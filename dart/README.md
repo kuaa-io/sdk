@@ -1,0 +1,73 @@
+# KUAA SDK para Dart
+
+SDK oficial da API do KUAA para Dart 3.8+ e Flutter (Android, iOS, desktop e web), só com `http` e `crypto`, os pacotes da equipe do Dart. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
+
+```sh
+dart pub add kuaa     # ou: flutter pub add kuaa
+```
+
+```dart
+import 'dart:io';
+
+import 'package:kuaa/kuaa.dart';
+
+final kuaa = Kuaa(Platform.environment['KUAA_API_KEY']!); // kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
+
+final kase = await kuaa.cases.create(
+  const CaseRequest(
+    externalReference: 'pedido-0001',
+    kind: 'KYC',
+    parties: [CaseRequestParty(kind: 'PERSON', primary: true, cpf: '123.456.789-09')],
+  ),
+  idempotencyKey: 'pedido-0001',
+);
+await kuaa.cases.start(kase.id, idempotencyKey: 'pedido-0001-start');
+
+await for (final summary in kuaa.cases.listIter(status: 'in_review')) {
+  print('${summary.id} ${summary.status}');
+}
+
+print(kuaa.lastResponse?.livemode); // false no sandbox (cabeçalho Kuaa-Livemode)
+kuaa.close();
+```
+
+A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no sandbox, e a chave sem `test` só em produção. A chave dá acesso à organização inteira: use o SDK no servidor. Num app Flutter, chame o seu backend em vez de embutir a chave. `kuaa.lastResponse` traz o `status`, o `livemode`, o `environment`, o `idempotentReplayed` e o `requestId` da última resposta.
+
+## Recursos
+
+| Serviço | Métodos |
+|---|---|
+| `kuaa.billing` | `balance`, `statement`, `statementIter` |
+| `kuaa.caseCaptureSessions` | `create`, `list`, `revoke` |
+| `kuaa.caseDocuments` | `list` |
+| `kuaa.caseMedia` | `create` |
+| `kuaa.caseOwnership` | `create`, `get` |
+| `kuaa.caseParties` | `create` |
+| `kuaa.caseTags` | `create`, `delete`, `list` |
+| `kuaa.cases` | `create`, `decision`, `dossier`, `get`, `list`, `listIter`, `start`, `submit`, `update` |
+| `kuaa.parties` | `get`, `list`, `listIter` |
+| `kuaa.webhooks` | `create`, `delete`, `list` |
+| `kuaa.workflows` | `list` |
+
+Os objetos respondidos são classes imutáveis com campos em camelCase (`kase.externalReference`) e `fromJson`/`toJson` com os nomes da API; os corpos das escritas são classes (`CaseRequest`), e um campo opcional deixado nulo não é enviado. As listas devolvem uma `Page` (`items`, `nextCursor`, `hasMore`), e o `…Iter` devolve um `Stream` que percorre todas as páginas pelo cursor. O envio de imagens (`kuaa.caseMedia.create`) vai como `multipart/form-data`, com cada arquivo num `FilePart`. As escritas aceitam `idempotencyKey:`, e todas aceitam `apiKey:` para usar outra chave numa chamada. `Kuaa(…, baseUrl:, httpClient:, timeout:)` troca o endereço, o `http.Client` (por exemplo, um `MockClient` nos testes) e o limite de 30 segundos.
+
+## Erros
+
+Uma recusa da API lança `KuaaException`, com `status`, `code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `message`, `fields` (as mensagens de cada campo), `retryAfter` em segundos (num 429 ou 503) e `requestId`.
+
+## Webhooks
+
+```dart
+import 'package:kuaa/kuaa.dart';
+
+final event = verifyWebhook(
+  Platform.environment['KUAA_WEBHOOK_SECRET']!,
+  request.headers, // Map<String, String> ou Map<String, List<String>>
+  await request.readAsString(),
+);
+print('${event.type} ${event.data.caseId}');
+```
+
+Cada entrega leva `X-Arandu-Delivery-Id`, `X-Arandu-Timestamp` e `X-Arandu-Signature: sha256=hex(HMAC-SHA256(segredo, timestamp + "." + delivery_id + "." + corpo))`. Durante uma rotação vem uma linha de assinatura por segredo ativo, e basta uma conferir. Um timestamp a mais de 5 minutos do relógio é recusado com `WebhookVerificationException`. Passe o corpo cru, `String` ou bytes, antes de interpretar; o evento é um envelope CloudEvents 1.0 e deve ser deduplicado pelo `id`, porque a entrega é pelo menos uma vez.
+
+Versão do SDK: 0.1.0 · contrato da API: 1.0.0

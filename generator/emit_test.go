@@ -23,6 +23,7 @@ func TestEveryLanguageWritesItsSDK(t *testing.T) {
 		"ruby":       {"kuaa.gemspec", "lib/kuaa.rb", "lib/kuaa/services.rb", "test/kuaa_test.rb", "test/webhook-vectors.json"},
 		"elixir":     {"mix.exs", "lib/kuaa.ex", "lib/kuaa/services.ex", "test/kuaa_test.exs", "test/webhook-vectors.json"},
 		"java":       {"pom.xml", "src/main/java/io/kuaa/Kuaa.java", "src/main/java/io/kuaa/Case.java", "src/main/java/io/kuaa/CaseRequest.java", "src/main/java/io/kuaa/CasesService.java", "src/test/resources/webhook-vectors.json"},
+		"dart":       {"pubspec.yaml", "lib/kuaa.dart", "lib/src/models.dart", "test/kuaa_test.dart", "test/webhook-vectors.json"},
 		"csharp":     {"Kuaa.slnx", "src/Kuaa/KuaaClient.cs", "src/Kuaa/Models/Case.cs", "src/Kuaa/Models/CaseRequest.cs", "src/Kuaa/Services/CasesService.cs", "tests/Kuaa.Tests/webhook-vectors.json"},
 	}
 	if len(expected) != len(Languages) {

@@ -1,0 +1,61 @@
+# KUAA SDK para Rust
+
+SDK oficial da API do KUAA para Rust 1.88+ (edição 2021), síncrono, com HTTP por [ureq](https://docs.rs/ureq) e rustls, JSON por serde e HMAC por RustCrypto. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
+
+```sh
+cargo add kuaa
+```
+
+```rust
+use kuaa::{CaseRequest, CaseRequestKind, CaseRequestParty, CaseRequestPartyKind, CasesListParams, Client};
+
+let client = Client::new(std::env::var("KUAA_API_KEY")?); // kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
+
+let party = CaseRequestParty::new(CaseRequestPartyKind::Person).primary(true).cpf("123.456.789-09");
+let kase = client
+    .cases()
+    .idempotency_key("pedido-0001")
+    .create(&CaseRequest::new("pedido-0001", CaseRequestKind::Kyc).parties(vec![party]))?;
+client.cases().idempotency_key("pedido-0001-start").start(&kase.id)?;
+
+for summary in client.cases().list_iter(CasesListParams::new().status("in_review")) {
+    println!("{}", summary?.id);
+}
+
+println!("{:?}", client.last_response().and_then(|last| last.livemode)); // Some(false) no sandbox
+```
+
+A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no sandbox, e a chave sem `test` só em produção. `client.last_response()` traz o `status`, o `livemode` (`Kuaa-Livemode`), o `environment`, o `idempotent_replayed` e o `request_id` da última resposta.
+
+## Recursos
+
+| Serviço | Métodos |
+|---|---|
+| `client.billing()` | `balance`, `statement`, `statement_iter` |
+| `client.case_capture_sessions()` | `create`, `list`, `revoke` |
+| `client.case_documents()` | `list` |
+| `client.case_media()` | `create` |
+| `client.case_ownership()` | `create`, `get` |
+| `client.case_parties()` | `create` |
+| `client.case_tags()` | `create`, `delete`, `list` |
+| `client.cases()` | `create`, `decision`, `dossier`, `get`, `list`, `list_iter`, `start`, `submit`, `update` |
+| `client.parties()` | `get`, `list`, `list_iter` |
+| `client.webhooks()` | `create`, `delete`, `list` |
+| `client.workflows()` | `list` |
+
+Os corpos das escritas são structs com `new(obrigatórios…)` e um método por campo opcional; os campos opcionais não definidos não são enviados. Os campos enumerados são enums (`CaseStatus::Approved`) que guardam em `Unrecognized` um valor que esta versão ainda não conhece. As listas respondem uma `Page` (`items`, `next_cursor`, `has_more`), e o `…_iter` devolve um `Iterator` que percorre todas as páginas pelo cursor. O envio de imagens (`client.case_media().create`) vai como `multipart/form-data`, com cada arquivo num `FilePart`. Antes da chamada, `.idempotency_key(…)` torna uma escrita segura para repetir, e `.api_key(…)` usa outra chave. `Client::builder(chave)` aceita `base_url`, `timeout` (30 s por padrão) e `transport`, para usar outro cliente HTTP ou testar sem rede.
+
+## Erros
+
+Uma recusa da API é `Error::Api(ApiError)`, com `status`, `code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `message`, `fields` (as mensagens de cada campo), `retry_after` (num 429 ou 503) e `request_id`. Falhas de rede são `Error::Transport`, e respostas ilegíveis, `Error::Json`.
+
+## Webhooks
+
+```rust
+let event = kuaa::verify_webhook(&std::env::var("KUAA_WEBHOOK_SECRET")?, &headers, &body)?;
+println!("{} {}", event.type_, event.data.case_id);
+```
+
+Cada entrega leva `X-Arandu-Delivery-Id`, `X-Arandu-Timestamp` e `X-Arandu-Signature: sha256=hex(HMAC-SHA256(segredo, timestamp + "." + delivery_id + "." + corpo))`. Durante uma rotação vem uma linha de assinatura por segredo ativo, e basta uma conferir. Um timestamp a mais de 5 minutos do relógio é `WebhookError::InvalidSignature`. `headers` pode ser um `http::HeaderMap`, um `HashMap` ou uma lista de pares (uma por linha). Passe o corpo cru, antes de interpretar; o evento é um envelope CloudEvents 1.0 e deve ser deduplicado pelo `id`, porque a entrega é pelo menos uma vez.
+
+Versão do SDK: 0.1.0 · contrato da API: 1.0.0

@@ -1,0 +1,231 @@
+package kuaa
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
+	"testing"
+	"time"
+)
+
+const caseJSON = `{"id":"case_1","external_reference":"pedido-1","kind":"KYC","status":"open","status_market":"PROCESSING",` +
+	`"livemode":false,"custom_status":null,"current_state":"collect_identity","workflow_definition_id":null,` +
+	`"policy_version_id":null,"parent_case_id":null,"child_group":null,` +
+	`"parties":[{"id":"party_1","kind":"PERSON","primary":true,"identity_id":null,"cpf":"12345678909"}],` +
+	`"relationships":[],"created_at":"2027-01-15T08:00:00Z","updated_at":"2027-01-15T08:00:00Z"}`
+
+func summaryJSON(id string) string {
+	return `{"id":"` + id + `","external_reference":"ref-` + id + `","kind":"KYC","status":"open","status_market":"PROCESSING",` +
+		`"livemode":false,"current_state":"start","workflow_definition_id":null,"workflow_version_id":null,` +
+		`"policy_version_id":null,"created_at":"2027-01-15T08:00:00Z","updated_at":"2027-01-15T08:00:00Z"}`
+}
+
+func server(t *testing.T, handle func(w http.ResponseWriter, r *http.Request)) *Client {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(handle))
+	t.Cleanup(srv.Close)
+	return New("kuaa_test_abc_secret", WithBaseURL(srv.URL+"/"))
+}
+
+func TestACallCarriesTheKeyAndUnwrapsTheData(t *testing.T) {
+	client := server(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer kuaa_test_abc_secret" || r.URL.Path != "/v1/cases/case_1" || r.Method != http.MethodGet {
+			t.Errorf("request %s %s %q", r.Method, r.URL.Path, r.Header.Get("Authorization"))
+		}
+		w.Header().Set("Kuaa-Livemode", "false")
+		w.Header().Set("Kuaa-Environment", "sandbox")
+		w.Header().Set("X-Request-ID", "req_1")
+		fmt.Fprint(w, `{"data":`+caseJSON+`}`)
+	})
+	got, err := client.Cases.Get(context.Background(), "case_1")
+	if err != nil || got.ID != "case_1" || got.Status != CaseStatusOpen || got.Parties[0].Cpf == nil || *got.Parties[0].Cpf != "12345678909" {
+		t.Fatalf("case %+v, %v", got, err)
+	}
+	last := client.LastResponse()
+	if last == nil || last.StatusCode != 200 || last.Livemode == nil || *last.Livemode || last.Environment != "sandbox" || last.RequestID != "req_1" {
+		t.Fatalf("last response %+v", last)
+	}
+}
+
+func TestAWriteSendsItsBodyAndIdempotencyKey(t *testing.T) {
+	client := server(t, func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/cases" || r.Header.Get("Idempotency-Key") != "pedido-1" ||
+			body["external_reference"] != "pedido-1" || body["kind"] != "KYC" || r.Header.Get("Content-Type") != "application/json" {
+			t.Errorf("request %s %s %q %v", r.Method, r.URL.Path, r.Header.Get("Idempotency-Key"), body)
+		}
+		if _, sent := body["workflow_definition_id"]; sent {
+			t.Error("an optional field left out was sent")
+		}
+		w.Header().Set("Idempotent-Replayed", "true")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, `{"data":`+caseJSON+`,"meta":{"created":false}}`)
+	})
+	got, err := client.Cases.Create(context.Background(), CaseRequest{ExternalReference: "pedido-1", Kind: "KYC"}, WithIdempotencyKey("pedido-1"))
+	if err != nil || got.ExternalReference != "pedido-1" {
+		t.Fatalf("case %+v, %v", got, err)
+	}
+	if last := client.LastResponse(); !last.IdempotentReplayed || last.StatusCode != 200 {
+		t.Fatalf("last response %+v", last)
+	}
+}
+
+func TestIteratingWalksEveryPageByCursor(t *testing.T) {
+	next := map[string]string{"": "c2", "c2": "c3", "c3": ""}
+	id := map[string]string{"": "case_1", "c2": "case_2", "c3": "case_3"}
+	client := server(t, func(w http.ResponseWriter, r *http.Request) {
+		cursor := r.URL.Query().Get("cursor")
+		if r.URL.Query().Get("limit") != "1" || r.URL.Query().Get("status") != "open" {
+			t.Errorf("query %q", r.URL.RawQuery)
+		}
+		meta := `{"next_cursor":null,"has_more":false,"limit":1}`
+		if next[cursor] != "" {
+			meta = `{"next_cursor":"` + next[cursor] + `","has_more":true,"limit":1}`
+		}
+		fmt.Fprint(w, `{"data":{"livemode":false,"cases":[`+summaryJSON(id[cursor])+`]},"meta":`+meta+`}`)
+	})
+	var ids []string
+	for summary, err := range client.Cases.ListIter(context.Background(), &CasesListParams{Limit: 1, Status: "open"}) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, summary.ID)
+	}
+	if fmt.Sprint(ids) != "[case_1 case_2 case_3]" {
+		t.Fatalf("walked %v", ids)
+	}
+}
+
+func TestARefusalIsATypedError(t *testing.T) {
+	client := server(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/v1/cases" {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			fmt.Fprint(w, `{"error":{"code":"validation_failed","message":"The input has invalid fields.","fields":{"kind":["must be KYC, KYB or AGE"]}}}`)
+			return
+		}
+		w.Header().Set("Retry-After", "7")
+		w.WriteHeader(http.StatusTooManyRequests)
+		fmt.Fprint(w, `{"error":{"code":"rate_limited","message":"Too many requests."}}`)
+	})
+	_, err := client.Cases.Create(context.Background(), CaseRequest{ExternalReference: "x", Kind: "X"})
+	var refused *Error
+	if !errors.As(err, &refused) || refused.StatusCode != 422 || refused.Code != "validation_failed" || refused.Fields["kind"][0] != "must be KYC, KYB or AGE" {
+		t.Fatalf("error %#v", err)
+	}
+	_, err = client.Cases.Get(context.Background(), "case_1")
+	if !errors.As(err, &refused) || refused.StatusCode != 429 || refused.Code != "rate_limited" || refused.RetryAfter != 7*time.Second {
+		t.Fatalf("error %#v", err)
+	}
+}
+
+func TestACaptureIsSentAsMultipart(t *testing.T) {
+	client := server(t, func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			t.Fatal(err)
+		}
+		files := r.MultipartForm.File["file"]
+		if r.URL.Path != "/v1/cases/case_1/media" || r.FormValue("kind") != "document" || r.FormValue("side") != "front" ||
+			r.FormValue("party_id") != "" || len(files) != 2 || files[0].Filename != "frente.jpg" || files[0].Header.Get("Content-Type") != "image/jpeg" ||
+			r.Header.Get("Idempotency-Key") != "captura-1" {
+			t.Errorf("form %v %v", r.MultipartForm.Value, files)
+		}
+		if len(files) > 0 {
+			opened, _ := files[0].Open()
+			data, _ := io.ReadAll(opened)
+			if string(data) != "\xff\xd8 frente" {
+				t.Errorf("file %q", data)
+			}
+		}
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprint(w, `{"data":{"documents":[{"id":"doc_1","capture":"document","party_id":"party_1","status":"received","artifact_id":null,"created_at":"2027-01-15T08:00:00Z"}]}}`)
+	})
+	got, err := client.CaseMedia.Create(context.Background(), "case_1", CaptureForm{
+		Kind: "document", DocumentType: Ptr("CNH"), Side: Ptr("front"),
+		File: []File{{Filename: "frente.jpg", ContentType: "image/jpeg", Data: []byte("\xff\xd8 frente")}, {Filename: "verso.jpg", ContentType: "image/jpeg", Data: []byte("verso")}},
+	}, WithIdempotencyKey("captura-1"))
+	if err != nil || len(got.Documents) != 1 || got.Documents[0].ID != "doc_1" {
+		t.Fatalf("capture %+v, %v", got, err)
+	}
+}
+
+func TestAListQueryRepeatsItsName(t *testing.T) {
+	client := server(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete || r.URL.RawQuery != "tag=prioridade&tag=revisar" {
+			t.Errorf("request %s %q", r.Method, r.URL.RawQuery)
+		}
+		fmt.Fprint(w, `{"data":{"case_id":"case_1","tags":[]}}`)
+	})
+	got, err := client.CaseTags.Delete(context.Background(), "case_1", &CaseTagsDeleteParams{Tag: []string{"prioridade", "revisar"}})
+	if err != nil || got.CaseID != "case_1" {
+		t.Fatalf("tags %+v, %v", got, err)
+	}
+}
+
+// The vectors are generated once, in Go, by sdk/generator, and every SDK
+// checks its verification against them.
+func TestWebhookVectors(t *testing.T) {
+	raw, err := os.ReadFile("testdata/webhook-vectors.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var vectors struct {
+		ToleranceSeconds int `json:"tolerance_seconds"`
+		Vectors          []struct {
+			Name    string              `json:"name"`
+			Secret  string              `json:"secret"`
+			Now     int64               `json:"now"`
+			Headers map[string][]string `json:"headers"`
+			Body    string              `json:"body"`
+			Valid   bool                `json:"valid"`
+			Event   *struct {
+				ID, Type, Source, Subject string
+				CaseID                    string `json:"case_id"`
+				Status, Environment       string
+				Livemode                  bool
+			} `json:"event"`
+		} `json:"vectors"`
+	}
+	if err := json.Unmarshal(raw, &vectors); err != nil {
+		t.Fatal(err)
+	}
+	if time.Duration(vectors.ToleranceSeconds)*time.Second != WebhookTolerance || len(vectors.Vectors) == 0 {
+		t.Fatalf("tolerance %d", vectors.ToleranceSeconds)
+	}
+	for _, v := range vectors.Vectors {
+		header := http.Header{}
+		for name, lines := range v.Headers {
+			header[name] = lines
+		}
+		event, err := verifyWebhookAt(v.Secret, header, []byte(v.Body), time.Unix(v.Now, 0))
+		if !v.Valid {
+			if !errors.Is(err, ErrWebhookSignature) {
+				t.Errorf("%s: verified (%v)", v.Name, err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("%s: %v", v.Name, err)
+			continue
+		}
+		want := v.Event
+		if event.ID != want.ID || event.Type != want.Type || event.Source != want.Source || event.Subject != want.Subject ||
+			event.Data.CaseID != want.CaseID || event.Data.Status != want.Status || event.Data.Environment != want.Environment ||
+			event.Data.Livemode != want.Livemode || event.Specversion != "1.0" {
+			t.Errorf("%s: event %+v", v.Name, event)
+		}
+	}
+	if _, err := VerifyWebhook("whsec_x", http.Header{}, nil); !errors.Is(err, ErrWebhookSignature) {
+		t.Errorf("an unsigned delivery: %v", err)
+	}
+	if !strings.HasPrefix(WebhookHeaderSignature, "X-Arandu-") {
+		t.Error("header")
+	}
+}

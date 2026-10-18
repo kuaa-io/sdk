@@ -114,20 +114,20 @@ class CaseTagsService:
     def __init__(self, client: Requester) -> None:
         self._client = client
 
-    def create(self, id: str, params: models.CaseTagsRequest, *, idempotency_key: str | None = None, api_key: str | None = None) -> models.CaseTags:
+    def create(self, id: str, params: models.CaseTagsRequest, *, idempotency_key: str | None = None, api_key: str | None = None) -> models.CaseTagList:
         """Give a case tags."""
         envelope = self._client.request("POST", f"/v1/cases/{segment(id)}/tags", body=params, idempotency_key=idempotency_key, api_key=api_key)
-        return models.CaseTags.from_dict(envelope["data"])
+        return models.CaseTagList.from_dict(envelope["data"])
 
-    def delete(self, id: str, *, tag: Sequence[str] | None = None, api_key: str | None = None) -> models.CaseTags:
+    def delete(self, id: str, *, tag: Sequence[str] | None = None, api_key: str | None = None) -> models.CaseTagList:
         """Take tags back from a case."""
         envelope = self._client.request("DELETE", f"/v1/cases/{segment(id)}/tags", query={"tag": tag}, api_key=api_key)
-        return models.CaseTags.from_dict(envelope["data"])
+        return models.CaseTagList.from_dict(envelope["data"])
 
-    def list(self, id: str, *, api_key: str | None = None) -> models.CaseTags:
+    def list(self, id: str, *, api_key: str | None = None) -> models.CaseTagList:
         """Read the tags of a case."""
         envelope = self._client.request("GET", f"/v1/cases/{segment(id)}/tags", api_key=api_key)
-        return models.CaseTags.from_dict(envelope["data"])
+        return models.CaseTagList.from_dict(envelope["data"])
 
 
 class CasesService:

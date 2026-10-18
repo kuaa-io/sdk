@@ -7,7 +7,7 @@ from ._errors import KuaaError
 from ._pagination import Page
 from ._services import BillingService, CaseCaptureSessionsService, CaseDocumentsService, CaseMediaService, CaseOwnershipService, CasePartiesService, CaseTagsService, CasesService, PartiesService, WebhooksService, WorkflowsService
 from ._version import API_VERSION, DEFAULT_BASE_URL, VERSION
-from .models import AddPartyRequest, AddPartyRequestRelationship, AddedParty, Balance, BeneficialOwner, BeneficialOwnerResolution, Capture, CaptureDocument, CaptureForm, CaptureSession, CaptureSessionIssued, CaptureSessionList, CaptureSessionRequest, CaptureSessionWorkflow, Case, CaseDecision, CasePatchRequest, CaseRequest, CaseRequestParty, CaseSummary, CaseTags, CaseTagsRequest, Check, CustomStatus, Decision, Document, DocumentDecision, DocumentList, Dossier, DossierParty, DossierWorkflow, Evidence, Finding, Identity, Monitoring, OwnershipDeclaration, OwnershipExemption, OwnershipPath, OwnershipRequest, OwnershipRequestDeclaration, OwnershipResolution, Party, PartyProfile, PartyProfileCase, PartyProfileTag, PartySummary, Policy, Relationship, Review, Run, RunWorkflow, Screening, StatementEntry, SubmitRequest, Tag, UnresolvedOwnership, Webhook, WebhookCreated, WebhookEvent, WebhookEventData, WebhookList, WebhookRequest, Workflow, WorkflowList, WorkflowStep, WorkflowVersion
+from .models import AddPartyRequest, AddPartyRequestRelationship, AddedParty, Balance, BeneficialOwner, BeneficialOwnerResolution, Capture, CaptureDocument, CaptureForm, CaptureSession, CaptureSessionIssued, CaptureSessionList, CaptureSessionRequest, CaptureSessionWorkflow, Case, CaseDecision, CasePatchRequest, CaseRequest, CaseRequestParty, CaseSummary, CaseTagList, CaseTagsRequest, Check, CustomStatus, Decision, Document, DocumentDecision, DocumentList, Dossier, DossierParty, DossierWorkflow, Evidence, Finding, Identity, Monitoring, OwnershipDeclaration, OwnershipExemption, OwnershipPath, OwnershipRequest, OwnershipRequestDeclaration, OwnershipResolution, Party, PartyProfile, PartyProfileCase, PartyProfileTag, PartySummary, Policy, Relationship, Review, Run, RunWorkflow, Screening, StatementEntry, SubmitRequest, Tag, UnresolvedOwnership, Webhook, WebhookCreated, WebhookEvent, WebhookEventData, WebhookList, WebhookRequest, Workflow, WorkflowList, WorkflowStep, WorkflowVersion
 from .webhooks import (
     WEBHOOK_HEADER_DELIVERY_ID,
     WEBHOOK_HEADER_SIGNATURE,
@@ -66,7 +66,7 @@ __all__ = [
     "CaseRequest",
     "CaseRequestParty",
     "CaseSummary",
-    "CaseTags",
+    "CaseTagList",
     "CaseTagsRequest",
     "Check",
     "CustomStatus",

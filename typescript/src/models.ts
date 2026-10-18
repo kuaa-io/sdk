@@ -384,8 +384,8 @@ export interface CaseSummary {
   workflow_version_id: string | null;
 }
 
-/** CaseTags is an object of KUAA's API. */
-export interface CaseTags {
+/** CaseTagList is an object of KUAA's API. */
+export interface CaseTagList {
   case_id: string;
   /** Every tag the case carries, in the organization's order. */
   tags: Tag[];

@@ -8,7 +8,7 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 from ._core import KuaaFile
 
-__all__ = ["KuaaFile", "AddPartyRequest", "AddPartyRequestRelationship", "AddedParty", "Balance", "BeneficialOwner", "BeneficialOwnerResolution", "Capture", "CaptureDocument", "CaptureForm", "CaptureSession", "CaptureSessionIssued", "CaptureSessionList", "CaptureSessionRequest", "CaptureSessionWorkflow", "Case", "CaseDecision", "CasePatchRequest", "CaseRequest", "CaseRequestParty", "CaseSummary", "CaseTags", "CaseTagsRequest", "Check", "CustomStatus", "Decision", "Document", "DocumentDecision", "DocumentList", "Dossier", "DossierParty", "DossierWorkflow", "Evidence", "Finding", "Identity", "Monitoring", "OwnershipDeclaration", "OwnershipExemption", "OwnershipPath", "OwnershipRequest", "OwnershipRequestDeclaration", "OwnershipResolution", "Party", "PartyProfile", "PartyProfileCase", "PartyProfileTag", "PartySummary", "Policy", "Relationship", "Review", "Run", "RunWorkflow", "Screening", "StatementEntry", "SubmitRequest", "Tag", "UnresolvedOwnership", "Webhook", "WebhookCreated", "WebhookEvent", "WebhookEventData", "WebhookList", "WebhookRequest", "Workflow", "WorkflowList", "WorkflowStep", "WorkflowVersion"]
+__all__ = ["KuaaFile", "AddPartyRequest", "AddPartyRequestRelationship", "AddedParty", "Balance", "BeneficialOwner", "BeneficialOwnerResolution", "Capture", "CaptureDocument", "CaptureForm", "CaptureSession", "CaptureSessionIssued", "CaptureSessionList", "CaptureSessionRequest", "CaptureSessionWorkflow", "Case", "CaseDecision", "CasePatchRequest", "CaseRequest", "CaseRequestParty", "CaseSummary", "CaseTagList", "CaseTagsRequest", "Check", "CustomStatus", "Decision", "Document", "DocumentDecision", "DocumentList", "Dossier", "DossierParty", "DossierWorkflow", "Evidence", "Finding", "Identity", "Monitoring", "OwnershipDeclaration", "OwnershipExemption", "OwnershipPath", "OwnershipRequest", "OwnershipRequestDeclaration", "OwnershipResolution", "Party", "PartyProfile", "PartyProfileCase", "PartyProfileTag", "PartySummary", "Policy", "Relationship", "Review", "Run", "RunWorkflow", "Screening", "StatementEntry", "SubmitRequest", "Tag", "UnresolvedOwnership", "Webhook", "WebhookCreated", "WebhookEvent", "WebhookEventData", "WebhookList", "WebhookRequest", "Workflow", "WorkflowList", "WorkflowStep", "WorkflowVersion"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -464,15 +464,15 @@ class CaseSummary:
 
 
 @dataclass(frozen=True, kw_only=True)
-class CaseTags:
-    """CaseTags is an object of KUAA's API."""
+class CaseTagList:
+    """CaseTagList is an object of KUAA's API."""
 
     case_id: str
     tags: list[Tag]
     """Every tag the case carries, in the organization's order."""
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> CaseTags:
+    def from_dict(cls, data: dict[str, Any]) -> CaseTagList:
         return cls(
             case_id=data["case_id"],
             tags=[Tag.from_dict(item) for item in data["tags"]],

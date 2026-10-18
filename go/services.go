@@ -200,8 +200,8 @@ func (s *CasePartiesService) Create(ctx context.Context, id string, params AddPa
 type CaseTagsService struct{ client *Client }
 
 // Create: Give a case tags.
-func (s *CaseTagsService) Create(ctx context.Context, id string, params CaseTagsRequest, opts ...RequestOption) (*CaseTags, error) {
-	var out CaseTags
+func (s *CaseTagsService) Create(ctx context.Context, id string, params CaseTagsRequest, opts ...RequestOption) (*CaseTagList, error) {
+	var out CaseTagList
 	err := s.client.call(ctx, http.MethodPost, "/v1/cases/"+url.PathEscape(id)+"/tags", nil, params, nil, &out, opts)
 	if err != nil {
 		return nil, err
@@ -227,8 +227,8 @@ func (p *CaseTagsDeleteParams) query() url.Values {
 }
 
 // Delete: Take tags back from a case.
-func (s *CaseTagsService) Delete(ctx context.Context, id string, params *CaseTagsDeleteParams, opts ...RequestOption) (*CaseTags, error) {
-	var out CaseTags
+func (s *CaseTagsService) Delete(ctx context.Context, id string, params *CaseTagsDeleteParams, opts ...RequestOption) (*CaseTagList, error) {
+	var out CaseTagList
 	err := s.client.call(ctx, http.MethodDelete, "/v1/cases/"+url.PathEscape(id)+"/tags", params.query(), nil, nil, &out, opts)
 	if err != nil {
 		return nil, err
@@ -237,8 +237,8 @@ func (s *CaseTagsService) Delete(ctx context.Context, id string, params *CaseTag
 }
 
 // List: Read the tags of a case.
-func (s *CaseTagsService) List(ctx context.Context, id string, opts ...RequestOption) (*CaseTags, error) {
-	var out CaseTags
+func (s *CaseTagsService) List(ctx context.Context, id string, opts ...RequestOption) (*CaseTagList, error) {
+	var out CaseTagList
 	err := s.client.call(ctx, http.MethodGet, "/v1/cases/"+url.PathEscape(id)+"/tags", nil, nil, nil, &out, opts)
 	if err != nil {
 		return nil, err

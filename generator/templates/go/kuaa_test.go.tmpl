@@ -149,7 +149,7 @@ func TestACaptureIsSentAsMultipart(t *testing.T) {
 	})
 	got, err := client.CaseMedia.Create(context.Background(), "case_1", CaptureForm{
 		Kind: "document", DocumentType: Ptr("CNH"), Side: Ptr("front"),
-		File: []File{{Filename: "frente.jpg", ContentType: "image/jpeg", Data: []byte("\xff\xd8 frente")}, {Filename: "verso.jpg", ContentType: "image/jpeg", Data: []byte("verso")}},
+		File: []File{{"{{"}}Filename: "frente.jpg", ContentType: "image/jpeg", Data: []byte("\xff\xd8 frente")}, {Filename: "verso.jpg", ContentType: "image/jpeg", Data: []byte("verso")}},
 	}, WithIdempotencyKey("captura-1"))
 	if err != nil || len(got.Documents) != 1 || got.Documents[0].ID != "doc_1" {
 		t.Fatalf("capture %+v, %v", got, err)

@@ -1,0 +1,448 @@
+{
+  "tolerance_seconds": 300,
+  "vectors": [
+    {
+      "name": "signed with the current secret",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "a rotation: one line per secret, the current one second",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "a rotation: the lines joined with a comma",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e, sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "a receiver that still holds the previous secret",
+      "secret": "whsec_kuaa_test_vector_previous_0123456789abcd",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "header names in lower case",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "x-arandu-delivery-id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "x-arandu-signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "x-arandu-timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "a sandbox event with a field this SDK does not know",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=f55a2383747e7e5dbcdf81300feec9ce4bab2be08f731ae66a2373370a2e176c"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"document.decided\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3SBX0\",\"id\":\"evt_01J9ZC3EVT2\",\"time\":\"2027-01-15T08:01:00Z\",\"subject\":\"cases/case_01J9ZC3CAS2\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT2\",\"type\":\"document.decided\",\"occurred_at\":\"2027-01-15T08:01:00Z\",\"tenant_id\":\"org_01J9ZC3SBX0\",\"case_id\":\"case_01J9ZC3CAS2\",\"status\":\"rerequested\",\"decision\":\"rerequested\",\"document_decision_id\":\"dd_01\",\"document_id\":\"doc_01\",\"document_type\":\"CNH\",\"document_side\":\"front\",\"requirement\":\"identity_document\",\"environment\":\"sandbox\",\"livemode\":false,\"future_field\":\"verificação\"}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT2",
+        "type": "document.decided",
+        "source": "urn:kuaa:tenant:org_01J9ZC3SBX0",
+        "subject": "cases/case_01J9ZC3CAS2",
+        "case_id": "case_01J9ZC3CAS2",
+        "status": "rerequested",
+        "environment": "sandbox",
+        "livemode": false
+      }
+    },
+    {
+      "name": "signed 300 seconds ago, the edge of the tolerance",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000300,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "signed 301 seconds ago",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000301,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "signed 301 seconds in the future",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1799999699,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "the body changed by one byte",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}} ",
+      "valid": false
+    },
+    {
+      "name": "another delivery id",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001x"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "a timestamp that was not the one signed",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1799999999"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "signed with another secret",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=2f9db34e8547c448d3911bdbab1f3c9a0c88b236653fbf0acbb49684eb9ac602"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "the signature in upper-case hex",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=ECC74A7594BD6B96D3A87E11F62A26795696A366CFFD43608E47E7E0C9CD331E"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": true,
+      "event": {
+        "id": "evt_01J9ZC3EVT1",
+        "type": "case.updated",
+        "source": "urn:kuaa:tenant:org_01J9ZC3ABCD",
+        "subject": "cases/case_01J9ZC3CASE",
+        "case_id": "case_01J9ZC3CASE",
+        "status": "approved",
+        "environment": "live",
+        "livemode": true
+      }
+    },
+    {
+      "name": "the signature without its sha256= prefix",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "a malformed line beside a valid one",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=zz",
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "more signatures than a sender writes",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=af701ad385ebaf55f8ea25e856633af2f71d87bbd5adb4d5d2e3697935e8c57e",
+          "sha256=ecc74a7594bd6b96d3a87e11f62a26795696a366cffd43608e47e7e0c9cd331e"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "no signature",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "no delivery id",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Signature": [
+          "sha256=06da66c59f1743eae42ac8411e004fc526900ada36c564aba1698d341e81ded3"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    },
+    {
+      "name": "a timestamp that is not a number",
+      "secret": "whsec_kuaa_test_vector_secret_0123456789abcdef",
+      "now": 1800000000,
+      "headers": {
+        "X-Arandu-Delivery-Id": [
+          "0199f2a4-7c1e-7b10-9a51-delivery0001"
+        ],
+        "X-Arandu-Signature": [
+          "sha256=a4febce9aa20935d4cd10b62761fe5256f56352f51f4d34640d372900f3d994d"
+        ],
+        "X-Arandu-Timestamp": [
+          "1800000000.0"
+        ]
+      },
+      "body": "{\"specversion\":\"1.0\",\"type\":\"case.updated\",\"source\":\"urn:kuaa:tenant:org_01J9ZC3ABCD\",\"id\":\"evt_01J9ZC3EVT1\",\"time\":\"2027-01-15T08:00:00Z\",\"subject\":\"cases/case_01J9ZC3CASE\",\"datacontenttype\":\"application/json\",\"data\":{\"event_id\":\"evt_01J9ZC3EVT1\",\"type\":\"case.updated\",\"occurred_at\":\"2027-01-15T08:00:00Z\",\"tenant_id\":\"org_01J9ZC3ABCD\",\"case_id\":\"case_01J9ZC3CASE\",\"status\":\"approved\",\"status_market\":\"APPROVED\",\"environment\":\"live\",\"livemode\":true}}",
+      "valid": false
+    }
+  ]
+}

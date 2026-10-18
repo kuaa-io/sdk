@@ -1,0 +1,62 @@
+# KUAA SDK para Ruby
+
+SDK oficial da API do KUAA para Ruby 3.1+, sem dependências: só `net/http`, `json` e `openssl`. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
+
+```sh
+gem install kuaa
+```
+
+```ruby
+require "kuaa"
+
+kuaa = Kuaa::Client.new(ENV.fetch("KUAA_API_KEY")) # kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
+
+kase = kuaa.cases.create(
+  { external_reference: "pedido-0001", kind: "KYC", parties: [{ kind: "PERSON", primary: true, cpf: "123.456.789-09" }] },
+  idempotency_key: "pedido-0001"
+)
+kuaa.cases.start(kase.id, idempotency_key: "pedido-0001-start")
+
+kuaa.cases.list_iter(status: "in_review").each do |summary|
+  puts "#{summary.id} #{summary.status}"
+end
+
+p kuaa.last_response.livemode # false no sandbox (cabeçalho Kuaa-Livemode)
+```
+
+A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no sandbox, e a chave sem `test` só em produção. `kuaa.last_response` traz o `status`, o `livemode`, o `environment`, o `idempotent_replayed` e o `request_id` da última resposta.
+
+## Recursos
+
+| Serviço | Métodos |
+|---|---|
+| `kuaa.billing` | `balance`, `statement`, `statement_iter` |
+| `kuaa.case_capture_sessions` | `create`, `list`, `revoke` |
+| `kuaa.case_documents` | `list` |
+| `kuaa.case_media` | `create` |
+| `kuaa.case_ownership` | `create`, `get` |
+| `kuaa.case_parties` | `create` |
+| `kuaa.case_tags` | `create`, `delete`, `list` |
+| `kuaa.cases` | `create`, `decision`, `dossier`, `get`, `list`, `list_iter`, `start`, `submit`, `update` |
+| `kuaa.parties` | `get`, `list`, `list_iter` |
+| `kuaa.webhooks` | `create`, `delete`, `list` |
+| `kuaa.workflows` | `list` |
+
+Os objetos respondidos são imutáveis, com leitores em snake_case (`kase.external_reference`). O corpo de uma escrita é a classe de parâmetros do método (`Kuaa::CaseRequest.new(…)`) ou um `Hash` com os mesmos nomes; um campo opcional não informado fica fora do JSON. As listas paginadas respondem uma `Kuaa::Page` (`items`, `next_cursor`, `has_more?`), e os métodos `_iter` devolvem um `Enumerator` que percorre todas as páginas pelo cursor (ou recebem um bloco). O envio de imagens (`kuaa.case_media.create`) vai como `multipart/form-data`, com cada arquivo num `Kuaa::FilePart` (ou `Kuaa::FilePart.from_path`).
+
+As escritas aceitam `idempotency_key:`, e todas aceitam `api_key:` para usar outra chave numa chamada. `Kuaa::Client.new` aceita `base_url:`, `timeout:` (30 segundos) e `transport:`.
+
+## Erros
+
+Uma recusa da API levanta `Kuaa::Error`, com `status`, `code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `message`, `fields` (as mensagens de cada campo), `retry_after` em segundos (num 429 ou 503) e `request_id`.
+
+## Webhooks
+
+```ruby
+event = Kuaa.verify_webhook(ENV.fetch("KUAA_WEBHOOK_SECRET"), request.headers, request.raw_post)
+puts event.type, event.data.case_id
+```
+
+Cada entrega leva `X-Arandu-Delivery-Id`, `X-Arandu-Timestamp` e `X-Arandu-Signature: sha256=hex(HMAC-SHA256(segredo, timestamp + "." + delivery_id + "." + corpo))`. Durante uma rotação vem uma linha de assinatura por segredo ativo, e basta uma conferir. Um timestamp a mais de 5 minutos do relógio é recusado com `Kuaa::WebhookVerificationError`. Passe o corpo cru, antes de interpretar; os cabeçalhos podem vir num `Hash` ou no env do Rack. O evento é um envelope CloudEvents 1.0 e deve ser deduplicado pelo `id`, porque a entrega é pelo menos uma vez.
+
+Versão do SDK: 0.1.0 · contrato da API: 1.0.0

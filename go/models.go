@@ -406,8 +406,8 @@ type CaseSummary struct {
 	WorkflowVersionID *string `json:"workflow_version_id"`
 }
 
-// CaseTags is an object of KUAA's API.
-type CaseTags struct {
+// CaseTagList is an object of KUAA's API.
+type CaseTagList struct {
 	CaseID string `json:"case_id"`
 	// Every tag the case carries, in the organization's order.
 	Tags []Tag `json:"tags"`

@@ -151,21 +151,21 @@ export class CaseTagsService {
   }
 
   /** Give a case tags. */
-  async create(id: string, params: models.CaseTagsRequest, options?: RequestOptions): Promise<models.CaseTags> {
+  async create(id: string, params: models.CaseTagsRequest, options?: RequestOptions): Promise<models.CaseTagList> {
     const envelope = await this.#client.request("POST", `/v1/cases/${encodeURIComponent(id)}/tags`, { body: params, options });
-    return envelope.data as unknown as models.CaseTags;
+    return envelope.data as unknown as models.CaseTagList;
   }
 
   /** Take tags back from a case. */
-  async delete(id: string, params: CaseTagsDeleteParams = {}, options?: RequestOptions): Promise<models.CaseTags> {
+  async delete(id: string, params: CaseTagsDeleteParams = {}, options?: RequestOptions): Promise<models.CaseTagList> {
     const envelope = await this.#client.request("DELETE", `/v1/cases/${encodeURIComponent(id)}/tags`, { query: { ...params }, options });
-    return envelope.data as unknown as models.CaseTags;
+    return envelope.data as unknown as models.CaseTagList;
   }
 
   /** Read the tags of a case. */
-  async list(id: string, options?: RequestOptions): Promise<models.CaseTags> {
+  async list(id: string, options?: RequestOptions): Promise<models.CaseTagList> {
     const envelope = await this.#client.request("GET", `/v1/cases/${encodeURIComponent(id)}/tags`, { options });
-    return envelope.data as unknown as models.CaseTags;
+    return envelope.data as unknown as models.CaseTagList;
   }
 }
 

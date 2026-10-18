@@ -6,8 +6,8 @@ declare(strict_types=1);
 
 namespace Kuaa\Models;
 
-/** CaseTags is an object of KUAA's API. */
-final class CaseTags
+/** CaseTagList is an object of KUAA's API. */
+final class CaseTagList
 {
     public function __construct(
         public readonly string $caseId,

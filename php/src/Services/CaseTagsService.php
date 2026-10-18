@@ -22,12 +22,12 @@ final class CaseTagsService
      *
      * @param array{tags: list<string>} $params
      */
-    public function create(string $id, array $params, ?string $idempotencyKey = null, ?string $apiKey = null): Models\CaseTags
+    public function create(string $id, array $params, ?string $idempotencyKey = null, ?string $apiKey = null): Models\CaseTagList
     {
         $envelope = $this->client->request('POST', '/v1/cases/' . rawurlencode($id) . '/tags', body: $params, idempotencyKey: $idempotencyKey, apiKey: $apiKey);
         /** @var array<string, mixed> $data */
         $data = $envelope['data'];
-        return Models\CaseTags::fromArray($data);
+        return Models\CaseTagList::fromArray($data);
     }
 
     /**
@@ -35,23 +35,23 @@ final class CaseTagsService
      *
      * @param array{tag?: list<string>} $params
      */
-    public function delete(string $id, array $params = [], ?string $apiKey = null): Models\CaseTags
+    public function delete(string $id, array $params = [], ?string $apiKey = null): Models\CaseTagList
     {
         $envelope = $this->client->request('DELETE', '/v1/cases/' . rawurlencode($id) . '/tags', query: $params, apiKey: $apiKey);
         /** @var array<string, mixed> $data */
         $data = $envelope['data'];
-        return Models\CaseTags::fromArray($data);
+        return Models\CaseTagList::fromArray($data);
     }
 
     /**
      * Read the tags of a case.
      */
-    public function list(string $id, ?string $apiKey = null): Models\CaseTags
+    public function list(string $id, ?string $apiKey = null): Models\CaseTagList
     {
         $envelope = $this->client->request('GET', '/v1/cases/' . rawurlencode($id) . '/tags', apiKey: $apiKey);
         /** @var array<string, mixed> $data */
         $data = $envelope['data'];
-        return Models\CaseTags::fromArray($data);
+        return Models\CaseTagList::fromArray($data);
     }
 }
 

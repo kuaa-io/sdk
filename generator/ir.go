@@ -292,6 +292,7 @@ func skipped(name string) bool {
 // namer.nested would name them poorly, by "<parent model>.<property>"; a
 // response's data is "<response component>.data".
 var overrides = map[string]string{
+	"CaseTagsResponse.data":                "CaseTagList",
 	"DecisionResponse.data":                "CaseDecision",
 	"Run.workflow":                         "RunWorkflow",
 	"PartyResponse.data":                   "AddedParty",
@@ -541,6 +542,15 @@ func build(doc *spec, version string) (*IR, error) {
 			}
 		}
 		ir.Services = append(ir.Services, service)
+	}
+	// Some languages name a service by its name alone (Elixir's Kuaa.Cases),
+	// beside the models (Kuaa.Case): the two must not meet.
+	for _, service := range ir.Services {
+		for _, model := range ir.Models {
+			if model.Name == Pascal(service.Name) {
+				return nil, fmt.Errorf("generator: the model %s has the name of the %s service; name it in overrides", model.Name, service.Name)
+			}
+		}
 	}
 	return ir, nil
 }

@@ -20,6 +20,8 @@ func TestEveryLanguageWritesItsSDK(t *testing.T) {
 		"typescript": {"package.json", "src/client.ts", "src/services.ts", "test/kuaa.test.ts", "test/webhook-vectors.json"},
 		"python":     {"pyproject.toml", "src/kuaa/__init__.py", "src/kuaa/py.typed", "tests/test_kuaa.py", "tests/webhook-vectors.json"},
 		"php":        {"composer.json", "src/Kuaa.php", "src/Models/CaseModel.php", "src/Services/CasesService.php", "tests/webhook-vectors.json"},
+		"ruby":       {"kuaa.gemspec", "lib/kuaa.rb", "lib/kuaa/services.rb", "test/kuaa_test.rb", "test/webhook-vectors.json"},
+		"elixir":     {"mix.exs", "lib/kuaa.ex", "lib/kuaa/services.ex", "test/kuaa_test.exs", "test/webhook-vectors.json"},
 	}
 	if len(expected) != len(Languages) {
 		t.Fatalf("languages %d, checked %d", len(Languages), len(expected))

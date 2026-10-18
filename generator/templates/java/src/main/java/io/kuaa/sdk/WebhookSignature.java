@@ -1,4 +1,4 @@
-package io.kuaa;
+package io.kuaa.sdk;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;

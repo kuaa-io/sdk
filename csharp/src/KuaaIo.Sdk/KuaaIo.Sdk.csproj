@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    net8.0 and net10.0 are the LTS releases: System.Text.Json, HMACSHA256 and
+    IAsyncEnumerable are in the box there, so the package depends on nothing.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>KuaaIo.Sdk</RootNamespace>
+    <AssemblyName>KuaaIo.Sdk</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <PackageId>KuaaIo.Sdk</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>KUAA</Authors>
+    <Company>KUAA</Company>
+    <Description>KUAA's SDK for .NET: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://kuaa.io</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kuaa-io/sdk</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>kuaa;kyc;kyb;identity;verification;cpf;cnpj;webhooks</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

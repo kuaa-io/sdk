@@ -3,7 +3,7 @@
 SDK oficial da API do KUAA para Ruby 3.1+, sem dependências: só `net/http`, `json` e `openssl`. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
 
 ```sh
-gem install kuaa
+gem install kuaa-io-sdk
 ```
 
 ```ruby

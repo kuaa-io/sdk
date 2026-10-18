@@ -1,4 +1,4 @@
-package io.kuaa;
+package io.kuaa.sdk;
 
 /** Options for one call: an idempotency key for a write, another organization's key. */
 public final class RequestOptions {

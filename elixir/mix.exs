@@ -8,7 +8,7 @@ defmodule Kuaa.MixProject do
 
   def project do
     [
-      app: :kuaa,
+      app: :kuaa_io_sdk,
       version: @version,
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,

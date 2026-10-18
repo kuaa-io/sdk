@@ -4,7 +4,7 @@ SDK oficial da API do KUAA para Elixir 1.18+, sem dependências: só `:httpc`, `
 
 ```elixir
 # mix.exs
-{:kuaa, "~> 0.1.0"}
+{:kuaa_io_sdk, "~> 0.1.0"}
 ```
 
 ```elixir

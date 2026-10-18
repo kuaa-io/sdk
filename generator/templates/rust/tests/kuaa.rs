@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, UNIX_EPOCH};
 
-use kuaa::{
+use kuaa_io_sdk::{
     verify_webhook_at, BoxError, CaptureForm, CaptureFormKind, CaseRequest, CaseRequestKind,
     CaseRequestParty, CaseRequestPartyKind, CaseStatus, CaseTagsDeleteParams, CaseTagsRequest,
     CasesListParams, Client, Error, FilePart, HttpRequest, HttpResponse, WebhookError,
@@ -81,7 +81,7 @@ fn a_call_carries_the_key_and_unwraps_the_data() {
     );
     assert_eq!(
         seen[0].header("user-agent"),
-        Some(format!("kuaa-rust/{}", kuaa::VERSION).as_str())
+        Some(format!("kuaa-rust/{}", kuaa_io_sdk::VERSION).as_str())
     );
     let last = client.last_response().unwrap();
     assert_eq!(last.status, 200);

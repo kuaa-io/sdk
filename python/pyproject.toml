@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "kuaa"
+name = "kuaa-io-sdk"
 version = "0.1.0"
 description = "KUAA's SDK for Python: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks."
 readme = "README.md"

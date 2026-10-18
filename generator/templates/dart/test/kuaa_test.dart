@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:kuaa/kuaa.dart';
+import 'package:kuaa_io_sdk/kuaa_io_sdk.dart';
 import 'package:test/test.dart';
 
 typedef Answer = http.Response Function(http.Request request);

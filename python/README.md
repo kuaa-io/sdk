@@ -3,7 +3,7 @@
 SDK oficial da API do KUAA para Python 3.11+, sem dependências. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
 
 ```sh
-pip install kuaa
+pip install kuaa-io-sdk
 ```
 
 ```python

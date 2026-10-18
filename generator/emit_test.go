@@ -20,12 +20,13 @@ func TestEveryLanguageWritesItsSDK(t *testing.T) {
 		"typescript": {"package.json", "src/client.ts", "src/services.ts", "test/kuaa.test.ts", "test/webhook-vectors.json"},
 		"python":     {"pyproject.toml", "src/kuaa/__init__.py", "src/kuaa/py.typed", "tests/test_kuaa.py", "tests/webhook-vectors.json"},
 		"php":        {"composer.json", "src/Kuaa.php", "src/Models/CaseModel.php", "src/Services/CasesService.php", "tests/webhook-vectors.json"},
-		"ruby":       {"kuaa.gemspec", "lib/kuaa.rb", "lib/kuaa/services.rb", "test/kuaa_test.rb", "test/webhook-vectors.json"},
+		"ruby":       {"kuaa-io-sdk.gemspec", "lib/kuaa.rb", "lib/kuaa/services.rb", "test/kuaa_test.rb", "test/webhook-vectors.json"},
 		"elixir":     {"mix.exs", "lib/kuaa.ex", "lib/kuaa/services.ex", "test/kuaa_test.exs", "test/webhook-vectors.json"},
-		"java":       {"pom.xml", "src/main/java/io/kuaa/Kuaa.java", "src/main/java/io/kuaa/Case.java", "src/main/java/io/kuaa/CaseRequest.java", "src/main/java/io/kuaa/CasesService.java", "src/test/resources/webhook-vectors.json"},
-		"dart":       {"pubspec.yaml", "lib/kuaa.dart", "lib/src/models.dart", "test/kuaa_test.dart", "test/webhook-vectors.json"},
+		"java":       {"pom.xml", "src/main/java/io/kuaa/sdk/Kuaa.java", "src/main/java/io/kuaa/sdk/Case.java", "src/main/java/io/kuaa/sdk/CaseRequest.java", "src/main/java/io/kuaa/sdk/CasesService.java", "src/test/resources/webhook-vectors.json"},
+		"dart":       {"pubspec.yaml", "lib/kuaa_io_sdk.dart", "lib/src/models.dart", "test/kuaa_test.dart", "test/webhook-vectors.json"},
 		"rust":       {"Cargo.toml", "src/lib.rs", "src/models.rs", "tests/kuaa.rs", "tests/webhook-vectors.json"},
-		"csharp":     {"Kuaa.slnx", "src/Kuaa/KuaaClient.cs", "src/Kuaa/Models/Case.cs", "src/Kuaa/Models/CaseRequest.cs", "src/Kuaa/Services/CasesService.cs", "tests/Kuaa.Tests/webhook-vectors.json"},
+		"swift":      {"Package.swift", "Sources/Kuaa/KuaaClient.swift", "Sources/Kuaa/Models.swift", "Tests/KuaaTests/KuaaTests.swift", "Tests/KuaaTests/webhook-vectors.json"},
+		"csharp":     {"KuaaIo.Sdk.slnx", "src/KuaaIo.Sdk/KuaaClient.cs", "src/KuaaIo.Sdk/Models/Case.cs", "src/KuaaIo.Sdk/Models/CaseRequest.cs", "src/KuaaIo.Sdk/Services/CasesService.cs", "tests/KuaaIo.Sdk.Tests/webhook-vectors.json"},
 	}
 	if len(expected) != len(Languages) {
 		t.Fatalf("languages %d, checked %d", len(Languages), len(expected))

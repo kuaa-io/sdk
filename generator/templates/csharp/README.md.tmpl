@@ -3,11 +3,11 @@
 SDK oficial da API do KUAA para C# e .NET 8+ (LTS), sem dependências: `HttpClient`, `System.Text.Json` com serialização gerada em compilação (compatível com trimming e Native AOT) e `HMACSHA256`. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
 
 ```sh
-dotnet add package Kuaa
+dotnet add package KuaaIo.Sdk
 ```
 
 ```csharp
-using Kuaa;
+using KuaaIo.Sdk;
 
 var kuaa = new KuaaClient(Environment.GetEnvironmentVariable("KUAA_API_KEY")!); // kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
 

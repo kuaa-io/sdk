@@ -1,5 +1,5 @@
 {
-    "name": "kuaa-io/kuaa-php",
+    "name": "kuaa-io/sdk",
     "description": "KUAA's SDK for PHP: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks.",
     "type": "library",
     "license": "MIT",

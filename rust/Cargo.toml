@@ -1,5 +1,5 @@
 [package]
-name = "kuaa"
+name = "kuaa-io-sdk"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.88"
@@ -7,7 +7,7 @@ description = "KUAA's SDK for Rust: identity verification cases (KYC, KYB, age),
 license = "MIT"
 homepage = "https://kuaa.io"
 repository = "https://github.com/kuaa-io/sdk"
-documentation = "https://docs.rs/kuaa"
+documentation = "https://docs.rs/kuaa-io-sdk"
 readme = "README.md"
 keywords = ["kuaa", "kyc", "identity", "api", "webhooks"]
 categories = ["api-bindings", "web-programming::http-client"]

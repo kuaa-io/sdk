@@ -3,13 +3,13 @@
 SDK oficial da API do KUAA para Dart 3.8+ e Flutter (Android, iOS, desktop e web), só com `http` e `crypto`, os pacotes da equipe do Dart. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
 
 ```sh
-dart pub add kuaa     # ou: flutter pub add kuaa
+dart pub add kuaa_io_sdk     # ou: flutter pub add kuaa_io_sdk
 ```
 
 ```dart
 import 'dart:io';
 
-import 'package:kuaa/kuaa.dart';
+import 'package:kuaa_io_sdk/kuaa_io_sdk.dart';
 
 final kuaa = Kuaa(Platform.environment['KUAA_API_KEY']!); // kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
 
@@ -50,7 +50,7 @@ Uma recusa da API lança `KuaaException`, com `status`, `code` (`validation_fail
 ## Webhooks
 
 ```dart
-import 'package:kuaa/kuaa.dart';
+import 'package:kuaa_io_sdk/kuaa_io_sdk.dart';
 
 final event = verifyWebhook(
   Platform.environment['KUAA_WEBHOOK_SECRET']!,

@@ -3,11 +3,11 @@
 SDK oficial da API do KUAA para Rust 1.88+ (edição 2021), síncrono, com HTTP por [ureq](https://docs.rs/ureq) e rustls, JSON por serde e HMAC por RustCrypto. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
 
 ```sh
-cargo add kuaa
+cargo add kuaa-io-sdk
 ```
 
 ```rust
-use kuaa::{CaseRequest, CaseRequestKind, CaseRequestParty, CaseRequestPartyKind, CasesListParams, Client};
+use kuaa_io_sdk::{CaseRequest, CaseRequestKind, CaseRequestParty, CaseRequestPartyKind, CasesListParams, Client};
 
 let client = Client::new(std::env::var("KUAA_API_KEY")?); // kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
 
@@ -44,7 +44,7 @@ Uma recusa da API é `Error::Api(ApiError)`, com `status`, `code` (`validation_f
 ## Webhooks
 
 ```rust
-let event = kuaa::verify_webhook(&std::env::var("KUAA_WEBHOOK_SECRET")?, &headers, &body)?;
+let event = kuaa_io_sdk::verify_webhook(&std::env::var("KUAA_WEBHOOK_SECRET")?, &headers, &body)?;
 println!("{} {}", event.type_, event.data.case_id);
 ```
 

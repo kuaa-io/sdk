@@ -3,7 +3,7 @@
 SDK oficial da API do KUAA para PHP 8.1+, só com as extensões `curl` e `json`. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
 
 ```sh
-composer require kuaa-io/kuaa-php
+composer require kuaa-io/sdk
 ```
 
 ```php

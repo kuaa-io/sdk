@@ -1,4 +1,4 @@
-name: kuaa
+name: kuaa_io_sdk
 version: 0.1.0
 description: >-
   KUAA's SDK for Dart and Flutter: identity verification cases (KYC, KYB,

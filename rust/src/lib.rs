@@ -8,9 +8,9 @@
 //! `data`; a refusal is [`Error::Api`].
 //!
 //! ```no_run
-//! use kuaa::{CaseRequest, CaseRequestKind, CasesListParams, Client};
+//! use kuaa_io_sdk::{CaseRequest, CaseRequestKind, CasesListParams, Client};
 //!
-//! # fn main() -> Result<(), kuaa::Error> {
+//! # fn main() -> Result<(), kuaa_io_sdk::Error> {
 //! let client = Client::new("kuaa_test_…");
 //!
 //! let kase = client

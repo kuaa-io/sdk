@@ -1,4 +1,4 @@
-package io.kuaa;
+package io.kuaa.sdk;
 
 import java.io.IOException;
 import java.nio.file.Files;

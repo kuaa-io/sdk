@@ -16,7 +16,10 @@ func TestEveryLanguageWritesItsSDK(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := map[string][]string{
-		"go": {"go.mod", "client.go", "services.go", "models.go", "testdata/webhook-vectors.json"},
+		"go":         {"go.mod", "client.go", "services.go", "models.go", "testdata/webhook-vectors.json"},
+		"typescript": {"package.json", "src/client.ts", "src/services.ts", "test/kuaa.test.ts", "test/webhook-vectors.json"},
+		"python":     {"pyproject.toml", "src/kuaa/__init__.py", "src/kuaa/py.typed", "tests/test_kuaa.py", "tests/webhook-vectors.json"},
+		"php":        {"composer.json", "src/Kuaa.php", "src/Models/CaseModel.php", "src/Services/CasesService.php", "tests/webhook-vectors.json"},
 	}
 	if len(expected) != len(Languages) {
 		t.Fatalf("languages %d, checked %d", len(Languages), len(expected))

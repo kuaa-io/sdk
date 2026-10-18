@@ -1,0 +1,54 @@
+# KUAA SDK para TypeScript
+
+SDK oficial da API do KUAA para TypeScript e JavaScript (Node 20.3+, Deno, Bun e navegadores com `fetch`), sem dependências. É gerado a partir do contrato da API (`openapi.json`, na raiz de [kuaa-io/sdk](https://github.com/kuaa-io/sdk)) por `generator/`. Não edite os arquivos desta pasta: regenere.
+
+```sh
+npm install @kuaa-io/sdk
+```
+
+```ts
+import { Kuaa } from "@kuaa-io/sdk";
+
+const kuaa = new Kuaa({ apiKey: process.env.KUAA_API_KEY! }); // kuaa_<prefixo>_<segredo> ou kuaa_test_<prefixo>_<segredo>
+
+const kase = await kuaa.cases.create(
+  { external_reference: "pedido-0001", kind: "KYC", parties: [{ kind: "PERSON", primary: true, cpf: "123.456.789-09" }] },
+  { idempotencyKey: "pedido-0001" },
+);
+await kuaa.cases.start(kase.id, { idempotencyKey: "pedido-0001-start" });
+
+for await (const summary of kuaa.cases.listIter({ status: "in_review" })) {
+  console.log(summary.id, summary.status);
+}
+
+console.log(kuaa.lastResponse?.livemode); // false no sandbox (cabeçalho Kuaa-Livemode)
+```
+
+A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no sandbox, e a chave sem `test` só em produção. `kuaa.lastResponse` traz o `status`, o `livemode` (`Kuaa-Livemode`), o `environment` (`Kuaa-Environment`), o `idempotentReplayed` (`Idempotent-Replayed`) e o `requestId` (`X-Request-ID`) da última resposta.
+
+## Recursos
+
+| Serviço | Métodos |
+|---|---|
+{{- range .Services}}
+| `kuaa.{{camel .Name}}` | {{range $i, $m := .Methods}}{{if $i}}, {{end}}`{{camel $m.Name}}`{{if $m.Paginated}}, `{{camel $m.Name}}Iter`{{end}}{{end}} |
+{{- end}}
+
+Cada método aceita, por último, `{ idempotencyKey, apiKey, signal }`. As listas paginadas respondem `{ items, nextCursor, hasMore }`, e o `…Iter` percorre todas as páginas pelo cursor. O envio de imagens (`kuaa.caseMedia.create`) vai como `multipart/form-data`, com cada arquivo em `{ filename, contentType, data }`.
+
+## Erros
+
+Uma recusa da API lança `KuaaError`, com `status`, `code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `fields` (as mensagens de cada campo), `retryAfter` em segundos (num 429 ou 503) e `requestId`.
+
+## Webhooks
+
+```ts
+import { verifyWebhook } from "@kuaa-io/sdk";
+
+const event = await verifyWebhook(process.env.KUAA_WEBHOOK_SECRET!, request.headers, await request.text());
+console.log(event.type, event.data.case_id, event.data.livemode);
+```
+
+Cada entrega leva `X-Arandu-Delivery-Id`, `X-Arandu-Timestamp` e `X-Arandu-Signature: sha256=hex(HMAC-SHA256(segredo, timestamp + "." + delivery_id + "." + corpo))`. Durante uma rotação vem uma linha de assinatura por segredo ativo, e basta uma conferir. Um timestamp a mais de 5 minutos do relógio é recusado com `WebhookVerificationError`. Passe o corpo cru, antes de interpretar; o evento é um envelope CloudEvents 1.0 e deve ser deduplicado pelo `id`, porque a entrega é pelo menos uma vez.
+
+Versão do SDK: {{.Version}} · contrato da API: {{.APIVersion}}

@@ -21,6 +21,9 @@ var templates embed.FS
 type Language struct {
 	Name  string
 	Funcs template.FuncMap
+	// ModelFile names a model's file where a language cannot name it after
+	// the model itself; nil keeps the model's name.
+	ModelFile func(model string) string
 }
 
 // Languages are the SDKs this generator writes.
@@ -58,7 +61,7 @@ func Generate(ir *IR, language, out string) error {
 		}
 		target := strings.TrimPrefix(file, root+"/")
 		target = strings.ReplaceAll(target, "_dot_", ".")
-		for _, scope := range scopes(ir, target) {
+		for _, scope := range scopes(ir, target, lang.ModelFile) {
 			if err := render(file, scope.target, source, scope.Scope, funcs, out); err != nil {
 				return err
 			}
@@ -83,13 +86,17 @@ type scoped struct {
 // scopes are the files one template writes. A path naming __model__ is
 // written once for each model the API answers, and one naming __service__
 // once for each service, for the languages that keep one class a file.
-func scopes(ir *IR, target string) []scoped {
+func scopes(ir *IR, target string, modelFile func(string) string) []scoped {
 	switch {
 	case strings.Contains(target, "__model__"):
 		var out []scoped
 		for _, model := range ir.Models {
 			if !model.Input {
-				out = append(out, scoped{Scope{IR: ir, Model: model}, strings.ReplaceAll(target, "__model__", model.Name)})
+				name := model.Name
+				if modelFile != nil {
+					name = modelFile(name)
+				}
+				out = append(out, scoped{Scope{IR: ir, Model: model}, strings.ReplaceAll(target, "__model__", name)})
 			}
 		}
 		return out

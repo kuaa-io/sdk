@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kuaa"
+version = "{{.Version}}"
+description = "KUAA's SDK for Python: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://kuaa.io"
+Repository = "https://github.com/kuaa-io/sdk"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kuaa"]

@@ -84,8 +84,9 @@ type scoped struct {
 }
 
 // scopes are the files one template writes. A path naming __model__ is
-// written once for each model the API answers, and one naming __service__
-// once for each service, for the languages that keep one class a file.
+// written once for each model the API answers, one naming __input__ once for
+// each body a request sends, and one naming __service__ once for each
+// service, for the languages that keep one class a file.
 func scopes(ir *IR, target string, modelFile func(string) string) []scoped {
 	switch {
 	case strings.Contains(target, "__model__"):
@@ -97,6 +98,14 @@ func scopes(ir *IR, target string, modelFile func(string) string) []scoped {
 					name = modelFile(name)
 				}
 				out = append(out, scoped{Scope{IR: ir, Model: model}, strings.ReplaceAll(target, "__model__", name)})
+			}
+		}
+		return out
+	case strings.Contains(target, "__input__"):
+		var out []scoped
+		for _, model := range ir.Models {
+			if model.Input {
+				out = append(out, scoped{Scope{IR: ir, Model: model}, strings.ReplaceAll(target, "__input__", model.Name)})
 			}
 		}
 		return out

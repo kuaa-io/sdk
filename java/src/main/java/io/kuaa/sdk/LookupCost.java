@@ -10,11 +10,13 @@ public final class LookupCost {
 
     private final long bureauChargedCents;
     private final long bureauPriceCents;
+    private final long credits;
     private final String tokenSource;
 
-    LookupCost(long bureauChargedCents, long bureauPriceCents, String tokenSource) {
+    LookupCost(long bureauChargedCents, long bureauPriceCents, long credits, String tokenSource) {
         this.bureauChargedCents = bureauChargedCents;
         this.bureauPriceCents = bureauPriceCents;
+        this.credits = credits;
         this.tokenSource = tokenSource;
     }
 
@@ -22,6 +24,7 @@ public final class LookupCost {
         return new LookupCost(
                 Json.required(data, "bureau_charged_cents", Json::asLong),
                 Json.required(data, "bureau_price_cents", Json::asLong),
+                Json.required(data, "credits", Json::asLong),
                 Json.optional(data, "token_source", Json::asString));
     }
 
@@ -35,6 +38,11 @@ public final class LookupCost {
         return bureauPriceCents;
     }
 
+    /** @return The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox. */
+    public long getCredits() {
+        return credits;
+    }
+
     /** @return platform, organization or sandbox. (null when the API sends none) */
     public String getTokenSource() {
         return tokenSource;
@@ -42,6 +50,6 @@ public final class LookupCost {
 
     @Override
     public String toString() {
-        return "LookupCost{" + "bureauChargedCents=" + bureauChargedCents + ", bureauPriceCents=" + bureauPriceCents + ", tokenSource=" + tokenSource + "}";
+        return "LookupCost{" + "bureauChargedCents=" + bureauChargedCents + ", bureauPriceCents=" + bureauPriceCents + ", credits=" + credits + ", tokenSource=" + tokenSource + "}";
     }
 }

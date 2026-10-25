@@ -6,7 +6,7 @@
 
     <groupId>io.kuaa</groupId>
     <artifactId>sdk</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <name>KUAA SDK for Java</name>
@@ -34,7 +34,7 @@
         <connection>scm:git:https://github.com/kuaa-io/sdk.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/kuaa-io/sdk.git</developerConnection>
         <url>https://github.com/kuaa-io/sdk</url>
-        <tag>v0.1.0</tag>
+        <tag>v0.2.0</tag>
     </scm>
 
     <properties>

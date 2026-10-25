@@ -28,7 +28,7 @@ Só usam a biblioteca padrão da linguagem, com duas exceções onde ela não te
 
 ## Consultas de CPF e CNPJ
 
-`lookups.person` e `lookups.business` consultam o cadastro de um CPF ou de um CNPJ sem abrir um case, e `lookups.get` lê uma consulta de novo. A resposta traz a conclusão do KUAA em `status` (`regular`, `irregular` ou `inconclusive`), as `reasons`, os dados e, em `provenance`, de onde veio cada campo. `purpose` é obrigatório. No sandbox (`kuaa_test_…`), o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular` com dados sintéticos. Em TypeScript:
+`lookups.person` e `lookups.business` consultam o cadastro de um CPF ou de um CNPJ sem abrir um case, e `lookups.get` lê uma consulta de novo. A resposta traz a conclusão do KUAA em `status` (`regular`, `irregular` ou `inconclusive`; `failed` numa consulta que não terminou), as `reasons`, os dados, em `provenance` de onde veio cada campo e, em `cost.credits`, os créditos cobrados. `purpose` é obrigatório. No sandbox (`kuaa_test_…`), o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular` com dados sintéticos. Em TypeScript:
 
 ```ts
 const lookup = await kuaa.lookups.person({ cpf: "000.000.001-91", purpose: "onboarding" }, { idempotencyKey: "consulta-0001" });

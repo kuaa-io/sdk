@@ -32,7 +32,7 @@ import java.util.Objects;
  */
 public final class Kuaa {
     /** This SDK's version. */
-    public static final String VERSION = "0.1.0";
+    public static final String VERSION = "0.2.0";
 
     /** The contract this SDK was generated from. */
     public static final String API_VERSION = "1.0.0";

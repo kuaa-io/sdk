@@ -4,7 +4,7 @@ import Foundation
 
 extension KuaaClient {
     /// This SDK's version.
-    public static let version = "0.1.0"
+    public static let version = "0.2.0"
 
     /// The contract this SDK was generated from.
     public static let apiVersion = "1.0.0"

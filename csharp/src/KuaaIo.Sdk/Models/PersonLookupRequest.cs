@@ -32,7 +32,7 @@ public sealed record PersonLookupRequest
     [JsonPropertyName("include")]
     public IReadOnlyList<string>? Include { get; init; }
 
-    /// <summary>Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).</summary>
+    /// <summary>Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).</summary>
     [JsonPropertyName("purpose")]
     public required string Purpose { get; init; }
 }

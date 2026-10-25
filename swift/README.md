@@ -4,7 +4,7 @@ SDK oficial da API do KUAA para Swift 6 (macOS 12+, iOS 15+, tvOS 15+, watchOS 8
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/kuaa-io/sdk", from: "0.1.0"),
+.package(url: "https://github.com/kuaa-io/sdk", from: "0.2.0"),
 // e, no target:
 .product(name: "KuaaSDK", package: "sdk"),
 ```
@@ -53,7 +53,7 @@ Os objetos respondidos são structs `Codable` com propriedades em camelCase (`ka
 
 ## Consultas de CPF e CNPJ
 
-Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`; `failed` numa consulta lida cujo processamento não terminou), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost` (com os créditos cobrados em `credits`). Acima do limite diário de consultas, ela responde `inconclusive` com `daily_limit_reached`, sem consultar o bureau; consultas demais num minuto, pela chave ou pela organização, recebem um 429 (`rate_limited`) com `Retry-After`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
 
 ```swift
 let lookup = try await kuaa.lookups.person(
@@ -82,4 +82,4 @@ print(event.type.rawValue, event.data.caseID)
 
 Cada entrega leva `X-Arandu-Delivery-Id`, `X-Arandu-Timestamp` e `X-Arandu-Signature: sha256=hex(HMAC-SHA256(segredo, timestamp + "." + delivery_id + "." + corpo))`. Durante uma rotação vem uma linha de assinatura por segredo ativo, e basta uma conferir. Um timestamp a mais de 5 minutos do relógio lança `WebhookVerificationError.invalidSignature`. `headers` pode ser `[String: [String]]` (uma entrada por linha) ou `[String: String]`. Passe o corpo cru, antes de interpretar; o evento é um envelope CloudEvents 1.0 e deve ser deduplicado pelo `id`, porque a entrega é pelo menos uma vez. A verificação usa o CryptoKit e por isso existe nas plataformas da Apple; no Linux, o cliente compila, mas a verificação dos webhooks não está disponível.
 
-Versão do SDK: 0.1.0 · contrato da API: 1.0.0
+Versão do SDK: 0.2.0 · contrato da API: 1.0.0

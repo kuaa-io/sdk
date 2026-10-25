@@ -32,7 +32,7 @@ namespace KuaaIo.Sdk;
 public sealed class KuaaClient
 {
     /// <summary>This SDK's version.</summary>
-    public const string Version = "0.1.0";
+    public const string Version = "0.2.0";
 
     /// <summary>The contract this SDK was generated from.</summary>
     public const string ApiVersion = "1.0.0";

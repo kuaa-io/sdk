@@ -1,6 +1,6 @@
 {
   "name": "@kuaa-io/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "KUAA's SDK for TypeScript and JavaScript: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks.",
   "license": "MIT",
   "homepage": "https://kuaa.io",

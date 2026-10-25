@@ -13,6 +13,8 @@ final class LookupCost
         /** What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable. */
         public readonly int $bureauChargedCents,
         public readonly int $bureauPriceCents,
+        /** The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox. */
+        public readonly int $credits,
         /** platform, organization or sandbox. */
         public readonly ?string $tokenSource,
     ) {
@@ -26,6 +28,7 @@ final class LookupCost
         return new self(
             bureauChargedCents: $data['bureau_charged_cents'],
             bureauPriceCents: $data['bureau_price_cents'],
+            credits: $data['credits'],
             tokenSource: $data['token_source'] ?? null,
         );
     }

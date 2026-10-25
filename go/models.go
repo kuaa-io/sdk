@@ -739,12 +739,12 @@ type Lookup struct {
 	// Where each field came from and when, by field name; a field with no value has no entry.
 	Provenance LookupProvenance `json:"provenance"`
 	Purpose    string           `json:"purpose"`
-	// cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_<reason> when AML was not answered.
+	// Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
 	Reasons     []string        `json:"reasons"`
 	RuleVersion string          `json:"rule_version"`
 	Screening   LookupScreening `json:"screening"`
 	Sources     []LookupSource  `json:"sources"`
-	// KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+	// KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
 	Status string `json:"status"`
 }
 
@@ -766,6 +766,8 @@ type LookupCost struct {
 	// What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
 	BureauChargedCents int64 `json:"bureau_charged_cents"`
 	BureauPriceCents   int64 `json:"bureau_price_cents"`
+	// The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.
+	Credits int64 `json:"credits"`
 	// platform, organization or sandbox.
 	TokenSource *string `json:"token_source,omitempty"`
 }
@@ -984,7 +986,7 @@ type PersonLookupRequest struct {
 	Cpf string `json:"cpf"`
 	// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
 	Include []string `json:"include,omitempty"`
-	// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+	// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
 	Purpose string `json:"purpose"`
 }
 
@@ -1480,6 +1482,7 @@ const (
 	LookupStatusRegular                                 = "regular"
 	LookupStatusIrregular                               = "irregular"
 	LookupStatusInconclusive                            = "inconclusive"
+	LookupStatusFailed                                  = "failed"
 	PartyKindPERSON                                     = "PERSON"
 	PartyKindBUSINESS                                   = "BUSINESS"
 	PartyProfileKindPERSON                              = "PERSON"

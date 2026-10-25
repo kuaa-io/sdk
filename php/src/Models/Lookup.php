@@ -33,7 +33,7 @@ final class Lookup
         /** @var 'onboarding'|'fraud_prevention'|'legal_obligation'|'credit_protection'|'contract_execution' */
         public readonly string $purpose,
         /**
-         * cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_<reason> when AML was not answered.
+         * Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
          * @var list<string>
          */
         public readonly array $reasons,
@@ -42,8 +42,8 @@ final class Lookup
         /** @var list<LookupSource> */
         public readonly array $sources,
         /**
-         * KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
-         * @var 'regular'|'irregular'|'inconclusive'
+         * KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
+         * @var 'regular'|'irregular'|'inconclusive'|'failed'
          */
         public readonly string $status,
     ) {

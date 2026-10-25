@@ -45,7 +45,7 @@ public final class PersonLookupRequest {
         return include;
     }
 
-    /** @return Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V). */
+    /** @return Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V). */
     public String getPurpose() {
         return purpose;
     }
@@ -93,7 +93,7 @@ public final class PersonLookupRequest {
         }
 
         /**
-         * @param purpose Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V). (required)
+         * @param purpose Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V). (required)
          * @return this builder
          */
         public Builder purpose(String purpose) {

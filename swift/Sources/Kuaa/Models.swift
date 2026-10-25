@@ -1187,12 +1187,12 @@ public struct Lookup: Codable, Sendable, Hashable {
     /// Where each field came from and when, by field name; a field with no value has no entry.
     public let provenance: LookupProvenance
     public let purpose: LookupPurpose
-    /// cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_<reason> when AML was not answered.
+    /// Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
     public let reasons: [String]
     public let ruleVersion: String
     public let screening: LookupScreening
     public let sources: [LookupSource]
-    /// KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+    /// KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
     public let status: LookupStatus
 
     public init(cost: LookupCost, createdAt: String, document: String, environment: LookupEnvironment, id: String, kind: LookupKind, legalBasis: String, livemode: Bool, object: LookupObject, provenance: LookupProvenance, purpose: LookupPurpose, reasons: [String], ruleVersion: String, screening: LookupScreening, sources: [LookupSource], status: LookupStatus, company: LookupCompany? = nil, person: LookupPerson? = nil) {
@@ -1272,18 +1272,22 @@ public struct LookupCost: Codable, Sendable, Hashable {
     /// What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
     public let bureauChargedCents: Int
     public let bureauPriceCents: Int
+    /// The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.
+    public let credits: Int
     /// platform, organization or sandbox.
     public let tokenSource: String?
 
-    public init(bureauChargedCents: Int, bureauPriceCents: Int, tokenSource: String? = nil) {
+    public init(bureauChargedCents: Int, bureauPriceCents: Int, credits: Int, tokenSource: String? = nil) {
         self.bureauChargedCents = bureauChargedCents
         self.bureauPriceCents = bureauPriceCents
+        self.credits = credits
         self.tokenSource = tokenSource
     }
 
     enum CodingKeys: String, CodingKey {
         case bureauChargedCents = "bureau_charged_cents"
         case bureauPriceCents = "bureau_price_cents"
+        case credits
         case tokenSource = "token_source"
     }
 }
@@ -3042,7 +3046,7 @@ public struct PersonLookupRequest: Encodable, Sendable, Hashable {
     public var cpf: String
     /// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
     public var include: [PersonLookupRequestInclude]?
-    /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+    /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
     public var purpose: PersonLookupRequestPurpose
 
     public init(cpf: String, purpose: PersonLookupRequestPurpose, include: [PersonLookupRequestInclude]? = nil) {
@@ -4697,7 +4701,7 @@ public struct LookupPurpose: RawRepresentable, Codable, Sendable, Hashable, Expr
     public static let contractExecution = LookupPurpose(rawValue: "contract_execution")
 }
 
-/// The values of `Lookup.status`. KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+/// The values of `Lookup.status`. KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
 public struct LookupStatus: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
@@ -4717,6 +4721,8 @@ public struct LookupStatus: RawRepresentable, Codable, Sendable, Hashable, Expre
     public static let irregular = LookupStatus(rawValue: "irregular")
     /// `inconclusive`
     public static let inconclusive = LookupStatus(rawValue: "inconclusive")
+    /// `failed`
+    public static let failed = LookupStatus(rawValue: "failed")
 }
 
 /// The values of `OwnershipRequestDeclaration.basis`. What the share rests on. Empty is declaration.
@@ -4905,7 +4911,7 @@ public struct PersonLookupRequestInclude: RawRepresentable, Codable, Sendable, H
     public static let aml = PersonLookupRequestInclude(rawValue: "aml")
 }
 
-/// The values of `PersonLookupRequest.purpose`. Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+/// The values of `PersonLookupRequest.purpose`. Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
 public struct PersonLookupRequestPurpose: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {

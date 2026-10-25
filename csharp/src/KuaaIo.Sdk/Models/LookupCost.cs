@@ -17,6 +17,10 @@ public sealed record LookupCost
     [JsonPropertyName("bureau_price_cents")]
     public required long BureauPriceCents { get; init; }
 
+    /// <summary>The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.</summary>
+    [JsonPropertyName("credits")]
+    public required long Credits { get; init; }
+
     /// <summary>platform, organization or sandbox. Null when the API sends none.</summary>
     [JsonPropertyName("token_source")]
     public string? TokenSource { get; init; }

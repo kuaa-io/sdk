@@ -48,6 +48,9 @@ public sealed record Lookup
     /// <summary>A value of <see cref="Status"/>.</summary>
     public const string StatusInconclusive = "inconclusive";
 
+    /// <summary>A value of <see cref="Status"/>.</summary>
+    public const string StatusFailed = "failed";
+
     /// <summary>Present on a business lookup. Null when the API sends none.</summary>
     [JsonPropertyName("company")]
     public LookupCompany? Company { get; init; }
@@ -100,7 +103,7 @@ public sealed record Lookup
     [JsonPropertyName("purpose")]
     public required string Purpose { get; init; }
 
-    /// <summary>cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_&lt;reason&gt; when AML was not answered.</summary>
+    /// <summary>Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_&lt;reason&gt; when AML was not answered.</summary>
     [JsonPropertyName("reasons")]
     public required IReadOnlyList<string> Reasons { get; init; }
 
@@ -116,7 +119,7 @@ public sealed record Lookup
     [JsonPropertyName("sources")]
     public required IReadOnlyList<LookupSource> Sources { get; init; }
 
-    /// <summary>KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.</summary>
+    /// <summary>KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.</summary>
     [JsonPropertyName("status")]
     public required string Status { get; init; }
 }

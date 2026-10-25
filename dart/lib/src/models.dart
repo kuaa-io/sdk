@@ -2785,12 +2785,15 @@ final class Lookup {
   /// `credit_protection`, `contract_execution`.
   final String purpose;
 
-  /// cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization,
-  /// cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null,
-  /// cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep,
-  /// pep_possible, not_found, screening_unavailable, screening_partial,
+  /// Irregular: cpf_suspended, cpf_cancelled, cpf_null,
+  /// cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed,
+  /// cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown,
+  /// obito_unknown, sanctions_possible, not_found, screening_unavailable,
+  /// daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked),
   /// bureau_not_enabled, product_disabled, no_token, budget_exceeded,
-  /// provider_unavailable, and aml_&lt;reason&gt; when AML was not answered.
+  /// provider_unavailable. Flagged only: pep, pep_possible, screening_partial
+  /// (screening.unavailable names the missing sources), and aml_&lt;reason&gt;
+  /// when AML was not answered.
   final List<String> reasons;
 
   final String ruleVersion;
@@ -2799,13 +2802,16 @@ final class Lookup {
 
   final List<LookupSource> sources;
 
-  /// KUAA's conclusion under rule_version: irregular when the situação is not
-  /// REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions
-  /// list holds the document itself; inconclusive when the registry could not
-  /// be read or held nothing, a sanctions list holds the name only, or no list
-  /// could be read; regular otherwise. A PEP is a reason, not an irregularity.
+  /// KUAA's conclusion under rule_version: irregular when the situação is a
+  /// known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died,
+  /// or when a sanctions list holds the document itself; inconclusive when the
+  /// registry could not be read or held nothing, the situação is empty or
+  /// unknown, óbito could not be read, a sanctions list holds the name only, or
+  /// no list could be read; regular otherwise. A PEP is a reason, not an
+  /// irregularity. failed is a lookup GET reads whose processing did not
+  /// finish; retrying the same day is answered from the bureau's paid answer.
   ///
-  /// One of `regular`, `irregular`, `inconclusive`.
+  /// One of `regular`, `irregular`, `inconclusive`, `failed`.
   final String status;
 
   /// The JSON the API answers.
@@ -2881,6 +2887,7 @@ final class LookupCost {
   const LookupCost({
     required this.bureauChargedCents,
     required this.bureauPriceCents,
+    required this.credits,
     this.tokenSource,
   });
 
@@ -2889,6 +2896,7 @@ final class LookupCost {
     return LookupCost(
       bureauChargedCents: json['bureau_charged_cents'] as int,
       bureauPriceCents: json['bureau_price_cents'] as int,
+      credits: json['credits'] as int,
       tokenSource: json['token_source'] as String?,
     );
   }
@@ -2899,6 +2907,13 @@ final class LookupCost {
 
   final int bureauPriceCents;
 
+  /// The KUAA credits the lookup was charged to the organization's credit
+  /// wallet: one item per Direct Data query that answered and was billed
+  /// (check.lookup_person, check.lookup_aml, check.lookup_business in the price
+  /// list). Zero for a same-day repeat, a refusal, a transport error, the daily
+  /// limit and the sandbox.
+  final int credits;
+
   /// platform, organization or sandbox.
   final String? tokenSource;
 
@@ -2906,6 +2921,7 @@ final class LookupCost {
   Map<String, Object?> toJson() => {
     'bureau_charged_cents': bureauChargedCents,
     'bureau_price_cents': bureauPriceCents,
+    'credits': credits,
     'token_source': ?tokenSource,
   };
 }
@@ -3782,7 +3798,7 @@ final class PersonLookupRequest {
   final List<String>? include;
 
   /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal
-  /// basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g),
+  /// basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX),
   /// legal_obligation (art. 7, II), credit_protection (art. 7, X),
   /// contract_execution (art. 7, V).
   ///

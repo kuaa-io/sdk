@@ -1430,8 +1430,8 @@ defmodule Kuaa.Lookup do
   * `person`: Present on a person lookup.
   * `provenance`: Where each field came from and when, by field name; a field with no value has no entry.
   * `purpose` (one of `"onboarding"`, `"fraud_prevention"`, `"legal_obligation"`, `"credit_protection"`, `"contract_execution"`)
-  * `reasons`: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_<reason> when AML was not answered.
-  * `status` (one of `"regular"`, `"irregular"`, `"inconclusive"`): KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+  * `reasons`: Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
+  * `status` (one of `"regular"`, `"irregular"`, `"inconclusive"`, `"failed"`): KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
   """
   @type t :: %__MODULE__{
           company: Kuaa.LookupCompany.t() | nil,
@@ -1515,15 +1515,17 @@ end
 defmodule Kuaa.LookupCost do
   @moduledoc "LookupCost is an object of KUAA's API."
 
-  defstruct [:bureau_charged_cents, :bureau_price_cents, :token_source]
+  defstruct [:bureau_charged_cents, :bureau_price_cents, :credits, :token_source]
 
   @typedoc """
   * `bureau_charged_cents`: What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
+  * `credits`: The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.
   * `token_source`: platform, organization or sandbox.
   """
   @type t :: %__MODULE__{
           bureau_charged_cents: integer(),
           bureau_price_cents: integer(),
+          credits: integer(),
           token_source: String.t() | nil
         }
 
@@ -1533,6 +1535,7 @@ defmodule Kuaa.LookupCost do
     %__MODULE__{
       bureau_charged_cents: Map.fetch!(data, "bureau_charged_cents"),
       bureau_price_cents: Map.fetch!(data, "bureau_price_cents"),
+      credits: Map.fetch!(data, "credits"),
       token_source: data["token_source"]
     }
   end

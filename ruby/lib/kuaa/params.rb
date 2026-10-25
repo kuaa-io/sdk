@@ -714,7 +714,7 @@ module Kuaa
     # @return [Array<String ("aml")>, nil]
     attr_reader :include
 
-    # Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+    # Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
     # @return [String ("onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution")]
     attr_reader :purpose
 

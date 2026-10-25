@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 from ._core import KuaaFile, ResponseInfo
 from ._errors import KuaaError
-from ._services import BillingService, CaseCaptureSessionsService, CaseDocumentsService, CaseMediaService, CaseOwnershipService, CasePartiesService, CaseTagsService, CasesService, PartiesService, WebhooksService, WorkflowsService
+from ._services import BillingService, CaseCaptureSessionsService, CaseChipChallengesService, CaseChipReadsService, CaseDocumentsService, CaseMediaService, CaseOwnershipService, CasePartiesService, CaseTagsService, CasesService, HealthService, LookupsService, PartiesService, WebhooksService, WorkflowsService
 from ._version import DEFAULT_BASE_URL, VERSION
 
 Transport = Callable[[str, str, dict[str, str], "bytes | None", float], "tuple[int, dict[str, str], bytes]"]
@@ -79,12 +79,16 @@ class Kuaa:
         self.last_response = None
         self.billing = BillingService(self)
         self.case_capture_sessions = CaseCaptureSessionsService(self)
+        self.case_chip_challenges = CaseChipChallengesService(self)
+        self.case_chip_reads = CaseChipReadsService(self)
         self.case_documents = CaseDocumentsService(self)
         self.case_media = CaseMediaService(self)
         self.case_ownership = CaseOwnershipService(self)
         self.case_parties = CasePartiesService(self)
         self.case_tags = CaseTagsService(self)
         self.cases = CasesService(self)
+        self.health = HealthService(self)
+        self.lookups = LookupsService(self)
         self.parties = PartiesService(self)
         self.webhooks = WebhooksService(self)
         self.workflows = WorkflowsService(self)

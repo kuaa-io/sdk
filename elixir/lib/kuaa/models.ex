@@ -314,6 +314,7 @@ defmodule Kuaa.CaptureSession do
     :embed_origin,
     :expires_at,
     :finished_at,
+    :handoff,
     :id,
     :locale,
     :party_id,
@@ -328,6 +329,7 @@ defmodule Kuaa.CaptureSession do
   @typedoc """
   * `completed_steps`: What the link asks for, in order, chosen from the workflow version the case is pinned to.
   * `embed_origin`: The one origin that may frame the link and receive its events.
+  * `handoff` (one of `"never"`, `"suggest"`, `"require"`): The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
   * `id`: The capture session identifier.
   * `locale` (one of `"pt-BR"`)
   * `party_id`: The party whose capture it is.
@@ -342,6 +344,7 @@ defmodule Kuaa.CaptureSession do
           embed_origin: String.t() | nil,
           expires_at: String.t(),
           finished_at: String.t() | nil,
+          handoff: String.t() | nil,
           id: String.t(),
           locale: String.t(),
           party_id: String.t(),
@@ -363,6 +366,7 @@ defmodule Kuaa.CaptureSession do
       embed_origin: data["embed_origin"],
       expires_at: Map.fetch!(data, "expires_at"),
       finished_at: data["finished_at"],
+      handoff: data["handoff"],
       id: Map.fetch!(data, "id"),
       locale: Map.fetch!(data, "locale"),
       party_id: Map.fetch!(data, "party_id"),
@@ -387,6 +391,7 @@ defmodule Kuaa.CaptureSessionIssued do
     :embed_origin,
     :expires_at,
     :finished_at,
+    :handoff,
     :id,
     :locale,
     :party_id,
@@ -404,6 +409,7 @@ defmodule Kuaa.CaptureSessionIssued do
   * `completed_steps`: What the link asks for, in order, chosen from the workflow version the case is pinned to.
   * `email_status` (one of `"sent"`, `"no_address"`, `"rate_limited"`, `"failed"`, `"unavailable"`): What e-mailing the link came to, when send_email or email asked for it, null otherwise: sent; no_address (no address typed and none on file); rate_limited (the case had 5 e-mails in 24 hours); failed (the mailer refused it); unavailable (this deployment sends no e-mail). The link is issued in every case.
   * `embed_origin`: The one origin that may frame the link and receive its events.
+  * `handoff` (one of `"never"`, `"suggest"`, `"require"`): The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
   * `id`: The capture session identifier.
   * `locale` (one of `"pt-BR"`)
   * `party_id`: The party whose capture it is.
@@ -421,6 +427,7 @@ defmodule Kuaa.CaptureSessionIssued do
           embed_origin: String.t() | nil,
           expires_at: String.t(),
           finished_at: String.t() | nil,
+          handoff: String.t() | nil,
           id: String.t(),
           locale: String.t(),
           party_id: String.t(),
@@ -445,6 +452,7 @@ defmodule Kuaa.CaptureSessionIssued do
       embed_origin: data["embed_origin"],
       expires_at: Map.fetch!(data, "expires_at"),
       finished_at: data["finished_at"],
+      handoff: data["handoff"],
       id: Map.fetch!(data, "id"),
       locale: Map.fetch!(data, "locale"),
       party_id: Map.fetch!(data, "party_id"),
@@ -719,6 +727,160 @@ defmodule Kuaa.Check do
       party_id: data["party_id"],
       started_at: Map.fetch!(data, "started_at"),
       status: Map.fetch!(data, "status")
+    }
+  end
+end
+
+defmodule Kuaa.ChipChallenge do
+  @moduledoc "ChipChallenge is an object of KUAA's API."
+
+  defstruct [:challenge, :expires_at, :id, :issued_at, :party_id]
+
+  @typedoc """
+  * `challenge`: The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back.
+  * `expires_at`: After it the challenge answers no read; it answers one read, once, before it.
+  * `id`: The challenge_id the chip read names.
+  * `party_id`: The person whose chip is read.
+  """
+  @type t :: %__MODULE__{
+          challenge: String.t(),
+          expires_at: String.t(),
+          id: String.t(),
+          issued_at: String.t(),
+          party_id: String.t()
+        }
+
+  @doc "Builds a ChipChallenge from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      challenge: Map.fetch!(data, "challenge"),
+      expires_at: Map.fetch!(data, "expires_at"),
+      id: Map.fetch!(data, "id"),
+      issued_at: Map.fetch!(data, "issued_at"),
+      party_id: Map.fetch!(data, "party_id")
+    }
+  end
+end
+
+defmodule Kuaa.ChipOutcomes do
+  @moduledoc "Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass."
+
+  defstruct [
+    :active_auth,
+    :certificate_validity,
+    :chain,
+    :chip_auth,
+    :com_consistency,
+    :data_group_hashes,
+    :face_match,
+    :file_structure,
+    :mrz_check_digits,
+    :mrz_matches_printed,
+    :passive_auth,
+    :revocation,
+    :sod_signature
+  ]
+
+  @typedoc """
+  * `active_auth` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `certificate_validity` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `chain` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `chip_auth` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `com_consistency` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `data_group_hashes` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `face_match` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `file_structure` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `mrz_check_digits` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `mrz_matches_printed` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `passive_auth` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `revocation` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  * `sod_signature` (one of `"passed"`, `"failed"`, `"not_present"`, `"unverifiable"`)
+  """
+  @type t :: %__MODULE__{
+          active_auth: String.t() | nil,
+          certificate_validity: String.t() | nil,
+          chain: String.t() | nil,
+          chip_auth: String.t() | nil,
+          com_consistency: String.t() | nil,
+          data_group_hashes: String.t() | nil,
+          face_match: String.t() | nil,
+          file_structure: String.t() | nil,
+          mrz_check_digits: String.t() | nil,
+          mrz_matches_printed: String.t() | nil,
+          passive_auth: String.t() | nil,
+          revocation: String.t() | nil,
+          sod_signature: String.t() | nil
+        }
+
+  @doc "Builds a ChipOutcomes from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      active_auth: data["active_auth"],
+      certificate_validity: data["certificate_validity"],
+      chain: data["chain"],
+      chip_auth: data["chip_auth"],
+      com_consistency: data["com_consistency"],
+      data_group_hashes: data["data_group_hashes"],
+      face_match: data["face_match"],
+      file_structure: data["file_structure"],
+      mrz_check_digits: data["mrz_check_digits"],
+      mrz_matches_printed: data["mrz_matches_printed"],
+      passive_auth: data["passive_auth"],
+      revocation: data["revocation"],
+      sod_signature: data["sod_signature"]
+    }
+  end
+end
+
+defmodule Kuaa.ChipRead do
+  @moduledoc "ChipRead is an object of KUAA's API."
+
+  defstruct [
+    :check,
+    :check_id,
+    :dg2_present,
+    :evidence_id,
+    :face_evidence_id,
+    :outcomes,
+    :reasons,
+    :result
+  ]
+
+  @typedoc """
+  * `check` (one of `"document_chip"`)
+  * `check_id`: The document_chip check the read was recorded as.
+  * `dg2_present`: The chip gave a face image.
+  * `evidence_id`: The evidence of the examination.
+  * `face_evidence_id`: The evidence of the comparison of the face image with the latest selfie, null when none ran.
+  * `outcomes`: Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+  * `reasons`: The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch.
+  * `result` (one of `"pass"`, `"fail"`, `"inconclusive"`): fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+  """
+  @type t :: %__MODULE__{
+          check: String.t(),
+          check_id: String.t(),
+          dg2_present: boolean(),
+          evidence_id: String.t(),
+          face_evidence_id: String.t() | nil,
+          outcomes: Kuaa.ChipOutcomes.t(),
+          reasons: %{optional(String.t()) => String.t()},
+          result: String.t()
+        }
+
+  @doc "Builds a ChipRead from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      check: Map.fetch!(data, "check"),
+      check_id: Map.fetch!(data, "check_id"),
+      dg2_present: Map.fetch!(data, "dg2_present"),
+      evidence_id: Map.fetch!(data, "evidence_id"),
+      face_evidence_id: data["face_evidence_id"],
+      outcomes: Kuaa.ChipOutcomes.from_map(Map.fetch!(data, "outcomes")),
+      reasons: Map.fetch!(data, "reasons"),
+      result: Map.fetch!(data, "result")
     }
   end
 end
@@ -1107,6 +1269,29 @@ defmodule Kuaa.Evidence do
   end
 end
 
+defmodule Kuaa.FieldProvenance do
+  @moduledoc "FieldProvenance is an object of KUAA's API."
+
+  defstruct [:retrieved_at, :source]
+
+  @typedoc """
+  * `source`: directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox.
+  """
+  @type t :: %__MODULE__{
+          retrieved_at: String.t(),
+          source: String.t()
+        }
+
+  @doc "Builds a FieldProvenance from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      retrieved_at: Map.fetch!(data, "retrieved_at"),
+      source: Map.fetch!(data, "source")
+    }
+  end
+end
+
 defmodule Kuaa.Finding do
   @moduledoc "Finding is an object of KUAA's API."
 
@@ -1138,6 +1323,54 @@ defmodule Kuaa.Finding do
   end
 end
 
+defmodule Kuaa.HealthReport do
+  @moduledoc "HealthReport is an object of KUAA's API."
+
+  defstruct [:checks, :livemode]
+
+  @typedoc """
+  * `checks`: Every check kind the workflows run or an engine is registered for, by kind.
+  * `livemode`: False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production.
+  """
+  @type t :: %__MODULE__{
+          checks: [Kuaa.HealthReportCheck.t()],
+          livemode: boolean()
+        }
+
+  @doc "Builds a HealthReport from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      checks: Enum.map(Map.fetch!(data, "checks"), &Kuaa.HealthReportCheck.from_map/1),
+      livemode: Map.fetch!(data, "livemode")
+    }
+  end
+end
+
+defmodule Kuaa.HealthReportCheck do
+  @moduledoc "HealthReportCheck is an object of KUAA's API."
+
+  defstruct [:availability, :check]
+
+  @typedoc """
+  * `availability` (one of `"available"`, `"dev_only"`, `"unavailable"`): available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+  * `check`: The check kind, as a workflow task names it: face_match, liveness, document_ocr...
+  """
+  @type t :: %__MODULE__{
+          availability: String.t(),
+          check: String.t()
+        }
+
+  @doc "Builds a HealthReportCheck from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      availability: Map.fetch!(data, "availability"),
+      check: Map.fetch!(data, "check")
+    }
+  end
+end
+
 defmodule Kuaa.Identity do
   @moduledoc "What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view."
 
@@ -1159,6 +1392,302 @@ defmodule Kuaa.Identity do
       created_at: Map.fetch!(data, "created_at"),
       id: Map.fetch!(data, "id"),
       verified_attributes: Map.fetch!(data, "verified_attributes")
+    }
+  end
+end
+
+defmodule Kuaa.Lookup do
+  @moduledoc "Lookup is an object of KUAA's API."
+
+  defstruct [
+    :company,
+    :cost,
+    :created_at,
+    :document,
+    :environment,
+    :id,
+    :kind,
+    :legal_basis,
+    :livemode,
+    :object,
+    :person,
+    :provenance,
+    :purpose,
+    :reasons,
+    :rule_version,
+    :screening,
+    :sources,
+    :status
+  ]
+
+  @typedoc """
+  * `company`: Present on a business lookup.
+  * `document`: The CPF or CNPJ, masked.
+  * `environment` (one of `"live"`, `"sandbox"`)
+  * `kind` (one of `"person"`, `"business"`)
+  * `legal_basis`: The LGPD article the purpose is made under, such as lgpd.art7.v.
+  * `object` (one of `"lookup"`)
+  * `person`: Present on a person lookup.
+  * `provenance`: Where each field came from and when, by field name; a field with no value has no entry.
+  * `purpose` (one of `"onboarding"`, `"fraud_prevention"`, `"legal_obligation"`, `"credit_protection"`, `"contract_execution"`)
+  * `reasons`: Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
+  * `status` (one of `"regular"`, `"irregular"`, `"inconclusive"`, `"failed"`): KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
+  """
+  @type t :: %__MODULE__{
+          company: Kuaa.LookupCompany.t() | nil,
+          cost: Kuaa.LookupCost.t(),
+          created_at: String.t(),
+          document: String.t(),
+          environment: String.t(),
+          id: String.t(),
+          kind: String.t(),
+          legal_basis: String.t(),
+          livemode: boolean(),
+          object: String.t(),
+          person: Kuaa.LookupPerson.t() | nil,
+          provenance: Kuaa.LookupProvenance.t(),
+          purpose: String.t(),
+          reasons: [String.t()],
+          rule_version: String.t(),
+          screening: Kuaa.LookupScreening.t(),
+          sources: [Kuaa.LookupSource.t()],
+          status: String.t()
+        }
+
+  @doc "Builds a Lookup from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      company: with(value when not is_nil(value) <- data["company"], do: Kuaa.LookupCompany.from_map(value)),
+      cost: Kuaa.LookupCost.from_map(Map.fetch!(data, "cost")),
+      created_at: Map.fetch!(data, "created_at"),
+      document: Map.fetch!(data, "document"),
+      environment: Map.fetch!(data, "environment"),
+      id: Map.fetch!(data, "id"),
+      kind: Map.fetch!(data, "kind"),
+      legal_basis: Map.fetch!(data, "legal_basis"),
+      livemode: Map.fetch!(data, "livemode"),
+      object: Map.fetch!(data, "object"),
+      person: with(value when not is_nil(value) <- data["person"], do: Kuaa.LookupPerson.from_map(value)),
+      provenance: Kuaa.LookupProvenance.from_map(Map.fetch!(data, "provenance")),
+      purpose: Map.fetch!(data, "purpose"),
+      reasons: Map.fetch!(data, "reasons"),
+      rule_version: Map.fetch!(data, "rule_version"),
+      screening: Kuaa.LookupScreening.from_map(Map.fetch!(data, "screening")),
+      sources: Enum.map(Map.fetch!(data, "sources"), &Kuaa.LookupSource.from_map/1),
+      status: Map.fetch!(data, "status")
+    }
+  end
+end
+
+defmodule Kuaa.LookupCompany do
+  @moduledoc "Present on a business lookup."
+
+  defstruct [:cnae, :data_fundacao, :natureza_juridica, :razao_social, :situacao_cadastral]
+
+  @typedoc """
+  * `cnae`: The main CNAE code.
+  * `natureza_juridica`: The legal nature, as described.
+  * `razao_social`: The registered name.
+  * `situacao_cadastral`: ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA.
+  """
+  @type t :: %__MODULE__{
+          cnae: String.t() | nil,
+          data_fundacao: String.t() | nil,
+          natureza_juridica: String.t() | nil,
+          razao_social: String.t() | nil,
+          situacao_cadastral: String.t() | nil
+        }
+
+  @doc "Builds a LookupCompany from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      cnae: data["cnae"],
+      data_fundacao: data["data_fundacao"],
+      natureza_juridica: data["natureza_juridica"],
+      razao_social: data["razao_social"],
+      situacao_cadastral: data["situacao_cadastral"]
+    }
+  end
+end
+
+defmodule Kuaa.LookupCost do
+  @moduledoc "LookupCost is an object of KUAA's API."
+
+  defstruct [:bureau_charged_cents, :bureau_price_cents, :credits, :token_source]
+
+  @typedoc """
+  * `bureau_charged_cents`: What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
+  * `credits`: The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.
+  * `token_source`: platform, organization or sandbox.
+  """
+  @type t :: %__MODULE__{
+          bureau_charged_cents: integer(),
+          bureau_price_cents: integer(),
+          credits: integer(),
+          token_source: String.t() | nil
+        }
+
+  @doc "Builds a LookupCost from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      bureau_charged_cents: Map.fetch!(data, "bureau_charged_cents"),
+      bureau_price_cents: Map.fetch!(data, "bureau_price_cents"),
+      credits: Map.fetch!(data, "credits"),
+      token_source: data["token_source"]
+    }
+  end
+end
+
+defmodule Kuaa.LookupPerson do
+  @moduledoc "Present on a person lookup."
+
+  defstruct [
+    :birth_date,
+    :death_date,
+    :deceased,
+    :full_name,
+    :pep,
+    :situacao_cadastral,
+    :situacao_cadastral_date
+  ]
+
+  @typedoc """
+  * `death_date`: From AML, when it was asked.
+  * `deceased`: Óbito, from Cadastro PF Plus or AML.
+  * `full_name`: The name the Receita Federal holds.
+  * `pep`: A politically exposed person: an active PEP on the CGU list, or AML's PEP flag.
+  * `situacao_cadastral`: REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO.
+  """
+  @type t :: %__MODULE__{
+          birth_date: String.t() | nil,
+          death_date: String.t() | nil,
+          deceased: boolean() | nil,
+          full_name: String.t() | nil,
+          pep: boolean(),
+          situacao_cadastral: String.t() | nil,
+          situacao_cadastral_date: String.t() | nil
+        }
+
+  @doc "Builds a LookupPerson from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      birth_date: data["birth_date"],
+      death_date: data["death_date"],
+      deceased: data["deceased"],
+      full_name: data["full_name"],
+      pep: Map.fetch!(data, "pep"),
+      situacao_cadastral: data["situacao_cadastral"],
+      situacao_cadastral_date: data["situacao_cadastral_date"]
+    }
+  end
+end
+
+defmodule Kuaa.LookupProvenance do
+  @moduledoc "Where each field came from and when, by field name; a field with no value has no entry."
+
+  defstruct [
+    :birth_date,
+    :cnae,
+    :data_fundacao,
+    :death_date,
+    :deceased,
+    :full_name,
+    :natureza_juridica,
+    :pep,
+    :razao_social,
+    :situacao_cadastral,
+    :situacao_cadastral_date
+  ]
+
+  @type t :: %__MODULE__{
+          birth_date: Kuaa.FieldProvenance.t() | nil,
+          cnae: Kuaa.FieldProvenance.t() | nil,
+          data_fundacao: Kuaa.FieldProvenance.t() | nil,
+          death_date: Kuaa.FieldProvenance.t() | nil,
+          deceased: Kuaa.FieldProvenance.t() | nil,
+          full_name: Kuaa.FieldProvenance.t() | nil,
+          natureza_juridica: Kuaa.FieldProvenance.t() | nil,
+          pep: Kuaa.FieldProvenance.t() | nil,
+          razao_social: Kuaa.FieldProvenance.t() | nil,
+          situacao_cadastral: Kuaa.FieldProvenance.t() | nil,
+          situacao_cadastral_date: Kuaa.FieldProvenance.t() | nil
+        }
+
+  @doc "Builds a LookupProvenance from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      birth_date: with(value when not is_nil(value) <- data["birth_date"], do: Kuaa.FieldProvenance.from_map(value)),
+      cnae: with(value when not is_nil(value) <- data["cnae"], do: Kuaa.FieldProvenance.from_map(value)),
+      data_fundacao: with(value when not is_nil(value) <- data["data_fundacao"], do: Kuaa.FieldProvenance.from_map(value)),
+      death_date: with(value when not is_nil(value) <- data["death_date"], do: Kuaa.FieldProvenance.from_map(value)),
+      deceased: with(value when not is_nil(value) <- data["deceased"], do: Kuaa.FieldProvenance.from_map(value)),
+      full_name: with(value when not is_nil(value) <- data["full_name"], do: Kuaa.FieldProvenance.from_map(value)),
+      natureza_juridica: with(value when not is_nil(value) <- data["natureza_juridica"], do: Kuaa.FieldProvenance.from_map(value)),
+      pep: with(value when not is_nil(value) <- data["pep"], do: Kuaa.FieldProvenance.from_map(value)),
+      razao_social: with(value when not is_nil(value) <- data["razao_social"], do: Kuaa.FieldProvenance.from_map(value)),
+      situacao_cadastral: with(value when not is_nil(value) <- data["situacao_cadastral"], do: Kuaa.FieldProvenance.from_map(value)),
+      situacao_cadastral_date: with(value when not is_nil(value) <- data["situacao_cadastral_date"], do: Kuaa.FieldProvenance.from_map(value))
+    }
+  end
+end
+
+defmodule Kuaa.LookupScreening do
+  @moduledoc "LookupScreening is an object of KUAA's API."
+
+  defstruct [:matches, :sources, :unavailable]
+
+  @type t :: %__MODULE__{
+          matches: [Kuaa.ScreeningMatch.t()],
+          sources: [Kuaa.ScreeningSource.t()],
+          unavailable: [String.t()]
+        }
+
+  @doc "Builds a LookupScreening from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      matches: Enum.map(Map.fetch!(data, "matches"), &Kuaa.ScreeningMatch.from_map/1),
+      sources: Enum.map(Map.fetch!(data, "sources"), &Kuaa.ScreeningSource.from_map/1),
+      unavailable: Map.fetch!(data, "unavailable")
+    }
+  end
+end
+
+defmodule Kuaa.LookupSource do
+  @moduledoc "LookupSource is an object of KUAA's API."
+
+  defstruct [:cached, :consulta_uid, :outcome, :reason, :retrieved_at, :source]
+
+  @typedoc """
+  * `cached`: Answered from the organization's same-day query, at no cost.
+  * `outcome`: found, not_found... when Direct Data answered.
+  * `reason`: Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable.
+  * `source`: directd:<product>, or kuaa:sandbox:<product>.
+  """
+  @type t :: %__MODULE__{
+          cached: boolean(),
+          consulta_uid: String.t() | nil,
+          outcome: String.t() | nil,
+          reason: String.t() | nil,
+          retrieved_at: String.t() | nil,
+          source: String.t()
+        }
+
+  @doc "Builds a LookupSource from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      cached: Map.fetch!(data, "cached"),
+      consulta_uid: data["consulta_uid"],
+      outcome: data["outcome"],
+      reason: data["reason"],
+      retrieved_at: data["retrieved_at"],
+      source: Map.fetch!(data, "source")
     }
   end
 end
@@ -1725,6 +2254,67 @@ defmodule Kuaa.Screening do
   end
 end
 
+defmodule Kuaa.ScreeningMatch do
+  @moduledoc "ScreeningMatch is an object of KUAA's API."
+
+  defstruct [:classification, :list, :match_status, :pep_active, :score, :source, :source_version]
+
+  @typedoc """
+  * `classification` (one of `"confirmed"`, `"strong"`, `"possible"`): confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+  * `list` (one of `"sanctions"`, `"pep"`)
+  * `pep_active`: For a PEP: whether the five-year window after the function is still open.
+  * `source`: The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn.
+  * `source_version`: The version of the source that was read.
+  """
+  @type t :: %__MODULE__{
+          classification: String.t(),
+          list: String.t(),
+          match_status: String.t(),
+          pep_active: boolean() | nil,
+          score: number(),
+          source: String.t(),
+          source_version: String.t()
+        }
+
+  @doc "Builds a ScreeningMatch from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      classification: Map.fetch!(data, "classification"),
+      list: Map.fetch!(data, "list"),
+      match_status: Map.fetch!(data, "match_status"),
+      pep_active: data["pep_active"],
+      score: Map.fetch!(data, "score"),
+      source: Map.fetch!(data, "source"),
+      source_version: Map.fetch!(data, "source_version")
+    }
+  end
+end
+
+defmodule Kuaa.ScreeningSource do
+  @moduledoc "ScreeningSource is an object of KUAA's API."
+
+  defstruct [:list, :retrieved_at, :source, :version]
+
+  @type t :: %__MODULE__{
+          list: String.t(),
+          retrieved_at: String.t(),
+          source: String.t(),
+          version: String.t()
+        }
+
+  @doc "Builds a ScreeningSource from the API's JSON."
+  @spec from_map(map()) :: t()
+  def from_map(%{} = data) do
+    %__MODULE__{
+      list: Map.fetch!(data, "list"),
+      retrieved_at: Map.fetch!(data, "retrieved_at"),
+      source: Map.fetch!(data, "source"),
+      version: Map.fetch!(data, "version")
+    }
+  end
+end
+
 defmodule Kuaa.StatementEntry do
   @moduledoc "StatementEntry is an object of KUAA's API."
 
@@ -1945,7 +2535,7 @@ defmodule Kuaa.WebhookEvent do
   * `source`: urn:kuaa:tenant: and the tenant the event happened in.
   * `specversion` (one of `"1.0"`)
   * `subject`: cases/ and the case id.
-  * `type` (one of `"case.created"`, `"case.updated"`, `"check.completed"`, `"decision.recorded"`, `"review.recorded"`, `"capture_session.finished"`, `"document.decided"`)
+  * `type` (one of `"case.created"`, `"case.updated"`, `"check.completed"`, `"decision.recorded"`, `"review.recorded"`, `"capture_session.finished"`, `"document.decided"`, `"capture_session.opened"`, `"capture_session.consent_given"`, `"capture_session.document_submitted"`, `"capture_session.selfie_submitted"`, `"capture_session.expired"`, `"capture_session.revoked"`)
   """
   @type t :: %__MODULE__{
           data: Kuaa.WebhookEventData.t(),
@@ -1997,12 +2587,13 @@ defmodule Kuaa.WebhookEventData do
     :review_id,
     :status,
     :status_market,
+    :step,
     :tenant_id,
     :type
   ]
 
   @typedoc """
-  * `capture_session_id`: Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued.
+  * `capture_session_id`: Present on every capture_session.* event: the hosted capture session, as answered when its link was issued.
   * `check_id`: Present on check.completed.
   * `decision` (one of `"approved"`, `"rejected"`, `"rerequested"`): Present on document.decided: what the reviewer decided about the document. It never decides the case; the reviewer's reason is not sent.
   * `decision_id`: Present on decision.recorded.
@@ -2017,9 +2608,10 @@ defmodule Kuaa.WebhookEventData do
   * `parent_case_id`: Present on case.created and case.updated of a child case: the case whose workflow opened it. Absent otherwise.
   * `requirement` (one of `"identity_document"`, `"selfie"`): Present on document.decided: what the document answers.
   * `review_id`: Present on review.recorded.
-  * `status`: What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
+  * `status`: What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
   * `status_market` (one of `"PROCESSING"`, `"PENDING_OCR"`, `"PENDING"`, `"APPROVED"`, `"REPROVED"`, `"BLOCKED"`, `"CANCELLED"`, `"EXPIRED"`): Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision.
-  * `type` (one of `"case.created"`, `"case.updated"`, `"check.completed"`, `"decision.recorded"`, `"review.recorded"`, `"capture_session.finished"`, `"document.decided"`)
+  * `step` (one of `"consent"`, `"document"`, `"selfie"`): Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+  * `type` (one of `"case.created"`, `"case.updated"`, `"check.completed"`, `"decision.recorded"`, `"review.recorded"`, `"capture_session.finished"`, `"document.decided"`, `"capture_session.opened"`, `"capture_session.consent_given"`, `"capture_session.document_submitted"`, `"capture_session.selfie_submitted"`, `"capture_session.expired"`, `"capture_session.revoked"`)
   """
   @type t :: %__MODULE__{
           capture_session_id: String.t() | nil,
@@ -2041,6 +2633,7 @@ defmodule Kuaa.WebhookEventData do
           review_id: String.t() | nil,
           status: String.t(),
           status_market: String.t() | nil,
+          step: String.t() | nil,
           tenant_id: String.t(),
           type: String.t()
         }
@@ -2068,6 +2661,7 @@ defmodule Kuaa.WebhookEventData do
       review_id: data["review_id"],
       status: Map.fetch!(data, "status"),
       status_market: data["status_market"],
+      step: data["step"],
       tenant_id: Map.fetch!(data, "tenant_id"),
       type: Map.fetch!(data, "type")
     }

@@ -40,6 +40,22 @@ Cada função recebe o cliente primeiro e devolve `{:ok, valor}` ou `{:error, %K
 
 As escritas aceitam `idempotency_key:`, e todas aceitam `api_key:` para usar outra chave numa chamada. `Kuaa.new/2` aceita `base_url:`, `timeout:` (30 segundos, em milissegundos) e `transport:`.
 
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`; `failed` numa consulta lida cujo processamento não terminou), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost` (com os créditos cobrados em `credits`). Acima do limite diário de consultas, ela responde `inconclusive` com `daily_limit_reached`, sem consultar o bureau; consultas demais num minuto, pela chave ou pela organização, recebem um 429 (`rate_limited`) com `Retry-After`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```elixir
+{:ok, lookup} =
+  Kuaa.Lookups.person(client, %{cpf: "000.000.001-91", purpose: "onboarding"}, idempotency_key: "consulta-0001")
+
+IO.inspect({lookup.status, lookup.reasons})
+
+{:ok, _company} =
+  Kuaa.Lookups.business(client, %{cnpj: "SA.NDB.OX0/0001-25", purpose: "onboarding"}, idempotency_key: "consulta-0002")
+
+{:ok, _again} = Kuaa.Lookups.get(client, lookup.id)
+```
+
 ## Erros
 
 Uma recusa da API é um `{:error, %Kuaa.Error{}}`, com `status`, `code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `message`, `fields` (as mensagens de cada campo), `retry_after` em segundos (num 429 ou 503) e `request_id`.

@@ -9,6 +9,15 @@ namespace KuaaIo.Sdk;
 /// <summary>CaptureSession is an object of KUAA's API.</summary>
 public sealed record CaptureSession
 {
+    /// <summary>A value of <see cref="Handoff"/>.</summary>
+    public const string HandoffNever = "never";
+
+    /// <summary>A value of <see cref="Handoff"/>.</summary>
+    public const string HandoffSuggest = "suggest";
+
+    /// <summary>A value of <see cref="Handoff"/>.</summary>
+    public const string HandoffRequire = "require";
+
     /// <summary>A value of <see cref="Locale"/>.</summary>
     public const string LocalePtBR = "pt-BR";
 
@@ -47,6 +56,10 @@ public sealed record CaptureSession
     /// <summary>The API's <c>finished_at</c>. Null when the API sends none.</summary>
     [JsonPropertyName("finished_at")]
     public string? FinishedAt { get; init; }
+
+    /// <summary>The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting. Null when the API sends none.</summary>
+    [JsonPropertyName("handoff")]
+    public string? Handoff { get; init; }
 
     /// <summary>The capture session identifier.</summary>
     [JsonPropertyName("id")]

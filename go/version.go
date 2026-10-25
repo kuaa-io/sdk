@@ -5,7 +5,7 @@ package kuaa
 // Version is this SDK's version; APIVersion is the contract it was generated
 // from.
 const (
-	Version    = "0.1.0"
+	Version    = "0.2.0"
 	APIVersion = "1.0.0"
 	// DefaultBaseURL is KUAA's API. The environment, live or sandbox, is the
 	// API key's: kuaa_<prefix>_<secret> or kuaa_test_<prefix>_<secret>.

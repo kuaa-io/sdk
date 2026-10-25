@@ -16,6 +16,16 @@ impl Client {
         CaseCaptureSessionsService::new(self)
     }
 
+    /// The API's case_chip_challenges.
+    pub fn case_chip_challenges(&self) -> CaseChipChallengesService<'_> {
+        CaseChipChallengesService::new(self)
+    }
+
+    /// The API's case_chip_reads.
+    pub fn case_chip_reads(&self) -> CaseChipReadsService<'_> {
+        CaseChipReadsService::new(self)
+    }
+
     /// The API's case_documents.
     pub fn case_documents(&self) -> CaseDocumentsService<'_> {
         CaseDocumentsService::new(self)
@@ -44,6 +54,16 @@ impl Client {
     /// The API's cases.
     pub fn cases(&self) -> CasesService<'_> {
         CasesService::new(self)
+    }
+
+    /// The API's health.
+    pub fn health(&self) -> HealthService<'_> {
+        HealthService::new(self)
+    }
+
+    /// The API's lookups.
+    pub fn lookups(&self) -> LookupsService<'_> {
+        LookupsService::new(self)
     }
 
     /// The API's parties.
@@ -208,6 +228,86 @@ impl<'a> CaseCaptureSessionsService<'a> {
     /// Revoke a capture link.
     pub fn revoke(&self, id: &str, session: &str) -> Result<CaptureSession, Error> {
         self.client.request("POST", &format!("/v1/cases/{}/capture-sessions/{}/revoke", crate::client::escape(id), crate::client::escape(session)), &[], None, &self.options)
+    }
+}
+
+/// The API's case_chip_challenges: `client.case_chip_challenges()`.
+///
+/// [`idempotency_key`](Self::idempotency_key) and [`api_key`](Self::api_key)
+/// set the options of the call made through it.
+#[derive(Debug, Clone)]
+pub struct CaseChipChallengesService<'a> {
+    client: &'a Client,
+    options: RequestOptions,
+}
+
+impl<'a> CaseChipChallengesService<'a> {
+    pub(crate) fn new(client: &'a Client) -> Self {
+        Self { client, options: RequestOptions::default() }
+    }
+
+    /// Makes the write safe to repeat: the same key with the same request
+    /// answers the first response again; with another request, a 409.
+    pub fn idempotency_key(mut self, key: impl Into<String>) -> Self {
+        self.options.idempotency_key = Some(key.into());
+        self
+    }
+
+    /// Calls with another key.
+    pub fn api_key(mut self, key: impl Into<String>) -> Self {
+        self.options.api_key = Some(key.into());
+        self
+    }
+
+    /// Calls with these options.
+    pub fn options(mut self, options: RequestOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    /// Issue a chip read challenge.
+    pub fn create(&self, id: &str, params: &ChipChallengeRequest) -> Result<ChipChallenge, Error> {
+        self.client.request("POST", &format!("/v1/cases/{}/chip/challenges", crate::client::escape(id)), &[], crate::client::json(params)?, &self.options)
+    }
+}
+
+/// The API's case_chip_reads: `client.case_chip_reads()`.
+///
+/// [`idempotency_key`](Self::idempotency_key) and [`api_key`](Self::api_key)
+/// set the options of the call made through it.
+#[derive(Debug, Clone)]
+pub struct CaseChipReadsService<'a> {
+    client: &'a Client,
+    options: RequestOptions,
+}
+
+impl<'a> CaseChipReadsService<'a> {
+    pub(crate) fn new(client: &'a Client) -> Self {
+        Self { client, options: RequestOptions::default() }
+    }
+
+    /// Makes the write safe to repeat: the same key with the same request
+    /// answers the first response again; with another request, a 409.
+    pub fn idempotency_key(mut self, key: impl Into<String>) -> Self {
+        self.options.idempotency_key = Some(key.into());
+        self
+    }
+
+    /// Calls with another key.
+    pub fn api_key(mut self, key: impl Into<String>) -> Self {
+        self.options.api_key = Some(key.into());
+        self
+    }
+
+    /// Calls with these options.
+    pub fn options(mut self, options: RequestOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    /// Submit a passport chip read.
+    pub fn create(&self, id: &str, params: &ChipReadRequest) -> Result<ChipRead, Error> {
+        self.client.request("POST", &format!("/v1/cases/{}/chip/reads", crate::client::escape(id)), &[], crate::client::json(params)?, &self.options)
     }
 }
 
@@ -686,6 +786,96 @@ impl<'a> CasesService<'a> {
     /// Update a case.
     pub fn update(&self, id: &str, params: &CasePatchRequest) -> Result<Case, Error> {
         self.client.request("PATCH", &format!("/v1/cases/{}", crate::client::escape(id)), &[], crate::client::json(params)?, &self.options)
+    }
+}
+
+/// The API's health: `client.health()`.
+///
+/// [`idempotency_key`](Self::idempotency_key) and [`api_key`](Self::api_key)
+/// set the options of the call made through it.
+#[derive(Debug, Clone)]
+pub struct HealthService<'a> {
+    client: &'a Client,
+    options: RequestOptions,
+}
+
+impl<'a> HealthService<'a> {
+    pub(crate) fn new(client: &'a Client) -> Self {
+        Self { client, options: RequestOptions::default() }
+    }
+
+    /// Makes the write safe to repeat: the same key with the same request
+    /// answers the first response again; with another request, a 409.
+    pub fn idempotency_key(mut self, key: impl Into<String>) -> Self {
+        self.options.idempotency_key = Some(key.into());
+        self
+    }
+
+    /// Calls with another key.
+    pub fn api_key(mut self, key: impl Into<String>) -> Self {
+        self.options.api_key = Some(key.into());
+        self
+    }
+
+    /// Calls with these options.
+    pub fn options(mut self, options: RequestOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    /// Read the availability of the engines.
+    pub fn get(&self) -> Result<HealthReport, Error> {
+        self.client.request("GET", "/v1/health", &[], None, &self.options)
+    }
+}
+
+/// The API's lookups: `client.lookups()`.
+///
+/// [`idempotency_key`](Self::idempotency_key) and [`api_key`](Self::api_key)
+/// set the options of the call made through it.
+#[derive(Debug, Clone)]
+pub struct LookupsService<'a> {
+    client: &'a Client,
+    options: RequestOptions,
+}
+
+impl<'a> LookupsService<'a> {
+    pub(crate) fn new(client: &'a Client) -> Self {
+        Self { client, options: RequestOptions::default() }
+    }
+
+    /// Makes the write safe to repeat: the same key with the same request
+    /// answers the first response again; with another request, a 409.
+    pub fn idempotency_key(mut self, key: impl Into<String>) -> Self {
+        self.options.idempotency_key = Some(key.into());
+        self
+    }
+
+    /// Calls with another key.
+    pub fn api_key(mut self, key: impl Into<String>) -> Self {
+        self.options.api_key = Some(key.into());
+        self
+    }
+
+    /// Calls with these options.
+    pub fn options(mut self, options: RequestOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    /// Look a CNPJ up.
+    pub fn business(&self, params: &BusinessLookupRequest) -> Result<Lookup, Error> {
+        self.client.request("POST", "/v1/lookups/business", &[], crate::client::json(params)?, &self.options)
+    }
+
+    /// Read a lookup.
+    pub fn get(&self, id: &str) -> Result<Lookup, Error> {
+        self.client.request("GET", &format!("/v1/lookups/{}", crate::client::escape(id)), &[], None, &self.options)
+    }
+
+    /// Look a CPF up.
+    pub fn person(&self, params: &PersonLookupRequest) -> Result<Lookup, Error> {
+        self.client.request("POST", "/v1/lookups/person", &[], crate::client::json(params)?, &self.options)
     }
 }
 

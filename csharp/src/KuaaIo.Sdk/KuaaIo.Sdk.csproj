@@ -12,7 +12,7 @@
     <IsAotCompatible>true</IsAotCompatible>
 
     <PackageId>KuaaIo.Sdk</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>KUAA</Authors>
     <Company>KUAA</Company>
     <Description>KUAA's SDK for .NET: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks.</Description>

@@ -8,7 +8,7 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 from ._core import KuaaFile
 
-__all__ = ["KuaaFile", "AddPartyRequest", "AddPartyRequestRelationship", "AddedParty", "Balance", "BeneficialOwner", "BeneficialOwnerResolution", "Capture", "CaptureDocument", "CaptureForm", "CaptureSession", "CaptureSessionIssued", "CaptureSessionList", "CaptureSessionRequest", "CaptureSessionWorkflow", "Case", "CaseDecision", "CasePatchRequest", "CaseRequest", "CaseRequestParty", "CaseSummary", "CaseTagList", "CaseTagsRequest", "Check", "CustomStatus", "Decision", "Document", "DocumentDecision", "DocumentList", "Dossier", "DossierParty", "DossierWorkflow", "Evidence", "Finding", "Identity", "Monitoring", "OwnershipDeclaration", "OwnershipExemption", "OwnershipPath", "OwnershipRequest", "OwnershipRequestDeclaration", "OwnershipResolution", "Party", "PartyProfile", "PartyProfileCase", "PartyProfileTag", "PartySummary", "Policy", "Relationship", "Review", "Run", "RunWorkflow", "Screening", "StatementEntry", "SubmitRequest", "Tag", "UnresolvedOwnership", "Webhook", "WebhookCreated", "WebhookEvent", "WebhookEventData", "WebhookList", "WebhookRequest", "Workflow", "WorkflowList", "WorkflowStep", "WorkflowVersion"]
+__all__ = ["KuaaFile", "AddPartyRequest", "AddPartyRequestRelationship", "AddedParty", "Balance", "BeneficialOwner", "BeneficialOwnerResolution", "BusinessLookupRequest", "Capture", "CaptureDocument", "CaptureForm", "CaptureSession", "CaptureSessionIssued", "CaptureSessionList", "CaptureSessionRequest", "CaptureSessionWorkflow", "Case", "CaseDecision", "CasePatchRequest", "CaseRequest", "CaseRequestParty", "CaseSummary", "CaseTagList", "CaseTagsRequest", "Check", "ChipChallenge", "ChipChallengeRequest", "ChipOutcomes", "ChipRead", "ChipReadRequest", "CustomStatus", "Decision", "Document", "DocumentDecision", "DocumentList", "Dossier", "DossierParty", "DossierWorkflow", "Evidence", "FieldProvenance", "Finding", "HealthReport", "HealthReportCheck", "Identity", "Lookup", "LookupCompany", "LookupCost", "LookupPerson", "LookupProvenance", "LookupScreening", "LookupSource", "Monitoring", "OwnershipDeclaration", "OwnershipExemption", "OwnershipPath", "OwnershipRequest", "OwnershipRequestDeclaration", "OwnershipResolution", "Party", "PartyProfile", "PartyProfileCase", "PartyProfileTag", "PartySummary", "PersonLookupRequest", "Policy", "Relationship", "Review", "Run", "RunWorkflow", "Screening", "ScreeningMatch", "ScreeningSource", "StatementEntry", "SubmitRequest", "Tag", "UnresolvedOwnership", "Webhook", "WebhookCreated", "WebhookEvent", "WebhookEventData", "WebhookList", "WebhookRequest", "Workflow", "WorkflowList", "WorkflowStep", "WorkflowVersion"]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -229,6 +229,8 @@ class CaptureSession:
     """The one origin that may frame the link and receive its events."""
     expires_at: str
     finished_at: str | None = None
+    handoff: Literal["never", "suggest", "require"] | None = None
+    """The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting."""
     id: str
     """The capture session identifier."""
     locale: Literal["pt-BR"]
@@ -253,6 +255,7 @@ class CaptureSession:
             embed_origin=data.get("embed_origin"),
             expires_at=data["expires_at"],
             finished_at=data.get("finished_at"),
+            handoff=data.get("handoff"),
             id=data["id"],
             locale=data["locale"],
             party_id=data["party_id"],
@@ -279,6 +282,8 @@ class CaptureSessionIssued:
     """The one origin that may frame the link and receive its events."""
     expires_at: str
     finished_at: str | None = None
+    handoff: Literal["never", "suggest", "require"] | None = None
+    """The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting."""
     id: str
     """The capture session identifier."""
     locale: Literal["pt-BR"]
@@ -308,6 +313,7 @@ class CaptureSessionIssued:
             embed_origin=data.get("embed_origin"),
             expires_at=data["expires_at"],
             finished_at=data.get("finished_at"),
+            handoff=data.get("handoff"),
             id=data["id"],
             locale=data["locale"],
             party_id=data["party_id"],
@@ -501,6 +507,102 @@ class Check:
             party_id=data.get("party_id"),
             started_at=data["started_at"],
             status=data["status"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChipChallenge:
+    """ChipChallenge is an object of KUAA's API."""
+
+    challenge: str
+    """The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back."""
+    expires_at: str
+    """After it the challenge answers no read; it answers one read, once, before it."""
+    id: str
+    """The challenge_id the chip read names."""
+    issued_at: str
+    party_id: str
+    """The person whose chip is read."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChipChallenge:
+        return cls(
+            challenge=data["challenge"],
+            expires_at=data["expires_at"],
+            id=data["id"],
+            issued_at=data["issued_at"],
+            party_id=data["party_id"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChipOutcomes:
+    """Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass."""
+
+    active_auth: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    certificate_validity: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    chain: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    chip_auth: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    com_consistency: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    data_group_hashes: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    face_match: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    file_structure: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    mrz_check_digits: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    mrz_matches_printed: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    passive_auth: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    revocation: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+    sod_signature: Literal["passed", "failed", "not_present", "unverifiable"] | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChipOutcomes:
+        return cls(
+            active_auth=data.get("active_auth"),
+            certificate_validity=data.get("certificate_validity"),
+            chain=data.get("chain"),
+            chip_auth=data.get("chip_auth"),
+            com_consistency=data.get("com_consistency"),
+            data_group_hashes=data.get("data_group_hashes"),
+            face_match=data.get("face_match"),
+            file_structure=data.get("file_structure"),
+            mrz_check_digits=data.get("mrz_check_digits"),
+            mrz_matches_printed=data.get("mrz_matches_printed"),
+            passive_auth=data.get("passive_auth"),
+            revocation=data.get("revocation"),
+            sod_signature=data.get("sod_signature"),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ChipRead:
+    """ChipRead is an object of KUAA's API."""
+
+    check: Literal["document_chip"]
+    check_id: str
+    """The document_chip check the read was recorded as."""
+    dg2_present: bool
+    """The chip gave a face image."""
+    evidence_id: str
+    """The evidence of the examination."""
+    face_evidence_id: str | None
+    """The evidence of the comparison of the face image with the latest selfie, null when none ran."""
+    outcomes: ChipOutcomes
+    """Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass."""
+    reasons: dict[str, str]
+    """The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch."""
+    result: Literal["pass", "fail", "inconclusive"]
+    """fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChipRead:
+        return cls(
+            check=data["check"],
+            check_id=data["check_id"],
+            dg2_present=data["dg2_present"],
+            evidence_id=data["evidence_id"],
+            face_evidence_id=data.get("face_evidence_id"),
+            outcomes=ChipOutcomes.from_dict(data["outcomes"]),
+            reasons=data["reasons"],
+            result=data["result"],
         )
 
 
@@ -778,6 +880,22 @@ class Evidence:
 
 
 @dataclass(frozen=True, kw_only=True)
+class FieldProvenance:
+    """FieldProvenance is an object of KUAA's API."""
+
+    retrieved_at: str
+    source: str
+    """directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FieldProvenance:
+        return cls(
+            retrieved_at=data["retrieved_at"],
+            source=data["source"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
 class Finding:
     """Finding is an object of KUAA's API."""
 
@@ -801,6 +919,40 @@ class Finding:
 
 
 @dataclass(frozen=True, kw_only=True)
+class HealthReport:
+    """HealthReport is an object of KUAA's API."""
+
+    checks: list[HealthReportCheck]
+    """Every check kind the workflows run or an engine is registered for, by kind."""
+    livemode: bool
+    """False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HealthReport:
+        return cls(
+            checks=[HealthReportCheck.from_dict(item) for item in data["checks"]],
+            livemode=data["livemode"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class HealthReportCheck:
+    """HealthReportCheck is an object of KUAA's API."""
+
+    availability: Literal["available", "dev_only", "unavailable"]
+    """available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured."""
+    check: str
+    """The check kind, as a workflow task names it: face_match, liveness, document_ocr..."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HealthReportCheck:
+        return cls(
+            availability=data["availability"],
+            check=data["check"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
 class Identity:
     """What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view."""
 
@@ -815,6 +967,214 @@ class Identity:
             created_at=data["created_at"],
             id=data["id"],
             verified_attributes=data["verified_attributes"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class Lookup:
+    """Lookup is an object of KUAA's API."""
+
+    company: LookupCompany | None = None
+    """Present on a business lookup."""
+    cost: LookupCost
+    created_at: str
+    document: str
+    """The CPF or CNPJ, masked."""
+    environment: Literal["live", "sandbox"]
+    id: str
+    kind: Literal["person", "business"]
+    legal_basis: str
+    """The LGPD article the purpose is made under, such as lgpd.art7.v."""
+    livemode: bool
+    object: Literal["lookup"]
+    person: LookupPerson | None = None
+    """Present on a person lookup."""
+    provenance: LookupProvenance
+    """Where each field came from and when, by field name; a field with no value has no entry."""
+    purpose: Literal["onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution"]
+    reasons: list[str]
+    """Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered."""
+    rule_version: str
+    screening: LookupScreening
+    sources: list[LookupSource]
+    status: Literal["regular", "irregular", "inconclusive", "failed"]
+    """KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Lookup:
+        return cls(
+            company=None if data.get("company") is None else LookupCompany.from_dict(data["company"]),
+            cost=LookupCost.from_dict(data["cost"]),
+            created_at=data["created_at"],
+            document=data["document"],
+            environment=data["environment"],
+            id=data["id"],
+            kind=data["kind"],
+            legal_basis=data["legal_basis"],
+            livemode=data["livemode"],
+            object=data["object"],
+            person=None if data.get("person") is None else LookupPerson.from_dict(data["person"]),
+            provenance=LookupProvenance.from_dict(data["provenance"]),
+            purpose=data["purpose"],
+            reasons=data["reasons"],
+            rule_version=data["rule_version"],
+            screening=LookupScreening.from_dict(data["screening"]),
+            sources=[LookupSource.from_dict(item) for item in data["sources"]],
+            status=data["status"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LookupCompany:
+    """Present on a business lookup."""
+
+    cnae: str | None = None
+    """The main CNAE code."""
+    data_fundacao: str | None = None
+    natureza_juridica: str | None = None
+    """The legal nature, as described."""
+    razao_social: str | None = None
+    """The registered name."""
+    situacao_cadastral: str | None = None
+    """ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LookupCompany:
+        return cls(
+            cnae=data.get("cnae"),
+            data_fundacao=data.get("data_fundacao"),
+            natureza_juridica=data.get("natureza_juridica"),
+            razao_social=data.get("razao_social"),
+            situacao_cadastral=data.get("situacao_cadastral"),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LookupCost:
+    """LookupCost is an object of KUAA's API."""
+
+    bureau_charged_cents: int
+    """What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable."""
+    bureau_price_cents: int
+    credits: int
+    """The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox."""
+    token_source: str | None = None
+    """platform, organization or sandbox."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LookupCost:
+        return cls(
+            bureau_charged_cents=data["bureau_charged_cents"],
+            bureau_price_cents=data["bureau_price_cents"],
+            credits=data["credits"],
+            token_source=data.get("token_source"),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LookupPerson:
+    """Present on a person lookup."""
+
+    birth_date: str | None = None
+    death_date: str | None = None
+    """From AML, when it was asked."""
+    deceased: bool | None = None
+    """Óbito, from Cadastro PF Plus or AML."""
+    full_name: str | None = None
+    """The name the Receita Federal holds."""
+    pep: bool
+    """A politically exposed person: an active PEP on the CGU list, or AML's PEP flag."""
+    situacao_cadastral: str | None = None
+    """REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO."""
+    situacao_cadastral_date: str | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LookupPerson:
+        return cls(
+            birth_date=data.get("birth_date"),
+            death_date=data.get("death_date"),
+            deceased=data.get("deceased"),
+            full_name=data.get("full_name"),
+            pep=data["pep"],
+            situacao_cadastral=data.get("situacao_cadastral"),
+            situacao_cadastral_date=data.get("situacao_cadastral_date"),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LookupProvenance:
+    """Where each field came from and when, by field name; a field with no value has no entry."""
+
+    birth_date: FieldProvenance | None = None
+    cnae: FieldProvenance | None = None
+    data_fundacao: FieldProvenance | None = None
+    death_date: FieldProvenance | None = None
+    deceased: FieldProvenance | None = None
+    full_name: FieldProvenance | None = None
+    natureza_juridica: FieldProvenance | None = None
+    pep: FieldProvenance | None = None
+    razao_social: FieldProvenance | None = None
+    situacao_cadastral: FieldProvenance | None = None
+    situacao_cadastral_date: FieldProvenance | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LookupProvenance:
+        return cls(
+            birth_date=None if data.get("birth_date") is None else FieldProvenance.from_dict(data["birth_date"]),
+            cnae=None if data.get("cnae") is None else FieldProvenance.from_dict(data["cnae"]),
+            data_fundacao=None if data.get("data_fundacao") is None else FieldProvenance.from_dict(data["data_fundacao"]),
+            death_date=None if data.get("death_date") is None else FieldProvenance.from_dict(data["death_date"]),
+            deceased=None if data.get("deceased") is None else FieldProvenance.from_dict(data["deceased"]),
+            full_name=None if data.get("full_name") is None else FieldProvenance.from_dict(data["full_name"]),
+            natureza_juridica=None if data.get("natureza_juridica") is None else FieldProvenance.from_dict(data["natureza_juridica"]),
+            pep=None if data.get("pep") is None else FieldProvenance.from_dict(data["pep"]),
+            razao_social=None if data.get("razao_social") is None else FieldProvenance.from_dict(data["razao_social"]),
+            situacao_cadastral=None if data.get("situacao_cadastral") is None else FieldProvenance.from_dict(data["situacao_cadastral"]),
+            situacao_cadastral_date=None if data.get("situacao_cadastral_date") is None else FieldProvenance.from_dict(data["situacao_cadastral_date"]),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LookupScreening:
+    """LookupScreening is an object of KUAA's API."""
+
+    matches: list[ScreeningMatch]
+    sources: list[ScreeningSource]
+    unavailable: list[str]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LookupScreening:
+        return cls(
+            matches=[ScreeningMatch.from_dict(item) for item in data["matches"]],
+            sources=[ScreeningSource.from_dict(item) for item in data["sources"]],
+            unavailable=data["unavailable"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class LookupSource:
+    """LookupSource is an object of KUAA's API."""
+
+    cached: bool
+    """Answered from the organization's same-day query, at no cost."""
+    consulta_uid: str | None = None
+    outcome: str | None = None
+    """found, not_found... when Direct Data answered."""
+    reason: str | None = None
+    """Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable."""
+    retrieved_at: str | None = None
+    source: str
+    """directd:<product>, or kuaa:sandbox:<product>."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> LookupSource:
+        return cls(
+            cached=data["cached"],
+            consulta_uid=data.get("consulta_uid"),
+            outcome=data.get("outcome"),
+            reason=data.get("reason"),
+            retrieved_at=data.get("retrieved_at"),
+            source=data["source"],
         )
 
 
@@ -1214,6 +1574,54 @@ class Screening:
 
 
 @dataclass(frozen=True, kw_only=True)
+class ScreeningMatch:
+    """ScreeningMatch is an object of KUAA's API."""
+
+    classification: Literal["confirmed", "strong", "possible"]
+    """confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone."""
+    list: Literal["sanctions", "pep"]
+    match_status: str
+    pep_active: bool | None = None
+    """For a PEP: whether the five-year window after the function is still open."""
+    score: float
+    source: str
+    """The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn."""
+    source_version: str
+    """The version of the source that was read."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ScreeningMatch:
+        return cls(
+            classification=data["classification"],
+            list=data["list"],
+            match_status=data["match_status"],
+            pep_active=data.get("pep_active"),
+            score=data["score"],
+            source=data["source"],
+            source_version=data["source_version"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ScreeningSource:
+    """ScreeningSource is an object of KUAA's API."""
+
+    list: str
+    retrieved_at: str
+    source: str
+    version: str
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ScreeningSource:
+        return cls(
+            list=data["list"],
+            retrieved_at=data["retrieved_at"],
+            source=data["source"],
+            version=data["version"],
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
 class StatementEntry:
     """StatementEntry is an object of KUAA's API."""
 
@@ -1309,7 +1717,7 @@ class Webhook:
     disabled_at: str | None
     disabled_reason: str | None
     """Why the endpoint was turned off: consecutive_failures when its deliveries kept giving up, or what the person who turned it off wrote."""
-    events: list[Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided"]]
+    events: list[Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked"]]
     id: str
     """The endpoint identifier."""
     name: str
@@ -1340,7 +1748,7 @@ class WebhookCreated:
     disabled_at: str | None
     disabled_reason: str | None
     """Why the endpoint was turned off: consecutive_failures when its deliveries kept giving up, or what the person who turned it off wrote."""
-    events: list[Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided"]]
+    events: list[Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked"]]
     id: str
     """The endpoint identifier."""
     name: str
@@ -1378,7 +1786,7 @@ class WebhookEvent:
     subject: str
     """cases/ and the case id."""
     time: str
-    type: Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided"]
+    type: Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked"]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> WebhookEvent:
@@ -1399,7 +1807,7 @@ class WebhookEventData:
     """WebhookEventData is an object of KUAA's API."""
 
     capture_session_id: str | None = None
-    """Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued."""
+    """Present on every capture_session.* event: the hosted capture session, as answered when its link was issued."""
     case_id: str
     check_id: str | None = None
     """Present on check.completed."""
@@ -1431,11 +1839,13 @@ class WebhookEventData:
     review_id: str | None = None
     """Present on review.recorded."""
     status: str
-    """What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided."""
+    """What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided."""
     status_market: Literal["PROCESSING", "PENDING_OCR", "PENDING", "APPROVED", "REPROVED", "BLOCKED", "CANCELLED", "EXPIRED"] | None = None
     """Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision."""
+    step: Literal["consent", "document", "selfie"] | None = None
+    """Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished."""
     tenant_id: str
-    type: Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided"]
+    type: Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked"]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> WebhookEventData:
@@ -1459,6 +1869,7 @@ class WebhookEventData:
             review_id=data.get("review_id"),
             status=data["status"],
             status_market=data.get("status_market"),
+            step=data.get("step"),
             tenant_id=data["tenant_id"],
             type=data["type"],
         )
@@ -1624,6 +2035,17 @@ class AddPartyRequestRelationship(TypedDict):
     """The last day the relationship holds, as YYYY-MM-DD; not before valid_from."""
 
 
+class BusinessLookupRequest(TypedDict):
+    """BusinessLookupRequest is a request body of KUAA's API."""
+
+    cnpj: str
+    """The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked."""
+    product: NotRequired[Literal["basic", "plus"]]
+    """Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name."""
+    purpose: Literal["onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution"]
+    """Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis."""
+
+
 class CaptureForm(TypedDict):
     """CaptureForm is a multipart body of KUAA's API."""
 
@@ -1650,6 +2072,8 @@ class CaptureSessionRequest(TypedDict):
     """The one https origin that may frame the capture (iframe or WebView) and receive its postMessage events. Without it the capture refuses to be framed."""
     expires_in_minutes: NotRequired[int]
     """How long the link opens, in minutes. Default 1440 (one day)."""
+    handoff: NotRequired[Literal["never", "suggest", "require"]]
+    """How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control."""
     party_id: NotRequired[str]
     """The party whose capture this is. Empty is the case's primary party."""
     return_url: NotRequired[str]
@@ -1722,6 +2146,48 @@ class CaseTagsRequest(TypedDict):
     """The tags to give the case, each by its name or by its slug, at most 50. Every one has to be a tag of the key's organization: a request naming one that is not is refused with 422 and gives none."""
 
 
+class ChipChallengeRequest(TypedDict):
+    """ChipChallengeRequest is a request body of KUAA's API."""
+
+    party_id: NotRequired[str]
+    """The person whose chip is read. Empty is the case's primary party, which must be a person."""
+
+
+class ChipReadRequest(TypedDict):
+    """ChipReadRequest is a request body of KUAA's API."""
+
+    aa_signature: NotRequired[str]
+    """The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded."""
+    ca_key_id: NotRequired[int]
+    """The Chip Authentication key the device used, when DG14 lists more than one."""
+    ca_protocol: NotRequired[str]
+    """The Chip Authentication protocol the device ran, as the object identifier DG14 names it."""
+    ca_status: NotRequired[Literal["completed", "failed"]]
+    """What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device."""
+    challenge_id: str
+    """The challenge issued for this read. It answers one read, once, before it expires."""
+    dg1: str
+    """DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded."""
+    dg11: NotRequired[str]
+    """DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded."""
+    dg12: NotRequired[str]
+    """DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded."""
+    dg14: NotRequired[str]
+    """DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded."""
+    dg15: NotRequired[str]
+    """DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded."""
+    dg2: NotRequired[str]
+    """DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded."""
+    ef_card_access: NotRequired[str]
+    """EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded."""
+    ef_com: NotRequired[str]
+    """EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded."""
+    ef_sod: str
+    """EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded."""
+    printed_mrz: NotRequired[str]
+    """The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered."""
+
+
 class OwnershipRequest(TypedDict):
     """OwnershipRequest is a request body of KUAA's API."""
 
@@ -1746,6 +2212,17 @@ class OwnershipRequestDeclaration(TypedDict):
     """The company the share is held in, a party of the case; not from_party_id itself."""
 
 
+class PersonLookupRequest(TypedDict):
+    """PersonLookupRequest is a request body of KUAA's API."""
+
+    cpf: str
+    """The CPF, as text, with or without punctuation; its check digits are verified before anything is asked."""
+    include: NotRequired[list[Literal["aml"]]]
+    """aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone."""
+    purpose: Literal["onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution"]
+    """Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V)."""
+
+
 class SubmitRequest(TypedDict):
     """SubmitRequest is a request body of KUAA's API."""
 
@@ -1756,7 +2233,7 @@ class SubmitRequest(TypedDict):
 class WebhookRequest(TypedDict):
     """WebhookRequest is a request body of KUAA's API."""
 
-    events: list[Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided"]]
+    events: list[Literal["case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked"]]
     """The events the endpoint receives."""
     name: str
     """What the tenant calls the endpoint."""

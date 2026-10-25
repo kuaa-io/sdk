@@ -171,6 +171,39 @@ module Kuaa
     end
   end
 
+  # BusinessLookupRequest is a request body of KUAA's API.
+  class BusinessLookupRequest < Params
+    MEMBERS = %i[cnpj product purpose].freeze
+
+    # The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked.
+    # @return [String]
+    attr_reader :cnpj
+
+    # Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+    # @return [String ("basic", "plus"), nil]
+    attr_reader :product
+
+    # Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+    # @return [String ("onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution")]
+    attr_reader :purpose
+
+    def initialize(cnpj:, product: nil, purpose:)
+      @cnpj = cnpj
+      @product = product
+      @purpose = purpose
+      freeze
+    end
+
+    # The body as the API reads it.
+    def to_wire
+      wire = {}
+      wire["cnpj"] = @cnpj
+      wire["product"] = @product unless @product.nil?
+      wire["purpose"] = @purpose
+      wire
+    end
+  end
+
   # CaptureForm is a multipart body of KUAA's API.
   class CaptureForm < Params
     MEMBERS = %i[captured_at document_type file kind party_id side].freeze
@@ -224,7 +257,7 @@ module Kuaa
 
   # CaptureSessionRequest is a request body of KUAA's API.
   class CaptureSessionRequest < Params
-    MEMBERS = %i[email embed_origin expires_in_minutes party_id return_url send_email].freeze
+    MEMBERS = %i[email embed_origin expires_in_minutes handoff party_id return_url send_email].freeze
 
     # The address to e-mail the link to, instead of the one on file. Given alone, it asks for the e-mail too. It is not stored and not audited: the audit keeps only that a link was e-mailed.
     # @return [String, nil]
@@ -238,6 +271,10 @@ module Kuaa
     # @return [Integer, nil]
     attr_reader :expires_in_minutes
 
+    # How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+    # @return [String ("never", "suggest", "require"), nil]
+    attr_reader :handoff
+
     # The party whose capture this is. Empty is the case's primary party.
     # @return [String, nil]
     attr_reader :party_id
@@ -250,10 +287,11 @@ module Kuaa
     # @return [Boolean, nil]
     attr_reader :send_email
 
-    def initialize(email: nil, embed_origin: nil, expires_in_minutes: nil, party_id: nil, return_url: nil, send_email: nil)
+    def initialize(email: nil, embed_origin: nil, expires_in_minutes: nil, handoff: nil, party_id: nil, return_url: nil, send_email: nil)
       @email = email
       @embed_origin = embed_origin
       @expires_in_minutes = expires_in_minutes
+      @handoff = handoff
       @party_id = party_id
       @return_url = return_url
       @send_email = send_email
@@ -266,6 +304,7 @@ module Kuaa
       wire["email"] = @email unless @email.nil?
       wire["embed_origin"] = @embed_origin unless @embed_origin.nil?
       wire["expires_in_minutes"] = @expires_in_minutes unless @expires_in_minutes.nil?
+      wire["handoff"] = @handoff unless @handoff.nil?
       wire["party_id"] = @party_id unless @party_id.nil?
       wire["return_url"] = @return_url unless @return_url.nil?
       wire["send_email"] = @send_email unless @send_email.nil?
@@ -465,6 +504,132 @@ module Kuaa
     end
   end
 
+  # ChipChallengeRequest is a request body of KUAA's API.
+  class ChipChallengeRequest < Params
+    MEMBERS = %i[party_id].freeze
+
+    # The person whose chip is read. Empty is the case's primary party, which must be a person.
+    # @return [String, nil]
+    attr_reader :party_id
+
+    def initialize(party_id: nil)
+      @party_id = party_id
+      freeze
+    end
+
+    # The body as the API reads it.
+    def to_wire
+      wire = {}
+      wire["party_id"] = @party_id unless @party_id.nil?
+      wire
+    end
+  end
+
+  # ChipReadRequest is a request body of KUAA's API.
+  class ChipReadRequest < Params
+    MEMBERS = %i[aa_signature ca_key_id ca_protocol ca_status challenge_id dg1 dg11 dg12 dg14 dg15 dg2 ef_card_access ef_com ef_sod printed_mrz].freeze
+
+    # The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    # @return [String, nil]
+    attr_reader :aa_signature
+
+    # The Chip Authentication key the device used, when DG14 lists more than one.
+    # @return [Integer, nil]
+    attr_reader :ca_key_id
+
+    # The Chip Authentication protocol the device ran, as the object identifier DG14 names it.
+    # @return [String, nil]
+    attr_reader :ca_protocol
+
+    # What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+    # @return [String ("completed", "failed"), nil]
+    attr_reader :ca_status
+
+    # The challenge issued for this read. It answers one read, once, before it expires.
+    # @return [String]
+    attr_reader :challenge_id
+
+    # DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded.
+    # @return [String]
+    attr_reader :dg1
+
+    # DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    # @return [String, nil]
+    attr_reader :dg11
+
+    # DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    # @return [String, nil]
+    attr_reader :dg12
+
+    # DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded.
+    # @return [String, nil]
+    attr_reader :dg14
+
+    # DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    # @return [String, nil]
+    attr_reader :dg15
+
+    # DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded.
+    # @return [String, nil]
+    attr_reader :dg2
+
+    # EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    # @return [String, nil]
+    attr_reader :ef_card_access
+
+    # EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    # @return [String, nil]
+    attr_reader :ef_com
+
+    # EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded.
+    # @return [String]
+    attr_reader :ef_sod
+
+    # The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered.
+    # @return [String, nil]
+    attr_reader :printed_mrz
+
+    def initialize(aa_signature: nil, ca_key_id: nil, ca_protocol: nil, ca_status: nil, challenge_id:, dg1:, dg11: nil, dg12: nil, dg14: nil, dg15: nil, dg2: nil, ef_card_access: nil, ef_com: nil, ef_sod:, printed_mrz: nil)
+      @aa_signature = aa_signature
+      @ca_key_id = ca_key_id
+      @ca_protocol = ca_protocol
+      @ca_status = ca_status
+      @challenge_id = challenge_id
+      @dg1 = dg1
+      @dg11 = dg11
+      @dg12 = dg12
+      @dg14 = dg14
+      @dg15 = dg15
+      @dg2 = dg2
+      @ef_card_access = ef_card_access
+      @ef_com = ef_com
+      @ef_sod = ef_sod
+      @printed_mrz = printed_mrz
+      freeze
+    end
+
+    # The body as the API reads it.
+    def to_wire
+      wire = {}
+      wire["aa_signature"] = @aa_signature unless @aa_signature.nil?
+      wire["ca_key_id"] = @ca_key_id unless @ca_key_id.nil?
+      wire["ca_protocol"] = @ca_protocol unless @ca_protocol.nil?
+      wire["ca_status"] = @ca_status unless @ca_status.nil?
+      wire["challenge_id"] = @challenge_id
+      wire["dg1"] = @dg1
+      wire["dg11"] = @dg11 unless @dg11.nil?
+      wire["dg12"] = @dg12 unless @dg12.nil?
+      wire["dg14"] = @dg14 unless @dg14.nil?
+      wire["dg15"] = @dg15 unless @dg15.nil?
+      wire["dg2"] = @dg2 unless @dg2.nil?
+      wire["ef_card_access"] = @ef_card_access unless @ef_card_access.nil?
+      wire["ef_com"] = @ef_com unless @ef_com.nil?
+      wire["ef_sod"] = @ef_sod
+      wire["printed_mrz"] = @printed_mrz unless @printed_mrz.nil?
+      wire
+    end
+  end
+
   # OwnershipRequest is a request body of KUAA's API.
   class OwnershipRequest < Params
     MEMBERS = %i[declarations].freeze
@@ -537,6 +702,39 @@ module Kuaa
     end
   end
 
+  # PersonLookupRequest is a request body of KUAA's API.
+  class PersonLookupRequest < Params
+    MEMBERS = %i[cpf include purpose].freeze
+
+    # The CPF, as text, with or without punctuation; its check digits are verified before anything is asked.
+    # @return [String]
+    attr_reader :cpf
+
+    # aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+    # @return [Array<String ("aml")>, nil]
+    attr_reader :include
+
+    # Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+    # @return [String ("onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution")]
+    attr_reader :purpose
+
+    def initialize(cpf:, include: nil, purpose:)
+      @cpf = cpf
+      @include = include
+      @purpose = purpose
+      freeze
+    end
+
+    # The body as the API reads it.
+    def to_wire
+      wire = {}
+      wire["cpf"] = @cpf
+      wire["include"] = Kuaa.wire(@include) unless @include.nil?
+      wire["purpose"] = @purpose
+      wire
+    end
+  end
+
   # SubmitRequest is a request body of KUAA's API.
   class SubmitRequest < Params
     MEMBERS = %i[state].freeze
@@ -563,7 +761,7 @@ module Kuaa
     MEMBERS = %i[events name url].freeze
 
     # The events the endpoint receives.
-    # @return [Array<String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided")>]
+    # @return [Array<String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked")>]
     attr_reader :events
 
     # What the tenant calls the endpoint.

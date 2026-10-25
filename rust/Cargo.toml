@@ -1,6 +1,6 @@
 [package]
 name = "kuaa-io-sdk"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.88"
 description = "KUAA's SDK for Rust: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks."

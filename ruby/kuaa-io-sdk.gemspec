@@ -4,7 +4,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "kuaa-io-sdk"
-  spec.version = "0.1.0"
+  spec.version = "0.2.0"
   spec.authors = ["KUAA"]
   spec.summary = "KUAA's SDK for Ruby: identity verification cases (KYC, KYB, age), parties, captures, decisions, dossiers and webhooks."
   spec.homepage = "https://kuaa.io"

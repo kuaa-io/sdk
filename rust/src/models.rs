@@ -167,6 +167,9 @@ pub struct CaptureSession {
     pub expires_at: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub finished_at: Option<String>,
+    /// The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub handoff: Option<CaptureSessionHandoff>,
     /// The capture session identifier.
     pub id: String,
     pub locale: CaptureSessionLocale,
@@ -201,6 +204,9 @@ pub struct CaptureSessionIssued {
     pub expires_at: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub finished_at: Option<String>,
+    /// The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub handoff: Option<CaptureSessionIssuedHandoff>,
     /// The capture session identifier.
     pub id: String,
     pub locale: CaptureSessionIssuedLocale,
@@ -324,6 +330,74 @@ pub struct Check {
     pub party_id: Option<String>,
     pub started_at: String,
     pub status: CheckStatus,
+}
+
+/// ChipChallenge is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ChipChallenge {
+    /// The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back.
+    pub challenge: String,
+    /// After it the challenge answers no read; it answers one read, once, before it.
+    pub expires_at: String,
+    /// The challenge_id the chip read names.
+    pub id: String,
+    pub issued_at: String,
+    /// The person whose chip is read.
+    pub party_id: String,
+}
+
+/// Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ChipOutcomes {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_auth: Option<ChipOutcomesActiveAuth>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub certificate_validity: Option<ChipOutcomesCertificateValidity>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chain: Option<ChipOutcomesChain>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip_auth: Option<ChipOutcomesChipAuth>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub com_consistency: Option<ChipOutcomesComConsistency>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_group_hashes: Option<ChipOutcomesDataGroupHashes>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub face_match: Option<ChipOutcomesFaceMatch>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_structure: Option<ChipOutcomesFileStructure>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mrz_check_digits: Option<ChipOutcomesMrzCheckDigits>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mrz_matches_printed: Option<ChipOutcomesMrzMatchesPrinted>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub passive_auth: Option<ChipOutcomesPassiveAuth>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revocation: Option<ChipOutcomesRevocation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sod_signature: Option<ChipOutcomesSodSignature>,
+}
+
+/// ChipRead is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ChipRead {
+    pub check: ChipReadCheck,
+    /// The document_chip check the read was recorded as.
+    pub check_id: String,
+    /// The chip gave a face image.
+    pub dg2_present: bool,
+    /// The evidence of the examination.
+    pub evidence_id: String,
+    /// The evidence of the comparison of the face image with the latest selfie, null when none ran.
+    pub face_evidence_id: Option<String>,
+    /// Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+    pub outcomes: ChipOutcomes,
+    /// The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch.
+    pub reasons: std::collections::HashMap<String, String>,
+    /// fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+    pub result: ChipReadResult,
 }
 
 /// The label of the organization's own set of situations a reviewer gave the case, such as "Aguardando compliance". It never changes status, status_market or the decision. Null when the case carries none, or for a key without tag.list.
@@ -498,6 +572,15 @@ pub struct Evidence {
     pub score: Option<f64>,
 }
 
+/// FieldProvenance is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct FieldProvenance {
+    pub retrieved_at: String,
+    /// directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox.
+    pub source: String,
+}
+
 /// Finding is an object of KUAA's API.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -510,6 +593,26 @@ pub struct Finding {
     pub severity: FindingSeverity,
 }
 
+/// HealthReport is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct HealthReport {
+    /// Every check kind the workflows run or an engine is registered for, by kind.
+    pub checks: Vec<HealthReportCheck>,
+    /// False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production.
+    pub livemode: bool,
+}
+
+/// HealthReportCheck is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct HealthReportCheck {
+    /// available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+    pub availability: HealthReportCheckAvailability,
+    /// The check kind, as a workflow task names it: face_match, liveness, document_ocr...
+    pub check: String,
+}
+
 /// What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -518,6 +621,154 @@ pub struct Identity {
     pub id: String,
     /// The names of the facts verified about it, never their values.
     pub verified_attributes: Vec<String>,
+}
+
+/// Lookup is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct Lookup {
+    /// Present on a business lookup.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub company: Option<LookupCompany>,
+    pub cost: LookupCost,
+    pub created_at: String,
+    /// The CPF or CNPJ, masked.
+    pub document: String,
+    pub environment: LookupEnvironment,
+    pub id: String,
+    pub kind: LookupKind,
+    /// The LGPD article the purpose is made under, such as lgpd.art7.v.
+    pub legal_basis: String,
+    pub livemode: bool,
+    pub object: LookupObject,
+    /// Present on a person lookup.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub person: Option<LookupPerson>,
+    /// Where each field came from and when, by field name; a field with no value has no entry.
+    pub provenance: LookupProvenance,
+    pub purpose: LookupPurpose,
+    /// Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
+    pub reasons: Vec<String>,
+    pub rule_version: String,
+    pub screening: LookupScreening,
+    pub sources: Vec<LookupSource>,
+    /// KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
+    pub status: LookupStatus,
+}
+
+/// Present on a business lookup.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct LookupCompany {
+    /// The main CNAE code.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cnae: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_fundacao: Option<String>,
+    /// The legal nature, as described.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub natureza_juridica: Option<String>,
+    /// The registered name.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub razao_social: Option<String>,
+    /// ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub situacao_cadastral: Option<String>,
+}
+
+/// LookupCost is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct LookupCost {
+    /// What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
+    pub bureau_charged_cents: i64,
+    pub bureau_price_cents: i64,
+    /// The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.
+    pub credits: i64,
+    /// platform, organization or sandbox.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub token_source: Option<String>,
+}
+
+/// Present on a person lookup.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct LookupPerson {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub birth_date: Option<String>,
+    /// From AML, when it was asked.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub death_date: Option<String>,
+    /// Óbito, from Cadastro PF Plus or AML.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deceased: Option<bool>,
+    /// The name the Receita Federal holds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub full_name: Option<String>,
+    /// A politically exposed person: an active PEP on the CGU list, or AML's PEP flag.
+    pub pep: bool,
+    /// REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub situacao_cadastral: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub situacao_cadastral_date: Option<String>,
+}
+
+/// Where each field came from and when, by field name; a field with no value has no entry.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct LookupProvenance {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub birth_date: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cnae: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_fundacao: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub death_date: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deceased: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub full_name: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub natureza_juridica: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pep: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub razao_social: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub situacao_cadastral: Option<FieldProvenance>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub situacao_cadastral_date: Option<FieldProvenance>,
+}
+
+/// LookupScreening is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct LookupScreening {
+    pub matches: Vec<ScreeningMatch>,
+    pub sources: Vec<ScreeningSource>,
+    pub unavailable: Vec<String>,
+}
+
+/// LookupSource is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct LookupSource {
+    /// Answered from the organization's same-day query, at no cost.
+    pub cached: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub consulta_uid: Option<String>,
+    /// found, not_found... when Direct Data answered.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<String>,
+    /// Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retrieved_at: Option<String>,
+    /// directd:<product>, or kuaa:sandbox:<product>.
+    pub source: String,
 }
 
 /// Monitoring is an object of KUAA's API.
@@ -764,6 +1015,34 @@ pub struct Screening {
     pub list: ScreeningList,
 }
 
+/// ScreeningMatch is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ScreeningMatch {
+    /// confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+    pub classification: ScreeningMatchClassification,
+    pub list: ScreeningMatchList,
+    pub match_status: String,
+    /// For a PEP: whether the five-year window after the function is still open.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pep_active: Option<bool>,
+    pub score: f64,
+    /// The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn.
+    pub source: String,
+    /// The version of the source that was read.
+    pub source_version: String,
+}
+
+/// ScreeningSource is an object of KUAA's API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ScreeningSource {
+    pub list: String,
+    pub retrieved_at: String,
+    pub source: String,
+    pub version: String,
+}
+
 /// StatementEntry is an object of KUAA's API.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -874,7 +1153,7 @@ pub struct WebhookEvent {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct WebhookEventData {
-    /// Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued.
+    /// Present on every capture_session.* event: the hosted capture session, as answered when its link was issued.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub capture_session_id: Option<String>,
     pub case_id: String,
@@ -918,11 +1197,14 @@ pub struct WebhookEventData {
     /// Present on review.recorded.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub review_id: Option<String>,
-    /// What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
+    /// What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
     pub status: String,
     /// Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status_market: Option<WebhookEventDataStatusMarket>,
+    /// Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub step: Option<WebhookEventDataStep>,
     pub tenant_id: String,
     #[serde(rename = "type")]
     pub type_: WebhookEventDataType,
@@ -1238,6 +1520,39 @@ impl AddPartyRequestRelationship {
     }
 }
 
+/// BusinessLookupRequest is a request body of KUAA's API.
+///
+/// [`BusinessLookupRequest::new`] takes the required fields; each optional one is set by
+/// the method of its name.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct BusinessLookupRequest {
+    /// The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked.
+    pub cnpj: String,
+    /// Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub product: Option<BusinessLookupRequestProduct>,
+    /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+    pub purpose: BusinessLookupRequestPurpose,
+}
+
+impl BusinessLookupRequest {
+    /// A body with its required fields.
+    pub fn new(cnpj: impl Into<String>, purpose: impl Into<BusinessLookupRequestPurpose>) -> Self {
+        Self {
+            cnpj: cnpj.into(),
+            product: None,
+            purpose: purpose.into(),
+        }
+    }
+
+    /// Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+    pub fn product(mut self, product: impl Into<BusinessLookupRequestProduct>) -> Self {
+        self.product = Some(product.into());
+        self
+    }
+}
+
 /// CaptureForm is a multipart body of KUAA's API.
 ///
 /// [`CaptureForm::new`] takes the required fields; each optional one is set by
@@ -1340,6 +1655,9 @@ pub struct CaptureSessionRequest {
     /// How long the link opens, in minutes. Default 1440 (one day).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub expires_in_minutes: Option<i64>,
+    /// How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub handoff: Option<CaptureSessionRequestHandoff>,
     /// The party whose capture this is. Empty is the case's primary party.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub party_id: Option<String>,
@@ -1358,6 +1676,7 @@ impl CaptureSessionRequest {
             email: None,
             embed_origin: None,
             expires_in_minutes: None,
+            handoff: None,
             party_id: None,
             return_url: None,
             send_email: None,
@@ -1379,6 +1698,12 @@ impl CaptureSessionRequest {
     /// How long the link opens, in minutes. Default 1440 (one day).
     pub fn expires_in_minutes(mut self, expires_in_minutes: i64) -> Self {
         self.expires_in_minutes = Some(expires_in_minutes);
+        self
+    }
+
+    /// How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+    pub fn handoff(mut self, handoff: impl Into<CaptureSessionRequestHandoff>) -> Self {
+        self.handoff = Some(handoff.into());
         self
     }
 
@@ -1654,6 +1979,179 @@ impl CaseTagsRequest {
     }
 }
 
+/// ChipChallengeRequest is a request body of KUAA's API.
+///
+/// [`ChipChallengeRequest::new`] takes the required fields; each optional one is set by
+/// the method of its name.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ChipChallengeRequest {
+    /// The person whose chip is read. Empty is the case's primary party, which must be a person.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub party_id: Option<String>,
+}
+
+impl ChipChallengeRequest {
+    /// A body with its required fields.
+    pub fn new() -> Self {
+        Self {
+            party_id: None,
+        }
+    }
+
+    /// The person whose chip is read. Empty is the case's primary party, which must be a person.
+    pub fn party_id(mut self, party_id: impl Into<String>) -> Self {
+        self.party_id = Some(party_id.into());
+        self
+    }
+}
+
+/// ChipReadRequest is a request body of KUAA's API.
+///
+/// [`ChipReadRequest::new`] takes the required fields; each optional one is set by
+/// the method of its name.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct ChipReadRequest {
+    /// The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aa_signature: Option<String>,
+    /// The Chip Authentication key the device used, when DG14 lists more than one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ca_key_id: Option<i64>,
+    /// The Chip Authentication protocol the device ran, as the object identifier DG14 names it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ca_protocol: Option<String>,
+    /// What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ca_status: Option<ChipReadRequestCaStatus>,
+    /// The challenge issued for this read. It answers one read, once, before it expires.
+    pub challenge_id: String,
+    /// DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded.
+    pub dg1: String,
+    /// DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dg11: Option<String>,
+    /// DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dg12: Option<String>,
+    /// DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dg14: Option<String>,
+    /// DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dg15: Option<String>,
+    /// DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dg2: Option<String>,
+    /// EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ef_card_access: Option<String>,
+    /// EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ef_com: Option<String>,
+    /// EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded.
+    pub ef_sod: String,
+    /// The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub printed_mrz: Option<String>,
+}
+
+impl ChipReadRequest {
+    /// A body with its required fields.
+    pub fn new(challenge_id: impl Into<String>, dg1: impl Into<String>, ef_sod: impl Into<String>) -> Self {
+        Self {
+            aa_signature: None,
+            ca_key_id: None,
+            ca_protocol: None,
+            ca_status: None,
+            challenge_id: challenge_id.into(),
+            dg1: dg1.into(),
+            dg11: None,
+            dg12: None,
+            dg14: None,
+            dg15: None,
+            dg2: None,
+            ef_card_access: None,
+            ef_com: None,
+            ef_sod: ef_sod.into(),
+            printed_mrz: None,
+        }
+    }
+
+    /// The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    pub fn aa_signature(mut self, aa_signature: impl Into<String>) -> Self {
+        self.aa_signature = Some(aa_signature.into());
+        self
+    }
+
+    /// The Chip Authentication key the device used, when DG14 lists more than one.
+    pub fn ca_key_id(mut self, ca_key_id: i64) -> Self {
+        self.ca_key_id = Some(ca_key_id);
+        self
+    }
+
+    /// The Chip Authentication protocol the device ran, as the object identifier DG14 names it.
+    pub fn ca_protocol(mut self, ca_protocol: impl Into<String>) -> Self {
+        self.ca_protocol = Some(ca_protocol.into());
+        self
+    }
+
+    /// What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+    pub fn ca_status(mut self, ca_status: impl Into<ChipReadRequestCaStatus>) -> Self {
+        self.ca_status = Some(ca_status.into());
+        self
+    }
+
+    /// DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    pub fn dg11(mut self, dg11: impl Into<String>) -> Self {
+        self.dg11 = Some(dg11.into());
+        self
+    }
+
+    /// DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    pub fn dg12(mut self, dg12: impl Into<String>) -> Self {
+        self.dg12 = Some(dg12.into());
+        self
+    }
+
+    /// DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded.
+    pub fn dg14(mut self, dg14: impl Into<String>) -> Self {
+        self.dg14 = Some(dg14.into());
+        self
+    }
+
+    /// DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    pub fn dg15(mut self, dg15: impl Into<String>) -> Self {
+        self.dg15 = Some(dg15.into());
+        self
+    }
+
+    /// DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded.
+    pub fn dg2(mut self, dg2: impl Into<String>) -> Self {
+        self.dg2 = Some(dg2.into());
+        self
+    }
+
+    /// EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    pub fn ef_card_access(mut self, ef_card_access: impl Into<String>) -> Self {
+        self.ef_card_access = Some(ef_card_access.into());
+        self
+    }
+
+    /// EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    pub fn ef_com(mut self, ef_com: impl Into<String>) -> Self {
+        self.ef_com = Some(ef_com.into());
+        self
+    }
+
+    /// The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered.
+    pub fn printed_mrz(mut self, printed_mrz: impl Into<String>) -> Self {
+        self.printed_mrz = Some(printed_mrz.into());
+        self
+    }
+}
+
 /// OwnershipRequest is a request body of KUAA's API.
 ///
 /// [`OwnershipRequest::new`] takes the required fields; each optional one is set by
@@ -1740,6 +2238,39 @@ impl OwnershipRequestDeclaration {
     /// The company the share is held in, a party of the case; not from_party_id itself.
     pub fn to_party_id(mut self, to_party_id: impl Into<String>) -> Self {
         self.to_party_id = Some(to_party_id.into());
+        self
+    }
+}
+
+/// PersonLookupRequest is a request body of KUAA's API.
+///
+/// [`PersonLookupRequest::new`] takes the required fields; each optional one is set by
+/// the method of its name.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct PersonLookupRequest {
+    /// The CPF, as text, with or without punctuation; its check digits are verified before anything is asked.
+    pub cpf: String,
+    /// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include: Option<Vec<PersonLookupRequestInclude>>,
+    /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+    pub purpose: PersonLookupRequestPurpose,
+}
+
+impl PersonLookupRequest {
+    /// A body with its required fields.
+    pub fn new(cpf: impl Into<String>, purpose: impl Into<PersonLookupRequestPurpose>) -> Self {
+        Self {
+            cpf: cpf.into(),
+            include: None,
+            purpose: purpose.into(),
+        }
+    }
+
+    /// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+    pub fn include(mut self, include: Vec<PersonLookupRequestInclude>) -> Self {
+        self.include = Some(include);
         self
     }
 }
@@ -2117,6 +2648,138 @@ impl<'de> Deserialize<'de> for BeneficialOwnerBasis {
     }
 }
 
+/// The values of `BusinessLookupRequest.product`. Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`BusinessLookupRequestProduct::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum BusinessLookupRequestProduct {
+    /// `basic`
+    Basic,
+    /// `plus`
+    Plus,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl BusinessLookupRequestProduct {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            BusinessLookupRequestProduct::Basic => "basic",
+            BusinessLookupRequestProduct::Plus => "plus",
+            BusinessLookupRequestProduct::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for BusinessLookupRequestProduct {
+    fn from(value: &str) -> Self {
+        match value {
+            "basic" => BusinessLookupRequestProduct::Basic,
+            "plus" => BusinessLookupRequestProduct::Plus,
+            other => BusinessLookupRequestProduct::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for BusinessLookupRequestProduct {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for BusinessLookupRequestProduct {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for BusinessLookupRequestProduct {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for BusinessLookupRequestProduct {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `BusinessLookupRequest.purpose`. Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`BusinessLookupRequestPurpose::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum BusinessLookupRequestPurpose {
+    /// `onboarding`
+    Onboarding,
+    /// `fraud_prevention`
+    FraudPrevention,
+    /// `legal_obligation`
+    LegalObligation,
+    /// `credit_protection`
+    CreditProtection,
+    /// `contract_execution`
+    ContractExecution,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl BusinessLookupRequestPurpose {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            BusinessLookupRequestPurpose::Onboarding => "onboarding",
+            BusinessLookupRequestPurpose::FraudPrevention => "fraud_prevention",
+            BusinessLookupRequestPurpose::LegalObligation => "legal_obligation",
+            BusinessLookupRequestPurpose::CreditProtection => "credit_protection",
+            BusinessLookupRequestPurpose::ContractExecution => "contract_execution",
+            BusinessLookupRequestPurpose::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for BusinessLookupRequestPurpose {
+    fn from(value: &str) -> Self {
+        match value {
+            "onboarding" => BusinessLookupRequestPurpose::Onboarding,
+            "fraud_prevention" => BusinessLookupRequestPurpose::FraudPrevention,
+            "legal_obligation" => BusinessLookupRequestPurpose::LegalObligation,
+            "credit_protection" => BusinessLookupRequestPurpose::CreditProtection,
+            "contract_execution" => BusinessLookupRequestPurpose::ContractExecution,
+            other => BusinessLookupRequestPurpose::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for BusinessLookupRequestPurpose {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for BusinessLookupRequestPurpose {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for BusinessLookupRequestPurpose {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for BusinessLookupRequestPurpose {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `CaptureDocument.capture`.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -2473,6 +3136,70 @@ impl<'de> Deserialize<'de> for CaptureSessionCompletedSteps {
     }
 }
 
+/// The values of `CaptureSession.handoff`. The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`CaptureSessionHandoff::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum CaptureSessionHandoff {
+    /// `never`
+    Never,
+    /// `suggest`
+    Suggest,
+    /// `require`
+    Require,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl CaptureSessionHandoff {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            CaptureSessionHandoff::Never => "never",
+            CaptureSessionHandoff::Suggest => "suggest",
+            CaptureSessionHandoff::Require => "require",
+            CaptureSessionHandoff::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for CaptureSessionHandoff {
+    fn from(value: &str) -> Self {
+        match value {
+            "never" => CaptureSessionHandoff::Never,
+            "suggest" => CaptureSessionHandoff::Suggest,
+            "require" => CaptureSessionHandoff::Require,
+            other => CaptureSessionHandoff::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for CaptureSessionHandoff {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for CaptureSessionHandoff {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for CaptureSessionHandoff {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for CaptureSessionHandoff {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `CaptureSession.locale`.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -2813,6 +3540,70 @@ impl<'de> Deserialize<'de> for CaptureSessionIssuedEmailStatus {
     }
 }
 
+/// The values of `CaptureSessionIssued.handoff`. The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`CaptureSessionIssuedHandoff::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum CaptureSessionIssuedHandoff {
+    /// `never`
+    Never,
+    /// `suggest`
+    Suggest,
+    /// `require`
+    Require,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl CaptureSessionIssuedHandoff {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            CaptureSessionIssuedHandoff::Never => "never",
+            CaptureSessionIssuedHandoff::Suggest => "suggest",
+            CaptureSessionIssuedHandoff::Require => "require",
+            CaptureSessionIssuedHandoff::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for CaptureSessionIssuedHandoff {
+    fn from(value: &str) -> Self {
+        match value {
+            "never" => CaptureSessionIssuedHandoff::Never,
+            "suggest" => CaptureSessionIssuedHandoff::Suggest,
+            "require" => CaptureSessionIssuedHandoff::Require,
+            other => CaptureSessionIssuedHandoff::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for CaptureSessionIssuedHandoff {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for CaptureSessionIssuedHandoff {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for CaptureSessionIssuedHandoff {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for CaptureSessionIssuedHandoff {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `CaptureSessionIssued.locale`.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -3004,6 +3795,70 @@ impl Serialize for CaptureSessionIssuedSteps {
 }
 
 impl<'de> Deserialize<'de> for CaptureSessionIssuedSteps {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `CaptureSessionRequest.handoff`. How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`CaptureSessionRequestHandoff::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum CaptureSessionRequestHandoff {
+    /// `never`
+    Never,
+    /// `suggest`
+    Suggest,
+    /// `require`
+    Require,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl CaptureSessionRequestHandoff {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            CaptureSessionRequestHandoff::Never => "never",
+            CaptureSessionRequestHandoff::Suggest => "suggest",
+            CaptureSessionRequestHandoff::Require => "require",
+            CaptureSessionRequestHandoff::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for CaptureSessionRequestHandoff {
+    fn from(value: &str) -> Self {
+        match value {
+            "never" => CaptureSessionRequestHandoff::Never,
+            "suggest" => CaptureSessionRequestHandoff::Suggest,
+            "require" => CaptureSessionRequestHandoff::Require,
+            other => CaptureSessionRequestHandoff::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for CaptureSessionRequestHandoff {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for CaptureSessionRequestHandoff {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for CaptureSessionRequestHandoff {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for CaptureSessionRequestHandoff {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         String::deserialize(deserializer).map(Self::from)
     }
@@ -3829,6 +4684,1070 @@ impl<'de> Deserialize<'de> for CheckStatus {
     }
 }
 
+/// The values of `ChipOutcomes.active_auth`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesActiveAuth::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesActiveAuth {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesActiveAuth {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesActiveAuth::Passed => "passed",
+            ChipOutcomesActiveAuth::Failed => "failed",
+            ChipOutcomesActiveAuth::NotPresent => "not_present",
+            ChipOutcomesActiveAuth::Unverifiable => "unverifiable",
+            ChipOutcomesActiveAuth::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesActiveAuth {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesActiveAuth::Passed,
+            "failed" => ChipOutcomesActiveAuth::Failed,
+            "not_present" => ChipOutcomesActiveAuth::NotPresent,
+            "unverifiable" => ChipOutcomesActiveAuth::Unverifiable,
+            other => ChipOutcomesActiveAuth::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesActiveAuth {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesActiveAuth {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesActiveAuth {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesActiveAuth {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.certificate_validity`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesCertificateValidity::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesCertificateValidity {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesCertificateValidity {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesCertificateValidity::Passed => "passed",
+            ChipOutcomesCertificateValidity::Failed => "failed",
+            ChipOutcomesCertificateValidity::NotPresent => "not_present",
+            ChipOutcomesCertificateValidity::Unverifiable => "unverifiable",
+            ChipOutcomesCertificateValidity::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesCertificateValidity {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesCertificateValidity::Passed,
+            "failed" => ChipOutcomesCertificateValidity::Failed,
+            "not_present" => ChipOutcomesCertificateValidity::NotPresent,
+            "unverifiable" => ChipOutcomesCertificateValidity::Unverifiable,
+            other => ChipOutcomesCertificateValidity::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesCertificateValidity {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesCertificateValidity {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesCertificateValidity {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesCertificateValidity {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.chain`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesChain::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesChain {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesChain {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesChain::Passed => "passed",
+            ChipOutcomesChain::Failed => "failed",
+            ChipOutcomesChain::NotPresent => "not_present",
+            ChipOutcomesChain::Unverifiable => "unverifiable",
+            ChipOutcomesChain::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesChain {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesChain::Passed,
+            "failed" => ChipOutcomesChain::Failed,
+            "not_present" => ChipOutcomesChain::NotPresent,
+            "unverifiable" => ChipOutcomesChain::Unverifiable,
+            other => ChipOutcomesChain::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesChain {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesChain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesChain {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesChain {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.chip_auth`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesChipAuth::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesChipAuth {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesChipAuth {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesChipAuth::Passed => "passed",
+            ChipOutcomesChipAuth::Failed => "failed",
+            ChipOutcomesChipAuth::NotPresent => "not_present",
+            ChipOutcomesChipAuth::Unverifiable => "unverifiable",
+            ChipOutcomesChipAuth::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesChipAuth {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesChipAuth::Passed,
+            "failed" => ChipOutcomesChipAuth::Failed,
+            "not_present" => ChipOutcomesChipAuth::NotPresent,
+            "unverifiable" => ChipOutcomesChipAuth::Unverifiable,
+            other => ChipOutcomesChipAuth::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesChipAuth {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesChipAuth {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesChipAuth {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesChipAuth {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.com_consistency`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesComConsistency::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesComConsistency {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesComConsistency {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesComConsistency::Passed => "passed",
+            ChipOutcomesComConsistency::Failed => "failed",
+            ChipOutcomesComConsistency::NotPresent => "not_present",
+            ChipOutcomesComConsistency::Unverifiable => "unverifiable",
+            ChipOutcomesComConsistency::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesComConsistency {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesComConsistency::Passed,
+            "failed" => ChipOutcomesComConsistency::Failed,
+            "not_present" => ChipOutcomesComConsistency::NotPresent,
+            "unverifiable" => ChipOutcomesComConsistency::Unverifiable,
+            other => ChipOutcomesComConsistency::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesComConsistency {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesComConsistency {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesComConsistency {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesComConsistency {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.data_group_hashes`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesDataGroupHashes::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesDataGroupHashes {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesDataGroupHashes {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesDataGroupHashes::Passed => "passed",
+            ChipOutcomesDataGroupHashes::Failed => "failed",
+            ChipOutcomesDataGroupHashes::NotPresent => "not_present",
+            ChipOutcomesDataGroupHashes::Unverifiable => "unverifiable",
+            ChipOutcomesDataGroupHashes::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesDataGroupHashes {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesDataGroupHashes::Passed,
+            "failed" => ChipOutcomesDataGroupHashes::Failed,
+            "not_present" => ChipOutcomesDataGroupHashes::NotPresent,
+            "unverifiable" => ChipOutcomesDataGroupHashes::Unverifiable,
+            other => ChipOutcomesDataGroupHashes::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesDataGroupHashes {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesDataGroupHashes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesDataGroupHashes {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesDataGroupHashes {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.face_match`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesFaceMatch::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesFaceMatch {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesFaceMatch {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesFaceMatch::Passed => "passed",
+            ChipOutcomesFaceMatch::Failed => "failed",
+            ChipOutcomesFaceMatch::NotPresent => "not_present",
+            ChipOutcomesFaceMatch::Unverifiable => "unverifiable",
+            ChipOutcomesFaceMatch::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesFaceMatch {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesFaceMatch::Passed,
+            "failed" => ChipOutcomesFaceMatch::Failed,
+            "not_present" => ChipOutcomesFaceMatch::NotPresent,
+            "unverifiable" => ChipOutcomesFaceMatch::Unverifiable,
+            other => ChipOutcomesFaceMatch::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesFaceMatch {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesFaceMatch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesFaceMatch {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesFaceMatch {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.file_structure`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesFileStructure::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesFileStructure {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesFileStructure {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesFileStructure::Passed => "passed",
+            ChipOutcomesFileStructure::Failed => "failed",
+            ChipOutcomesFileStructure::NotPresent => "not_present",
+            ChipOutcomesFileStructure::Unverifiable => "unverifiable",
+            ChipOutcomesFileStructure::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesFileStructure {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesFileStructure::Passed,
+            "failed" => ChipOutcomesFileStructure::Failed,
+            "not_present" => ChipOutcomesFileStructure::NotPresent,
+            "unverifiable" => ChipOutcomesFileStructure::Unverifiable,
+            other => ChipOutcomesFileStructure::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesFileStructure {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesFileStructure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesFileStructure {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesFileStructure {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.mrz_check_digits`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesMrzCheckDigits::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesMrzCheckDigits {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesMrzCheckDigits {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesMrzCheckDigits::Passed => "passed",
+            ChipOutcomesMrzCheckDigits::Failed => "failed",
+            ChipOutcomesMrzCheckDigits::NotPresent => "not_present",
+            ChipOutcomesMrzCheckDigits::Unverifiable => "unverifiable",
+            ChipOutcomesMrzCheckDigits::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesMrzCheckDigits {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesMrzCheckDigits::Passed,
+            "failed" => ChipOutcomesMrzCheckDigits::Failed,
+            "not_present" => ChipOutcomesMrzCheckDigits::NotPresent,
+            "unverifiable" => ChipOutcomesMrzCheckDigits::Unverifiable,
+            other => ChipOutcomesMrzCheckDigits::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesMrzCheckDigits {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesMrzCheckDigits {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesMrzCheckDigits {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesMrzCheckDigits {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.mrz_matches_printed`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesMrzMatchesPrinted::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesMrzMatchesPrinted {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesMrzMatchesPrinted {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesMrzMatchesPrinted::Passed => "passed",
+            ChipOutcomesMrzMatchesPrinted::Failed => "failed",
+            ChipOutcomesMrzMatchesPrinted::NotPresent => "not_present",
+            ChipOutcomesMrzMatchesPrinted::Unverifiable => "unverifiable",
+            ChipOutcomesMrzMatchesPrinted::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesMrzMatchesPrinted {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesMrzMatchesPrinted::Passed,
+            "failed" => ChipOutcomesMrzMatchesPrinted::Failed,
+            "not_present" => ChipOutcomesMrzMatchesPrinted::NotPresent,
+            "unverifiable" => ChipOutcomesMrzMatchesPrinted::Unverifiable,
+            other => ChipOutcomesMrzMatchesPrinted::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesMrzMatchesPrinted {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesMrzMatchesPrinted {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesMrzMatchesPrinted {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesMrzMatchesPrinted {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.passive_auth`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesPassiveAuth::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesPassiveAuth {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesPassiveAuth {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesPassiveAuth::Passed => "passed",
+            ChipOutcomesPassiveAuth::Failed => "failed",
+            ChipOutcomesPassiveAuth::NotPresent => "not_present",
+            ChipOutcomesPassiveAuth::Unverifiable => "unverifiable",
+            ChipOutcomesPassiveAuth::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesPassiveAuth {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesPassiveAuth::Passed,
+            "failed" => ChipOutcomesPassiveAuth::Failed,
+            "not_present" => ChipOutcomesPassiveAuth::NotPresent,
+            "unverifiable" => ChipOutcomesPassiveAuth::Unverifiable,
+            other => ChipOutcomesPassiveAuth::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesPassiveAuth {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesPassiveAuth {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesPassiveAuth {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesPassiveAuth {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.revocation`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesRevocation::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesRevocation {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesRevocation {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesRevocation::Passed => "passed",
+            ChipOutcomesRevocation::Failed => "failed",
+            ChipOutcomesRevocation::NotPresent => "not_present",
+            ChipOutcomesRevocation::Unverifiable => "unverifiable",
+            ChipOutcomesRevocation::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesRevocation {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesRevocation::Passed,
+            "failed" => ChipOutcomesRevocation::Failed,
+            "not_present" => ChipOutcomesRevocation::NotPresent,
+            "unverifiable" => ChipOutcomesRevocation::Unverifiable,
+            other => ChipOutcomesRevocation::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesRevocation {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesRevocation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesRevocation {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesRevocation {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipOutcomes.sod_signature`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipOutcomesSodSignature::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipOutcomesSodSignature {
+    /// `passed`
+    Passed,
+    /// `failed`
+    Failed,
+    /// `not_present`
+    NotPresent,
+    /// `unverifiable`
+    Unverifiable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipOutcomesSodSignature {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipOutcomesSodSignature::Passed => "passed",
+            ChipOutcomesSodSignature::Failed => "failed",
+            ChipOutcomesSodSignature::NotPresent => "not_present",
+            ChipOutcomesSodSignature::Unverifiable => "unverifiable",
+            ChipOutcomesSodSignature::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipOutcomesSodSignature {
+    fn from(value: &str) -> Self {
+        match value {
+            "passed" => ChipOutcomesSodSignature::Passed,
+            "failed" => ChipOutcomesSodSignature::Failed,
+            "not_present" => ChipOutcomesSodSignature::NotPresent,
+            "unverifiable" => ChipOutcomesSodSignature::Unverifiable,
+            other => ChipOutcomesSodSignature::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipOutcomesSodSignature {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipOutcomesSodSignature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipOutcomesSodSignature {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipOutcomesSodSignature {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipRead.check`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipReadCheck::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipReadCheck {
+    /// `document_chip`
+    DocumentChip,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipReadCheck {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipReadCheck::DocumentChip => "document_chip",
+            ChipReadCheck::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipReadCheck {
+    fn from(value: &str) -> Self {
+        match value {
+            "document_chip" => ChipReadCheck::DocumentChip,
+            other => ChipReadCheck::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipReadCheck {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipReadCheck {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipReadCheck {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipReadCheck {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipRead.result`. fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipReadResult::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipReadResult {
+    /// `pass`
+    Pass,
+    /// `fail`
+    Fail,
+    /// `inconclusive`
+    Inconclusive,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipReadResult {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipReadResult::Pass => "pass",
+            ChipReadResult::Fail => "fail",
+            ChipReadResult::Inconclusive => "inconclusive",
+            ChipReadResult::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipReadResult {
+    fn from(value: &str) -> Self {
+        match value {
+            "pass" => ChipReadResult::Pass,
+            "fail" => ChipReadResult::Fail,
+            "inconclusive" => ChipReadResult::Inconclusive,
+            other => ChipReadResult::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipReadResult {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipReadResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipReadResult {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipReadResult {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ChipReadRequest.ca_status`. What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ChipReadRequestCaStatus::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ChipReadRequestCaStatus {
+    /// `completed`
+    Completed,
+    /// `failed`
+    Failed,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ChipReadRequestCaStatus {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ChipReadRequestCaStatus::Completed => "completed",
+            ChipReadRequestCaStatus::Failed => "failed",
+            ChipReadRequestCaStatus::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ChipReadRequestCaStatus {
+    fn from(value: &str) -> Self {
+        match value {
+            "completed" => ChipReadRequestCaStatus::Completed,
+            "failed" => ChipReadRequestCaStatus::Failed,
+            other => ChipReadRequestCaStatus::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ChipReadRequestCaStatus {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ChipReadRequestCaStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ChipReadRequestCaStatus {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ChipReadRequestCaStatus {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `Decision.decided_by_kind`. engine is the policy engine; reviewer is a person.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -4573,6 +6492,386 @@ impl<'de> Deserialize<'de> for FindingSeverity {
     }
 }
 
+/// The values of `HealthReportCheck.availability`. available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`HealthReportCheckAvailability::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum HealthReportCheckAvailability {
+    /// `available`
+    Available,
+    /// `dev_only`
+    DevOnly,
+    /// `unavailable`
+    Unavailable,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl HealthReportCheckAvailability {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            HealthReportCheckAvailability::Available => "available",
+            HealthReportCheckAvailability::DevOnly => "dev_only",
+            HealthReportCheckAvailability::Unavailable => "unavailable",
+            HealthReportCheckAvailability::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for HealthReportCheckAvailability {
+    fn from(value: &str) -> Self {
+        match value {
+            "available" => HealthReportCheckAvailability::Available,
+            "dev_only" => HealthReportCheckAvailability::DevOnly,
+            "unavailable" => HealthReportCheckAvailability::Unavailable,
+            other => HealthReportCheckAvailability::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for HealthReportCheckAvailability {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for HealthReportCheckAvailability {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for HealthReportCheckAvailability {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for HealthReportCheckAvailability {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `Lookup.environment`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`LookupEnvironment::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum LookupEnvironment {
+    /// `live`
+    Live,
+    /// `sandbox`
+    Sandbox,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl LookupEnvironment {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            LookupEnvironment::Live => "live",
+            LookupEnvironment::Sandbox => "sandbox",
+            LookupEnvironment::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for LookupEnvironment {
+    fn from(value: &str) -> Self {
+        match value {
+            "live" => LookupEnvironment::Live,
+            "sandbox" => LookupEnvironment::Sandbox,
+            other => LookupEnvironment::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for LookupEnvironment {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for LookupEnvironment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for LookupEnvironment {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for LookupEnvironment {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `Lookup.kind`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`LookupKind::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum LookupKind {
+    /// `person`
+    Person,
+    /// `business`
+    Business,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl LookupKind {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            LookupKind::Person => "person",
+            LookupKind::Business => "business",
+            LookupKind::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for LookupKind {
+    fn from(value: &str) -> Self {
+        match value {
+            "person" => LookupKind::Person,
+            "business" => LookupKind::Business,
+            other => LookupKind::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for LookupKind {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for LookupKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for LookupKind {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for LookupKind {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `Lookup.object`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`LookupObject::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum LookupObject {
+    /// `lookup`
+    Lookup,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl LookupObject {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            LookupObject::Lookup => "lookup",
+            LookupObject::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for LookupObject {
+    fn from(value: &str) -> Self {
+        match value {
+            "lookup" => LookupObject::Lookup,
+            other => LookupObject::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for LookupObject {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for LookupObject {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for LookupObject {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for LookupObject {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `Lookup.purpose`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`LookupPurpose::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum LookupPurpose {
+    /// `onboarding`
+    Onboarding,
+    /// `fraud_prevention`
+    FraudPrevention,
+    /// `legal_obligation`
+    LegalObligation,
+    /// `credit_protection`
+    CreditProtection,
+    /// `contract_execution`
+    ContractExecution,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl LookupPurpose {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            LookupPurpose::Onboarding => "onboarding",
+            LookupPurpose::FraudPrevention => "fraud_prevention",
+            LookupPurpose::LegalObligation => "legal_obligation",
+            LookupPurpose::CreditProtection => "credit_protection",
+            LookupPurpose::ContractExecution => "contract_execution",
+            LookupPurpose::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for LookupPurpose {
+    fn from(value: &str) -> Self {
+        match value {
+            "onboarding" => LookupPurpose::Onboarding,
+            "fraud_prevention" => LookupPurpose::FraudPrevention,
+            "legal_obligation" => LookupPurpose::LegalObligation,
+            "credit_protection" => LookupPurpose::CreditProtection,
+            "contract_execution" => LookupPurpose::ContractExecution,
+            other => LookupPurpose::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for LookupPurpose {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for LookupPurpose {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for LookupPurpose {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for LookupPurpose {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `Lookup.status`. KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`LookupStatus::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum LookupStatus {
+    /// `regular`
+    Regular,
+    /// `irregular`
+    Irregular,
+    /// `inconclusive`
+    Inconclusive,
+    /// `failed`
+    Failed,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl LookupStatus {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            LookupStatus::Regular => "regular",
+            LookupStatus::Irregular => "irregular",
+            LookupStatus::Inconclusive => "inconclusive",
+            LookupStatus::Failed => "failed",
+            LookupStatus::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for LookupStatus {
+    fn from(value: &str) -> Self {
+        match value {
+            "regular" => LookupStatus::Regular,
+            "irregular" => LookupStatus::Irregular,
+            "inconclusive" => LookupStatus::Inconclusive,
+            "failed" => LookupStatus::Failed,
+            other => LookupStatus::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for LookupStatus {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for LookupStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for LookupStatus {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for LookupStatus {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `OwnershipRequestDeclaration.basis`. What the share rests on. Empty is declaration.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -5049,6 +7348,134 @@ impl<'de> Deserialize<'de> for PartySummaryKind {
     }
 }
 
+/// The values of `PersonLookupRequest.include`. aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`PersonLookupRequestInclude::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum PersonLookupRequestInclude {
+    /// `aml`
+    Aml,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl PersonLookupRequestInclude {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            PersonLookupRequestInclude::Aml => "aml",
+            PersonLookupRequestInclude::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for PersonLookupRequestInclude {
+    fn from(value: &str) -> Self {
+        match value {
+            "aml" => PersonLookupRequestInclude::Aml,
+            other => PersonLookupRequestInclude::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for PersonLookupRequestInclude {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for PersonLookupRequestInclude {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for PersonLookupRequestInclude {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for PersonLookupRequestInclude {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `PersonLookupRequest.purpose`. Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`PersonLookupRequestPurpose::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum PersonLookupRequestPurpose {
+    /// `onboarding`
+    Onboarding,
+    /// `fraud_prevention`
+    FraudPrevention,
+    /// `legal_obligation`
+    LegalObligation,
+    /// `credit_protection`
+    CreditProtection,
+    /// `contract_execution`
+    ContractExecution,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl PersonLookupRequestPurpose {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            PersonLookupRequestPurpose::Onboarding => "onboarding",
+            PersonLookupRequestPurpose::FraudPrevention => "fraud_prevention",
+            PersonLookupRequestPurpose::LegalObligation => "legal_obligation",
+            PersonLookupRequestPurpose::CreditProtection => "credit_protection",
+            PersonLookupRequestPurpose::ContractExecution => "contract_execution",
+            PersonLookupRequestPurpose::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for PersonLookupRequestPurpose {
+    fn from(value: &str) -> Self {
+        match value {
+            "onboarding" => PersonLookupRequestPurpose::Onboarding,
+            "fraud_prevention" => PersonLookupRequestPurpose::FraudPrevention,
+            "legal_obligation" => PersonLookupRequestPurpose::LegalObligation,
+            "credit_protection" => PersonLookupRequestPurpose::CreditProtection,
+            "contract_execution" => PersonLookupRequestPurpose::ContractExecution,
+            other => PersonLookupRequestPurpose::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for PersonLookupRequestPurpose {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for PersonLookupRequestPurpose {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for PersonLookupRequestPurpose {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for PersonLookupRequestPurpose {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `Relationship.role`. Reads "from_party_id is <role> of to_party_id".
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -5421,6 +7848,130 @@ impl<'de> Deserialize<'de> for ScreeningList {
     }
 }
 
+/// The values of `ScreeningMatch.classification`. confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ScreeningMatchClassification::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ScreeningMatchClassification {
+    /// `confirmed`
+    Confirmed,
+    /// `strong`
+    Strong,
+    /// `possible`
+    Possible,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ScreeningMatchClassification {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ScreeningMatchClassification::Confirmed => "confirmed",
+            ScreeningMatchClassification::Strong => "strong",
+            ScreeningMatchClassification::Possible => "possible",
+            ScreeningMatchClassification::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ScreeningMatchClassification {
+    fn from(value: &str) -> Self {
+        match value {
+            "confirmed" => ScreeningMatchClassification::Confirmed,
+            "strong" => ScreeningMatchClassification::Strong,
+            "possible" => ScreeningMatchClassification::Possible,
+            other => ScreeningMatchClassification::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ScreeningMatchClassification {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ScreeningMatchClassification {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ScreeningMatchClassification {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ScreeningMatchClassification {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
+/// The values of `ScreeningMatch.list`.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`ScreeningMatchList::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum ScreeningMatchList {
+    /// `sanctions`
+    Sanctions,
+    /// `pep`
+    Pep,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl ScreeningMatchList {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ScreeningMatchList::Sanctions => "sanctions",
+            ScreeningMatchList::Pep => "pep",
+            ScreeningMatchList::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for ScreeningMatchList {
+    fn from(value: &str) -> Self {
+        match value {
+            "sanctions" => ScreeningMatchList::Sanctions,
+            "pep" => ScreeningMatchList::Pep,
+            other => ScreeningMatchList::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for ScreeningMatchList {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for ScreeningMatchList {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for ScreeningMatchList {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ScreeningMatchList {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `Webhook.events`.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -5442,6 +7993,18 @@ pub enum WebhookEvents {
     CaptureSessionFinished,
     /// `document.decided`
     DocumentDecided,
+    /// `capture_session.opened`
+    CaptureSessionOpened,
+    /// `capture_session.consent_given`
+    CaptureSessionConsentGiven,
+    /// `capture_session.document_submitted`
+    CaptureSessionDocumentSubmitted,
+    /// `capture_session.selfie_submitted`
+    CaptureSessionSelfieSubmitted,
+    /// `capture_session.expired`
+    CaptureSessionExpired,
+    /// `capture_session.revoked`
+    CaptureSessionRevoked,
     /// A value this SDK does not know yet.
     Unrecognized(String),
 }
@@ -5457,6 +8020,12 @@ impl WebhookEvents {
             WebhookEvents::ReviewRecorded => "review.recorded",
             WebhookEvents::CaptureSessionFinished => "capture_session.finished",
             WebhookEvents::DocumentDecided => "document.decided",
+            WebhookEvents::CaptureSessionOpened => "capture_session.opened",
+            WebhookEvents::CaptureSessionConsentGiven => "capture_session.consent_given",
+            WebhookEvents::CaptureSessionDocumentSubmitted => "capture_session.document_submitted",
+            WebhookEvents::CaptureSessionSelfieSubmitted => "capture_session.selfie_submitted",
+            WebhookEvents::CaptureSessionExpired => "capture_session.expired",
+            WebhookEvents::CaptureSessionRevoked => "capture_session.revoked",
             WebhookEvents::Unrecognized(value) => value,
         }
     }
@@ -5472,6 +8041,12 @@ impl From<&str> for WebhookEvents {
             "review.recorded" => WebhookEvents::ReviewRecorded,
             "capture_session.finished" => WebhookEvents::CaptureSessionFinished,
             "document.decided" => WebhookEvents::DocumentDecided,
+            "capture_session.opened" => WebhookEvents::CaptureSessionOpened,
+            "capture_session.consent_given" => WebhookEvents::CaptureSessionConsentGiven,
+            "capture_session.document_submitted" => WebhookEvents::CaptureSessionDocumentSubmitted,
+            "capture_session.selfie_submitted" => WebhookEvents::CaptureSessionSelfieSubmitted,
+            "capture_session.expired" => WebhookEvents::CaptureSessionExpired,
+            "capture_session.revoked" => WebhookEvents::CaptureSessionRevoked,
             other => WebhookEvents::Unrecognized(other.to_owned()),
         }
     }
@@ -5522,6 +8097,18 @@ pub enum WebhookCreatedEvents {
     CaptureSessionFinished,
     /// `document.decided`
     DocumentDecided,
+    /// `capture_session.opened`
+    CaptureSessionOpened,
+    /// `capture_session.consent_given`
+    CaptureSessionConsentGiven,
+    /// `capture_session.document_submitted`
+    CaptureSessionDocumentSubmitted,
+    /// `capture_session.selfie_submitted`
+    CaptureSessionSelfieSubmitted,
+    /// `capture_session.expired`
+    CaptureSessionExpired,
+    /// `capture_session.revoked`
+    CaptureSessionRevoked,
     /// A value this SDK does not know yet.
     Unrecognized(String),
 }
@@ -5537,6 +8124,12 @@ impl WebhookCreatedEvents {
             WebhookCreatedEvents::ReviewRecorded => "review.recorded",
             WebhookCreatedEvents::CaptureSessionFinished => "capture_session.finished",
             WebhookCreatedEvents::DocumentDecided => "document.decided",
+            WebhookCreatedEvents::CaptureSessionOpened => "capture_session.opened",
+            WebhookCreatedEvents::CaptureSessionConsentGiven => "capture_session.consent_given",
+            WebhookCreatedEvents::CaptureSessionDocumentSubmitted => "capture_session.document_submitted",
+            WebhookCreatedEvents::CaptureSessionSelfieSubmitted => "capture_session.selfie_submitted",
+            WebhookCreatedEvents::CaptureSessionExpired => "capture_session.expired",
+            WebhookCreatedEvents::CaptureSessionRevoked => "capture_session.revoked",
             WebhookCreatedEvents::Unrecognized(value) => value,
         }
     }
@@ -5552,6 +8145,12 @@ impl From<&str> for WebhookCreatedEvents {
             "review.recorded" => WebhookCreatedEvents::ReviewRecorded,
             "capture_session.finished" => WebhookCreatedEvents::CaptureSessionFinished,
             "document.decided" => WebhookCreatedEvents::DocumentDecided,
+            "capture_session.opened" => WebhookCreatedEvents::CaptureSessionOpened,
+            "capture_session.consent_given" => WebhookCreatedEvents::CaptureSessionConsentGiven,
+            "capture_session.document_submitted" => WebhookCreatedEvents::CaptureSessionDocumentSubmitted,
+            "capture_session.selfie_submitted" => WebhookCreatedEvents::CaptureSessionSelfieSubmitted,
+            "capture_session.expired" => WebhookCreatedEvents::CaptureSessionExpired,
+            "capture_session.revoked" => WebhookCreatedEvents::CaptureSessionRevoked,
             other => WebhookCreatedEvents::Unrecognized(other.to_owned()),
         }
     }
@@ -5714,6 +8313,18 @@ pub enum WebhookEventType {
     CaptureSessionFinished,
     /// `document.decided`
     DocumentDecided,
+    /// `capture_session.opened`
+    CaptureSessionOpened,
+    /// `capture_session.consent_given`
+    CaptureSessionConsentGiven,
+    /// `capture_session.document_submitted`
+    CaptureSessionDocumentSubmitted,
+    /// `capture_session.selfie_submitted`
+    CaptureSessionSelfieSubmitted,
+    /// `capture_session.expired`
+    CaptureSessionExpired,
+    /// `capture_session.revoked`
+    CaptureSessionRevoked,
     /// A value this SDK does not know yet.
     Unrecognized(String),
 }
@@ -5729,6 +8340,12 @@ impl WebhookEventType {
             WebhookEventType::ReviewRecorded => "review.recorded",
             WebhookEventType::CaptureSessionFinished => "capture_session.finished",
             WebhookEventType::DocumentDecided => "document.decided",
+            WebhookEventType::CaptureSessionOpened => "capture_session.opened",
+            WebhookEventType::CaptureSessionConsentGiven => "capture_session.consent_given",
+            WebhookEventType::CaptureSessionDocumentSubmitted => "capture_session.document_submitted",
+            WebhookEventType::CaptureSessionSelfieSubmitted => "capture_session.selfie_submitted",
+            WebhookEventType::CaptureSessionExpired => "capture_session.expired",
+            WebhookEventType::CaptureSessionRevoked => "capture_session.revoked",
             WebhookEventType::Unrecognized(value) => value,
         }
     }
@@ -5744,6 +8361,12 @@ impl From<&str> for WebhookEventType {
             "review.recorded" => WebhookEventType::ReviewRecorded,
             "capture_session.finished" => WebhookEventType::CaptureSessionFinished,
             "document.decided" => WebhookEventType::DocumentDecided,
+            "capture_session.opened" => WebhookEventType::CaptureSessionOpened,
+            "capture_session.consent_given" => WebhookEventType::CaptureSessionConsentGiven,
+            "capture_session.document_submitted" => WebhookEventType::CaptureSessionDocumentSubmitted,
+            "capture_session.selfie_submitted" => WebhookEventType::CaptureSessionSelfieSubmitted,
+            "capture_session.expired" => WebhookEventType::CaptureSessionExpired,
+            "capture_session.revoked" => WebhookEventType::CaptureSessionRevoked,
             other => WebhookEventType::Unrecognized(other.to_owned()),
         }
     }
@@ -6041,6 +8664,70 @@ impl<'de> Deserialize<'de> for WebhookEventDataStatusMarket {
     }
 }
 
+/// The values of `WebhookEventData.step`. Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+///
+/// A value this SDK does not know yet is kept, as it came, in
+/// [`WebhookEventDataStep::Unrecognized`].
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum WebhookEventDataStep {
+    /// `consent`
+    Consent,
+    /// `document`
+    Document,
+    /// `selfie`
+    Selfie,
+    /// A value this SDK does not know yet.
+    Unrecognized(String),
+}
+
+impl WebhookEventDataStep {
+    /// The value as the API writes it.
+    pub fn as_str(&self) -> &str {
+        match self {
+            WebhookEventDataStep::Consent => "consent",
+            WebhookEventDataStep::Document => "document",
+            WebhookEventDataStep::Selfie => "selfie",
+            WebhookEventDataStep::Unrecognized(value) => value,
+        }
+    }
+}
+
+impl From<&str> for WebhookEventDataStep {
+    fn from(value: &str) -> Self {
+        match value {
+            "consent" => WebhookEventDataStep::Consent,
+            "document" => WebhookEventDataStep::Document,
+            "selfie" => WebhookEventDataStep::Selfie,
+            other => WebhookEventDataStep::Unrecognized(other.to_owned()),
+        }
+    }
+}
+
+impl From<String> for WebhookEventDataStep {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl fmt::Display for WebhookEventDataStep {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl Serialize for WebhookEventDataStep {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for WebhookEventDataStep {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        String::deserialize(deserializer).map(Self::from)
+    }
+}
+
 /// The values of `WebhookEventData.type`.
 ///
 /// A value this SDK does not know yet is kept, as it came, in
@@ -6062,6 +8749,18 @@ pub enum WebhookEventDataType {
     CaptureSessionFinished,
     /// `document.decided`
     DocumentDecided,
+    /// `capture_session.opened`
+    CaptureSessionOpened,
+    /// `capture_session.consent_given`
+    CaptureSessionConsentGiven,
+    /// `capture_session.document_submitted`
+    CaptureSessionDocumentSubmitted,
+    /// `capture_session.selfie_submitted`
+    CaptureSessionSelfieSubmitted,
+    /// `capture_session.expired`
+    CaptureSessionExpired,
+    /// `capture_session.revoked`
+    CaptureSessionRevoked,
     /// A value this SDK does not know yet.
     Unrecognized(String),
 }
@@ -6077,6 +8776,12 @@ impl WebhookEventDataType {
             WebhookEventDataType::ReviewRecorded => "review.recorded",
             WebhookEventDataType::CaptureSessionFinished => "capture_session.finished",
             WebhookEventDataType::DocumentDecided => "document.decided",
+            WebhookEventDataType::CaptureSessionOpened => "capture_session.opened",
+            WebhookEventDataType::CaptureSessionConsentGiven => "capture_session.consent_given",
+            WebhookEventDataType::CaptureSessionDocumentSubmitted => "capture_session.document_submitted",
+            WebhookEventDataType::CaptureSessionSelfieSubmitted => "capture_session.selfie_submitted",
+            WebhookEventDataType::CaptureSessionExpired => "capture_session.expired",
+            WebhookEventDataType::CaptureSessionRevoked => "capture_session.revoked",
             WebhookEventDataType::Unrecognized(value) => value,
         }
     }
@@ -6092,6 +8797,12 @@ impl From<&str> for WebhookEventDataType {
             "review.recorded" => WebhookEventDataType::ReviewRecorded,
             "capture_session.finished" => WebhookEventDataType::CaptureSessionFinished,
             "document.decided" => WebhookEventDataType::DocumentDecided,
+            "capture_session.opened" => WebhookEventDataType::CaptureSessionOpened,
+            "capture_session.consent_given" => WebhookEventDataType::CaptureSessionConsentGiven,
+            "capture_session.document_submitted" => WebhookEventDataType::CaptureSessionDocumentSubmitted,
+            "capture_session.selfie_submitted" => WebhookEventDataType::CaptureSessionSelfieSubmitted,
+            "capture_session.expired" => WebhookEventDataType::CaptureSessionExpired,
+            "capture_session.revoked" => WebhookEventDataType::CaptureSessionRevoked,
             other => WebhookEventDataType::Unrecognized(other.to_owned()),
         }
     }
@@ -6142,6 +8853,18 @@ pub enum WebhookRequestEvents {
     CaptureSessionFinished,
     /// `document.decided`
     DocumentDecided,
+    /// `capture_session.opened`
+    CaptureSessionOpened,
+    /// `capture_session.consent_given`
+    CaptureSessionConsentGiven,
+    /// `capture_session.document_submitted`
+    CaptureSessionDocumentSubmitted,
+    /// `capture_session.selfie_submitted`
+    CaptureSessionSelfieSubmitted,
+    /// `capture_session.expired`
+    CaptureSessionExpired,
+    /// `capture_session.revoked`
+    CaptureSessionRevoked,
     /// A value this SDK does not know yet.
     Unrecognized(String),
 }
@@ -6157,6 +8880,12 @@ impl WebhookRequestEvents {
             WebhookRequestEvents::ReviewRecorded => "review.recorded",
             WebhookRequestEvents::CaptureSessionFinished => "capture_session.finished",
             WebhookRequestEvents::DocumentDecided => "document.decided",
+            WebhookRequestEvents::CaptureSessionOpened => "capture_session.opened",
+            WebhookRequestEvents::CaptureSessionConsentGiven => "capture_session.consent_given",
+            WebhookRequestEvents::CaptureSessionDocumentSubmitted => "capture_session.document_submitted",
+            WebhookRequestEvents::CaptureSessionSelfieSubmitted => "capture_session.selfie_submitted",
+            WebhookRequestEvents::CaptureSessionExpired => "capture_session.expired",
+            WebhookRequestEvents::CaptureSessionRevoked => "capture_session.revoked",
             WebhookRequestEvents::Unrecognized(value) => value,
         }
     }
@@ -6172,6 +8901,12 @@ impl From<&str> for WebhookRequestEvents {
             "review.recorded" => WebhookRequestEvents::ReviewRecorded,
             "capture_session.finished" => WebhookRequestEvents::CaptureSessionFinished,
             "document.decided" => WebhookRequestEvents::DocumentDecided,
+            "capture_session.opened" => WebhookRequestEvents::CaptureSessionOpened,
+            "capture_session.consent_given" => WebhookRequestEvents::CaptureSessionConsentGiven,
+            "capture_session.document_submitted" => WebhookRequestEvents::CaptureSessionDocumentSubmitted,
+            "capture_session.selfie_submitted" => WebhookRequestEvents::CaptureSessionSelfieSubmitted,
+            "capture_session.expired" => WebhookRequestEvents::CaptureSessionExpired,
+            "capture_session.revoked" => WebhookRequestEvents::CaptureSessionRevoked,
             other => WebhookRequestEvents::Unrecognized(other.to_owned()),
         }
     }

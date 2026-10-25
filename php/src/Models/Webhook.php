@@ -16,7 +16,7 @@ final class Webhook
         public readonly ?string $disabledAt,
         /** Why the endpoint was turned off: consecutive_failures when its deliveries kept giving up, or what the person who turned it off wrote. */
         public readonly ?string $disabledReason,
-        /** @var list<'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided'> */
+        /** @var list<'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided'|'capture_session.opened'|'capture_session.consent_given'|'capture_session.document_submitted'|'capture_session.selfie_submitted'|'capture_session.expired'|'capture_session.revoked'> */
         public readonly array $events,
         /** The endpoint identifier. */
         public readonly string $id,

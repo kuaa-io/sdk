@@ -37,6 +37,26 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 
 Os corpos das escritas são structs com `new(obrigatórios…)` e um método por campo opcional; os campos opcionais não definidos não são enviados. Os campos enumerados são enums (`CaseStatus::Approved`) que guardam em `Unrecognized` um valor que esta versão ainda não conhece. As listas respondem uma `Page` (`items`, `next_cursor`, `has_more`), e o `…_iter` devolve um `Iterator` que percorre todas as páginas pelo cursor. O envio de imagens (`client.case_media().create`) vai como `multipart/form-data`, com cada arquivo num `FilePart`. Antes da chamada, `.idempotency_key(…)` torna uma escrita segura para repetir, e `.api_key(…)` usa outra chave. `Client::builder(chave)` aceita `base_url`, `timeout` (30 s por padrão) e `transport`, para usar outro cliente HTTP ou testar sem rede.
 
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`; `failed` numa consulta lida cujo processamento não terminou), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost` (com os créditos cobrados em `credits`). Acima do limite diário de consultas, ela responde `inconclusive` com `daily_limit_reached`, sem consultar o bureau; consultas demais num minuto, pela chave ou pela organização, recebem um 429 (`rate_limited`) com `Retry-After`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```rust
+use kuaa_io_sdk::{BusinessLookupRequest, BusinessLookupRequestPurpose, PersonLookupRequest, PersonLookupRequestPurpose};
+
+let lookup = client
+    .lookups()
+    .idempotency_key("consulta-0001")
+    .person(&PersonLookupRequest::new("000.000.001-91", PersonLookupRequestPurpose::Onboarding))?;
+println!("{:?} {:?}", lookup.status, lookup.reasons);
+
+let company = client
+    .lookups()
+    .idempotency_key("consulta-0002")
+    .business(&BusinessLookupRequest::new("SA.NDB.OX0/0001-25", BusinessLookupRequestPurpose::Onboarding))?;
+let again = client.lookups().get(&lookup.id)?;
+```
+
 ## Erros
 
 Uma recusa da API é `Error::Api(ApiError)`, com `status`, `code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `message`, `fields` (as mensagens de cada campo), `retry_after` (num 429 ou 503) e `request_id`. Falhas de rede são `Error::Transport`, e respostas ilegíveis, `Error::Json`.

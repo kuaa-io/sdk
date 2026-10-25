@@ -32,12 +32,16 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 |---|---|
 | `kuaa.billing` | `balance`, `statement`, `statement_iter` |
 | `kuaa.case_capture_sessions` | `create`, `list`, `revoke` |
+| `kuaa.case_chip_challenges` | `create` |
+| `kuaa.case_chip_reads` | `create` |
 | `kuaa.case_documents` | `list` |
 | `kuaa.case_media` | `create` |
 | `kuaa.case_ownership` | `create`, `get` |
 | `kuaa.case_parties` | `create` |
 | `kuaa.case_tags` | `create`, `delete`, `list` |
 | `kuaa.cases` | `create`, `decision`, `dossier`, `get`, `list`, `list_iter`, `start`, `submit`, `update` |
+| `kuaa.health` | `get` |
+| `kuaa.lookups` | `business`, `get`, `person` |
 | `kuaa.parties` | `get`, `list`, `list_iter` |
 | `kuaa.webhooks` | `create`, `delete`, `list` |
 | `kuaa.workflows` | `list` |
@@ -45,6 +49,19 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 Os objetos respondidos são imutáveis, com leitores em snake_case (`kase.external_reference`). O corpo de uma escrita é a classe de parâmetros do método (`Kuaa::CaseRequest.new(…)`) ou um `Hash` com os mesmos nomes; um campo opcional não informado fica fora do JSON. As listas paginadas respondem uma `Kuaa::Page` (`items`, `next_cursor`, `has_more?`), e os métodos `_iter` devolvem um `Enumerator` que percorre todas as páginas pelo cursor (ou recebem um bloco). O envio de imagens (`kuaa.case_media.create`) vai como `multipart/form-data`, com cada arquivo num `Kuaa::FilePart` (ou `Kuaa::FilePart.from_path`).
 
 As escritas aceitam `idempotency_key:`, e todas aceitam `api_key:` para usar outra chave numa chamada. `Kuaa::Client.new` aceita `base_url:`, `timeout:` (30 segundos) e `transport:`.
+
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`; `failed` numa consulta lida cujo processamento não terminou), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost` (com os créditos cobrados em `credits`). Acima do limite diário de consultas, ela responde `inconclusive` com `daily_limit_reached`, sem consultar o bureau; consultas demais num minuto, pela chave ou pela organização, recebem um 429 (`rate_limited`) com `Retry-After`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```ruby
+lookup = kuaa.lookups.person({ cpf: "000.000.001-91", purpose: "onboarding" }, idempotency_key: "consulta-0001")
+puts lookup.status, lookup.reasons.inspect
+puts lookup.provenance.situacao_cadastral&.source
+
+company = kuaa.lookups.business({ cnpj: "SA.NDB.OX0/0001-25", purpose: "onboarding" }, idempotency_key: "consulta-0002")
+again = kuaa.lookups.get(lookup.id)
+```
 
 ## Erros
 
@@ -59,4 +76,4 @@ puts event.type, event.data.case_id
 
 Cada entrega leva `X-Arandu-Delivery-Id`, `X-Arandu-Timestamp` e `X-Arandu-Signature: sha256=hex(HMAC-SHA256(segredo, timestamp + "." + delivery_id + "." + corpo))`. Durante uma rotação vem uma linha de assinatura por segredo ativo, e basta uma conferir. Um timestamp a mais de 5 minutos do relógio é recusado com `Kuaa::WebhookVerificationError`. Passe o corpo cru, antes de interpretar; os cabeçalhos podem vir num `Hash` ou no env do Rack. O evento é um envelope CloudEvents 1.0 e deve ser deduplicado pelo `id`, porque a entrega é pelo menos uma vez.
 
-Versão do SDK: 0.1.0 · contrato da API: 1.0.0
+Versão do SDK: 0.2.0 · contrato da API: 1.0.0

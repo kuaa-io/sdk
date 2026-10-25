@@ -61,6 +61,12 @@ class Kuaa implements Requester {
   /// The API's case_capture_sessions.
   late final caseCaptureSessions = CaseCaptureSessionsService(this);
 
+  /// The API's case_chip_challenges.
+  late final caseChipChallenges = CaseChipChallengesService(this);
+
+  /// The API's case_chip_reads.
+  late final caseChipReads = CaseChipReadsService(this);
+
   /// The API's case_documents.
   late final caseDocuments = CaseDocumentsService(this);
 
@@ -78,6 +84,12 @@ class Kuaa implements Requester {
 
   /// The API's cases.
   late final cases = CasesService(this);
+
+  /// The API's health.
+  late final health = HealthService(this);
+
+  /// The API's lookups.
+  late final lookups = LookupsService(this);
 
   /// The API's parties.
   late final parties = PartiesService(this);

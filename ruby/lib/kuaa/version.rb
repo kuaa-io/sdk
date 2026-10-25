@@ -4,7 +4,7 @@
 
 module Kuaa
   # This SDK's version.
-  VERSION = "0.1.0"
+  VERSION = "0.2.0"
 
   # The contract this SDK was generated from.
   API_VERSION = "1.0.0"

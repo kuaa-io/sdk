@@ -143,6 +143,16 @@ export interface BeneficialOwnerResolution {
   unresolved: UnresolvedOwnership[];
 }
 
+/** BusinessLookupRequest is a request body of KUAA's API. */
+export interface BusinessLookupRequest {
+  /** The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked. */
+  cnpj: string;
+  /** Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name. */
+  product?: "basic" | "plus";
+  /** Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis. */
+  purpose: "onboarding" | "fraud_prevention" | "legal_obligation" | "credit_protection" | "contract_execution";
+}
+
 /** Capture is an object of KUAA's API. */
 export interface Capture {
   /** One row per file, in the order sent. */
@@ -196,6 +206,8 @@ export interface CaptureSession {
   embed_origin?: string | null;
   expires_at: string;
   finished_at?: string | null;
+  /** The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting. */
+  handoff?: "never" | "suggest" | "require" | null;
   /** The capture session identifier. */
   id: string;
   locale: "pt-BR";
@@ -224,6 +236,8 @@ export interface CaptureSessionIssued {
   embed_origin?: string | null;
   expires_at: string;
   finished_at?: string | null;
+  /** The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting. */
+  handoff?: "never" | "suggest" | "require" | null;
   /** The capture session identifier. */
   id: string;
   locale: "pt-BR";
@@ -257,6 +271,8 @@ export interface CaptureSessionRequest {
   embed_origin?: string;
   /** How long the link opens, in minutes. Default 1440 (one day). */
   expires_in_minutes?: number;
+  /** How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control. */
+  handoff?: "never" | "suggest" | "require";
   /** The party whose capture this is. Empty is the case's primary party. */
   party_id?: string;
   /** Where the person is offered to go back to when they finish: an absolute https:// address. */
@@ -408,6 +424,95 @@ export interface Check {
   status: "running" | "completed" | "failed";
 }
 
+/** ChipChallenge is an object of KUAA's API. */
+export interface ChipChallenge {
+  /** The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back. */
+  challenge: string;
+  /** After it the challenge answers no read; it answers one read, once, before it. */
+  expires_at: string;
+  /** The challenge_id the chip read names. */
+  id: string;
+  issued_at: string;
+  /** The person whose chip is read. */
+  party_id: string;
+}
+
+/** ChipChallengeRequest is a request body of KUAA's API. */
+export interface ChipChallengeRequest {
+  /** The person whose chip is read. Empty is the case's primary party, which must be a person. */
+  party_id?: string;
+}
+
+/** Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass. */
+export interface ChipOutcomes {
+  active_auth?: "passed" | "failed" | "not_present" | "unverifiable";
+  certificate_validity?: "passed" | "failed" | "not_present" | "unverifiable";
+  chain?: "passed" | "failed" | "not_present" | "unverifiable";
+  chip_auth?: "passed" | "failed" | "not_present" | "unverifiable";
+  com_consistency?: "passed" | "failed" | "not_present" | "unverifiable";
+  data_group_hashes?: "passed" | "failed" | "not_present" | "unverifiable";
+  face_match?: "passed" | "failed" | "not_present" | "unverifiable";
+  file_structure?: "passed" | "failed" | "not_present" | "unverifiable";
+  mrz_check_digits?: "passed" | "failed" | "not_present" | "unverifiable";
+  mrz_matches_printed?: "passed" | "failed" | "not_present" | "unverifiable";
+  passive_auth?: "passed" | "failed" | "not_present" | "unverifiable";
+  revocation?: "passed" | "failed" | "not_present" | "unverifiable";
+  sod_signature?: "passed" | "failed" | "not_present" | "unverifiable";
+}
+
+/** ChipRead is an object of KUAA's API. */
+export interface ChipRead {
+  check: "document_chip";
+  /** The document_chip check the read was recorded as. */
+  check_id: string;
+  /** The chip gave a face image. */
+  dg2_present: boolean;
+  /** The evidence of the examination. */
+  evidence_id: string;
+  /** The evidence of the comparison of the face image with the latest selfie, null when none ran. */
+  face_evidence_id: string | null;
+  /** Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass. */
+  outcomes: ChipOutcomes;
+  /** The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch. */
+  reasons: Record<string, string>;
+  /** fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides. */
+  result: "pass" | "fail" | "inconclusive";
+}
+
+/** ChipReadRequest is a request body of KUAA's API. */
+export interface ChipReadRequest {
+  /** The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded. */
+  aa_signature?: string;
+  /** The Chip Authentication key the device used, when DG14 lists more than one. */
+  ca_key_id?: number;
+  /** The Chip Authentication protocol the device ran, as the object identifier DG14 names it. */
+  ca_protocol?: string;
+  /** What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device. */
+  ca_status?: "completed" | "failed";
+  /** The challenge issued for this read. It answers one read, once, before it expires. */
+  challenge_id: string;
+  /** DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded. */
+  dg1: string;
+  /** DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded. */
+  dg11?: string;
+  /** DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded. */
+  dg12?: string;
+  /** DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded. */
+  dg14?: string;
+  /** DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded. */
+  dg15?: string;
+  /** DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded. */
+  dg2?: string;
+  /** EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded. */
+  ef_card_access?: string;
+  /** EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded. */
+  ef_com?: string;
+  /** EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded. */
+  ef_sod: string;
+  /** The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered. */
+  printed_mrz?: string;
+}
+
 /** The label of the organization's own set of situations a reviewer gave the case, such as "Aguardando compliance". It never changes status, status_market or the decision. Null when the case carries none, or for a key without tag.list. */
 export interface CustomStatus {
   /** The name the organization gave it. */
@@ -551,6 +656,13 @@ export interface Evidence {
   score?: number;
 }
 
+/** FieldProvenance is an object of KUAA's API. */
+export interface FieldProvenance {
+  retrieved_at: string;
+  /** directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox. */
+  source: string;
+}
+
 /** Finding is an object of KUAA's API. */
 export interface Finding {
   code: string;
@@ -561,12 +673,133 @@ export interface Finding {
   severity: "info" | "low" | "medium" | "high" | "critical";
 }
 
+/** HealthReport is an object of KUAA's API. */
+export interface HealthReport {
+  /** Every check kind the workflows run or an engine is registered for, by kind. */
+  checks: HealthReportCheck[];
+  /** False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production. */
+  livemode: boolean;
+}
+
+/** HealthReportCheck is an object of KUAA's API. */
+export interface HealthReportCheck {
+  /** available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured. */
+  availability: "available" | "dev_only" | "unavailable";
+  /** The check kind, as a workflow task names it: face_match, liveness, document_ocr... */
+  check: string;
+}
+
 /** What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view. */
 export interface Identity {
   created_at: string;
   id: string;
   /** The names of the facts verified about it, never their values. */
   verified_attributes: string[];
+}
+
+/** Lookup is an object of KUAA's API. */
+export interface Lookup {
+  /** Present on a business lookup. */
+  company?: LookupCompany;
+  cost: LookupCost;
+  created_at: string;
+  /** The CPF or CNPJ, masked. */
+  document: string;
+  environment: "live" | "sandbox";
+  id: string;
+  kind: "person" | "business";
+  /** The LGPD article the purpose is made under, such as lgpd.art7.v. */
+  legal_basis: string;
+  livemode: boolean;
+  object: "lookup";
+  /** Present on a person lookup. */
+  person?: LookupPerson;
+  /** Where each field came from and when, by field name; a field with no value has no entry. */
+  provenance: LookupProvenance;
+  purpose: "onboarding" | "fraud_prevention" | "legal_obligation" | "credit_protection" | "contract_execution";
+  /** Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered. */
+  reasons: string[];
+  rule_version: string;
+  screening: LookupScreening;
+  sources: LookupSource[];
+  /** KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer. */
+  status: "regular" | "irregular" | "inconclusive" | "failed";
+}
+
+/** Present on a business lookup. */
+export interface LookupCompany {
+  /** The main CNAE code. */
+  cnae?: string | null;
+  data_fundacao?: string | null;
+  /** The legal nature, as described. */
+  natureza_juridica?: string | null;
+  /** The registered name. */
+  razao_social?: string | null;
+  /** ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA. */
+  situacao_cadastral?: string | null;
+}
+
+/** LookupCost is an object of KUAA's API. */
+export interface LookupCost {
+  /** What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable. */
+  bureau_charged_cents: number;
+  bureau_price_cents: number;
+  /** The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox. */
+  credits: number;
+  /** platform, organization or sandbox. */
+  token_source?: string | null;
+}
+
+/** Present on a person lookup. */
+export interface LookupPerson {
+  birth_date?: string | null;
+  /** From AML, when it was asked. */
+  death_date?: string | null;
+  /** Óbito, from Cadastro PF Plus or AML. */
+  deceased?: boolean | null;
+  /** The name the Receita Federal holds. */
+  full_name?: string | null;
+  /** A politically exposed person: an active PEP on the CGU list, or AML's PEP flag. */
+  pep: boolean;
+  /** REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO. */
+  situacao_cadastral?: string | null;
+  situacao_cadastral_date?: string | null;
+}
+
+/** Where each field came from and when, by field name; a field with no value has no entry. */
+export interface LookupProvenance {
+  birth_date?: FieldProvenance;
+  cnae?: FieldProvenance;
+  data_fundacao?: FieldProvenance;
+  death_date?: FieldProvenance;
+  deceased?: FieldProvenance;
+  full_name?: FieldProvenance;
+  natureza_juridica?: FieldProvenance;
+  pep?: FieldProvenance;
+  razao_social?: FieldProvenance;
+  situacao_cadastral?: FieldProvenance;
+  situacao_cadastral_date?: FieldProvenance;
+}
+
+/** LookupScreening is an object of KUAA's API. */
+export interface LookupScreening {
+  matches: ScreeningMatch[];
+  sources: ScreeningSource[];
+  unavailable: string[];
+}
+
+/** LookupSource is an object of KUAA's API. */
+export interface LookupSource {
+  /** Answered from the organization's same-day query, at no cost. */
+  cached: boolean;
+  consulta_uid?: string;
+  /** found, not_found... when Direct Data answered. */
+  outcome?: string;
+  /** Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. */
+  reason?: string;
+  retrieved_at?: string | null;
+  /** directd:<product>, or kuaa:sandbox:<product>. */
+  source: string;
 }
 
 /** Monitoring is an object of KUAA's API. */
@@ -725,6 +958,16 @@ export interface PartySummary {
   name: string | null;
 }
 
+/** PersonLookupRequest is a request body of KUAA's API. */
+export interface PersonLookupRequest {
+  /** The CPF, as text, with or without punctuation; its check digits are verified before anything is asked. */
+  cpf: string;
+  /** aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone. */
+  include?: "aml"[];
+  /** Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V). */
+  purpose: "onboarding" | "fraud_prevention" | "legal_obligation" | "credit_protection" | "contract_execution";
+}
+
 /** The policy version that produced the decision: its id, version and content digest. */
 export interface Policy {
   digest: string;
@@ -788,6 +1031,29 @@ export interface Screening {
   list: "sanctions" | "pep";
 }
 
+/** ScreeningMatch is an object of KUAA's API. */
+export interface ScreeningMatch {
+  /** confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone. */
+  classification: "confirmed" | "strong" | "possible";
+  list: "sanctions" | "pep";
+  match_status: string;
+  /** For a PEP: whether the five-year window after the function is still open. */
+  pep_active?: boolean;
+  score: number;
+  /** The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn. */
+  source: string;
+  /** The version of the source that was read. */
+  source_version: string;
+}
+
+/** ScreeningSource is an object of KUAA's API. */
+export interface ScreeningSource {
+  list: string;
+  retrieved_at: string;
+  source: string;
+  version: string;
+}
+
 /** StatementEntry is an object of KUAA's API. */
 export interface StatementEntry {
   /** Signed, in the smallest unit: negative leaves the wallet, positive enters it. */
@@ -846,7 +1112,7 @@ export interface Webhook {
   disabled_at: string | null;
   /** Why the endpoint was turned off: consecutive_failures when its deliveries kept giving up, or what the person who turned it off wrote. */
   disabled_reason: string | null;
-  events: ("case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided")[];
+  events: ("case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided" | "capture_session.opened" | "capture_session.consent_given" | "capture_session.document_submitted" | "capture_session.selfie_submitted" | "capture_session.expired" | "capture_session.revoked")[];
   /** The endpoint identifier. */
   id: string;
   name: string;
@@ -862,7 +1128,7 @@ export interface WebhookCreated {
   disabled_at: string | null;
   /** Why the endpoint was turned off: consecutive_failures when its deliveries kept giving up, or what the person who turned it off wrote. */
   disabled_reason: string | null;
-  events: ("case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided")[];
+  events: ("case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided" | "capture_session.opened" | "capture_session.consent_given" | "capture_session.document_submitted" | "capture_session.selfie_submitted" | "capture_session.expired" | "capture_session.revoked")[];
   /** The endpoint identifier. */
   id: string;
   name: string;
@@ -884,12 +1150,12 @@ export interface WebhookEvent {
   /** cases/ and the case id. */
   subject: string;
   time: string;
-  type: "case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided";
+  type: "case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided" | "capture_session.opened" | "capture_session.consent_given" | "capture_session.document_submitted" | "capture_session.selfie_submitted" | "capture_session.expired" | "capture_session.revoked";
 }
 
 /** WebhookEventData is an object of KUAA's API. */
 export interface WebhookEventData {
-  /** Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued. */
+  /** Present on every capture_session.* event: the hosted capture session, as answered when its link was issued. */
   capture_session_id?: string;
   case_id: string;
   /** Present on check.completed. */
@@ -921,12 +1187,14 @@ export interface WebhookEventData {
   requirement?: "identity_document" | "selfie";
   /** Present on review.recorded. */
   review_id?: string;
-  /** What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided. */
+  /** What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided. */
   status: string;
   /** Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision. */
   status_market?: "PROCESSING" | "PENDING_OCR" | "PENDING" | "APPROVED" | "REPROVED" | "BLOCKED" | "CANCELLED" | "EXPIRED";
+  /** Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished. */
+  step?: "consent" | "document" | "selfie";
   tenant_id: string;
-  type: "case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided";
+  type: "case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided" | "capture_session.opened" | "capture_session.consent_given" | "capture_session.document_submitted" | "capture_session.selfie_submitted" | "capture_session.expired" | "capture_session.revoked";
 }
 
 /** WebhookList is an object of KUAA's API. */
@@ -938,7 +1206,7 @@ export interface WebhookList {
 /** WebhookRequest is a request body of KUAA's API. */
 export interface WebhookRequest {
   /** The events the endpoint receives. */
-  events: ("case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided")[];
+  events: ("case.created" | "case.updated" | "check.completed" | "decision.recorded" | "review.recorded" | "capture_session.finished" | "document.decided" | "capture_session.opened" | "capture_session.consent_given" | "capture_session.document_submitted" | "capture_session.selfie_submitted" | "capture_session.expired" | "capture_session.revoked")[];
   /** What the tenant calls the endpoint. */
   name: string;
   /** The https:// address the deliveries go to. An address without TLS, with a user or a password, or whose host is or resolves to a loopback, private, link-local, metadata or shared (100.64.0.0/10) address is refused with 422; every attempt checks the address again as it connects. */

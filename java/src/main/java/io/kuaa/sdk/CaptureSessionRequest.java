@@ -9,10 +9,17 @@ import java.util.stream.Collectors;
 
 /** CaptureSessionRequest is a request body of KUAA's API. */
 public final class CaptureSessionRequest {
+    /** A value of {@link #getHandoff()}. */
+    public static final String HANDOFF_NEVER = "never";
+    /** A value of {@link #getHandoff()}. */
+    public static final String HANDOFF_SUGGEST = "suggest";
+    /** A value of {@link #getHandoff()}. */
+    public static final String HANDOFF_REQUIRE = "require";
 
     private final String email;
     private final String embedOrigin;
     private final Long expiresInMinutes;
+    private final String handoff;
     private final String partyId;
     private final String returnUrl;
     private final Boolean sendEmail;
@@ -21,6 +28,7 @@ public final class CaptureSessionRequest {
         this.email = builder.email;
         this.embedOrigin = builder.embedOrigin;
         this.expiresInMinutes = builder.expiresInMinutes;
+        this.handoff = builder.handoff;
         this.partyId = builder.partyId;
         this.returnUrl = builder.returnUrl;
         this.sendEmail = builder.sendEmail;
@@ -44,6 +52,11 @@ public final class CaptureSessionRequest {
     /** @return How long the link opens, in minutes. Default 1440 (one day). (null when left out) */
     public Long getExpiresInMinutes() {
         return expiresInMinutes;
+    }
+
+    /** @return How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control. (null when left out) */
+    public String getHandoff() {
+        return handoff;
     }
 
     /** @return The party whose capture this is. Empty is the case's primary party. (null when left out) */
@@ -72,6 +85,9 @@ public final class CaptureSessionRequest {
         if (expiresInMinutes != null) {
             body.put("expires_in_minutes", expiresInMinutes);
         }
+        if (handoff != null) {
+            body.put("handoff", handoff);
+        }
         if (partyId != null) {
             body.put("party_id", partyId);
         }
@@ -94,6 +110,7 @@ public final class CaptureSessionRequest {
         private String email;
         private String embedOrigin;
         private Long expiresInMinutes;
+        private String handoff;
         private String partyId;
         private String returnUrl;
         private Boolean sendEmail;
@@ -125,6 +142,15 @@ public final class CaptureSessionRequest {
          */
         public Builder expiresInMinutes(Long expiresInMinutes) {
             this.expiresInMinutes = expiresInMinutes;
+            return this;
+        }
+
+        /**
+         * @param handoff How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+         * @return this builder
+         */
+        public Builder handoff(String handoff) {
+            this.handoff = handoff;
             return this;
         }
 

@@ -25,6 +25,18 @@ public final class WebhookEvent {
     public static final String TYPE_CAPTURE_SESSION_FINISHED = "capture_session.finished";
     /** A value of {@link #getType()}. */
     public static final String TYPE_DOCUMENT_DECIDED = "document.decided";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_OPENED = "capture_session.opened";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_CONSENT_GIVEN = "capture_session.consent_given";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_DOCUMENT_SUBMITTED = "capture_session.document_submitted";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_SELFIE_SUBMITTED = "capture_session.selfie_submitted";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_EXPIRED = "capture_session.expired";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_REVOKED = "capture_session.revoked";
 
     private final WebhookEventData data;
     private final String datacontenttype;

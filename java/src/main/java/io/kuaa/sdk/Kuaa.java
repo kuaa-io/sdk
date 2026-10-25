@@ -32,7 +32,7 @@ import java.util.Objects;
  */
 public final class Kuaa {
     /** This SDK's version. */
-    public static final String VERSION = "0.1.0";
+    public static final String VERSION = "0.2.0";
 
     /** The contract this SDK was generated from. */
     public static final String API_VERSION = "1.0.0";
@@ -49,12 +49,16 @@ public final class Kuaa {
     private volatile ResponseInfo lastResponse;
     private final BillingService billing;
     private final CaseCaptureSessionsService caseCaptureSessions;
+    private final CaseChipChallengesService caseChipChallenges;
+    private final CaseChipReadsService caseChipReads;
     private final CaseDocumentsService caseDocuments;
     private final CaseMediaService caseMedia;
     private final CaseOwnershipService caseOwnership;
     private final CasePartiesService caseParties;
     private final CaseTagsService caseTags;
     private final CasesService cases;
+    private final HealthService health;
+    private final LookupsService lookups;
     private final PartiesService parties;
     private final WebhooksService webhooks;
     private final WorkflowsService workflows;
@@ -75,12 +79,16 @@ public final class Kuaa {
         this.transport = builder.transport == null ? new HttpTransport() : builder.transport;
         this.billing = new BillingService(this);
         this.caseCaptureSessions = new CaseCaptureSessionsService(this);
+        this.caseChipChallenges = new CaseChipChallengesService(this);
+        this.caseChipReads = new CaseChipReadsService(this);
         this.caseDocuments = new CaseDocumentsService(this);
         this.caseMedia = new CaseMediaService(this);
         this.caseOwnership = new CaseOwnershipService(this);
         this.caseParties = new CasePartiesService(this);
         this.caseTags = new CaseTagsService(this);
         this.cases = new CasesService(this);
+        this.health = new HealthService(this);
+        this.lookups = new LookupsService(this);
         this.parties = new PartiesService(this);
         this.webhooks = new WebhooksService(this);
         this.workflows = new WorkflowsService(this);
@@ -104,6 +112,16 @@ public final class Kuaa {
     /** @return the API's case_capture_sessions */
     public CaseCaptureSessionsService caseCaptureSessions() {
         return caseCaptureSessions;
+    }
+
+    /** @return the API's case_chip_challenges */
+    public CaseChipChallengesService caseChipChallenges() {
+        return caseChipChallenges;
+    }
+
+    /** @return the API's case_chip_reads */
+    public CaseChipReadsService caseChipReads() {
+        return caseChipReads;
     }
 
     /** @return the API's case_documents */
@@ -134,6 +152,16 @@ public final class Kuaa {
     /** @return the API's cases */
     public CasesService cases() {
         return cases;
+    }
+
+    /** @return the API's health */
+    public HealthService health() {
+        return health;
+    }
+
+    /** @return the API's lookups */
+    public LookupsService lookups() {
+        return lookups;
     }
 
     /** @return the API's parties */

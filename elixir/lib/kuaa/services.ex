@@ -110,6 +110,65 @@ defmodule Kuaa.CaseCaptureSessions do
   end
 end
 
+defmodule Kuaa.CaseChipChallenges do
+  @moduledoc "The API's case_chip_challenges."
+
+  alias Kuaa.Client
+
+  @doc """
+  Issue a chip read challenge.
+
+  Options: `:idempotency_key` and `:api_key`.
+  """
+  @spec create(
+          Client.t(),
+          String.t(),
+          Kuaa.ChipChallengeRequest.t() | keyword() | map(),
+          keyword()
+        ) ::
+          {:ok, Kuaa.ChipChallenge.t()} | {:error, Kuaa.Error.t()}
+  def create(%Client{} = client, id, params, opts \\ []) do
+    path = "/v1/cases/#{Client.segment(id)}/chip/challenges"
+
+    request = [
+      body: Kuaa.ChipChallengeRequest.to_map(params),
+      idempotency_key: opts[:idempotency_key],
+      api_key: opts[:api_key]
+    ]
+
+    with {:ok, envelope} <- Client.request(client, "POST", path, request) do
+      {:ok, Kuaa.ChipChallenge.from_map(Map.fetch!(envelope, "data"))}
+    end
+  end
+end
+
+defmodule Kuaa.CaseChipReads do
+  @moduledoc "The API's case_chip_reads."
+
+  alias Kuaa.Client
+
+  @doc """
+  Submit a passport chip read.
+
+  Options: `:idempotency_key` and `:api_key`.
+  """
+  @spec create(Client.t(), String.t(), Kuaa.ChipReadRequest.t() | keyword() | map(), keyword()) ::
+          {:ok, Kuaa.ChipRead.t()} | {:error, Kuaa.Error.t()}
+  def create(%Client{} = client, id, params, opts \\ []) do
+    path = "/v1/cases/#{Client.segment(id)}/chip/reads"
+
+    request = [
+      body: Kuaa.ChipReadRequest.to_map(params),
+      idempotency_key: opts[:idempotency_key],
+      api_key: opts[:api_key]
+    ]
+
+    with {:ok, envelope} <- Client.request(client, "POST", path, request) do
+      {:ok, Kuaa.ChipRead.from_map(Map.fetch!(envelope, "data"))}
+    end
+  end
+end
+
 defmodule Kuaa.CaseDocuments do
   @moduledoc "The API's case_documents."
 
@@ -455,6 +514,91 @@ defmodule Kuaa.Cases do
 
     with {:ok, envelope} <- Client.request(client, "PATCH", path, request) do
       {:ok, Kuaa.Case.from_map(Map.fetch!(envelope, "data"))}
+    end
+  end
+end
+
+defmodule Kuaa.Health do
+  @moduledoc "The API's health."
+
+  alias Kuaa.Client
+
+  @doc """
+  Read the availability of the engines.
+
+  Options: `:api_key`.
+  """
+  @spec get(Client.t(), keyword()) :: {:ok, Kuaa.HealthReport.t()} | {:error, Kuaa.Error.t()}
+  def get(%Client{} = client, opts \\ []) do
+    path = "/v1/health"
+    request = [api_key: opts[:api_key]]
+
+    with {:ok, envelope} <- Client.request(client, "GET", path, request) do
+      {:ok, Kuaa.HealthReport.from_map(Map.fetch!(envelope, "data"))}
+    end
+  end
+end
+
+defmodule Kuaa.Lookups do
+  @moduledoc "The API's lookups."
+
+  alias Kuaa.Client
+
+  @doc """
+  Look a CNPJ up.
+
+  Options: `:idempotency_key` and `:api_key`.
+  """
+  @spec business(Client.t(), Kuaa.BusinessLookupRequest.t() | keyword() | map(), keyword()) ::
+          {:ok, Kuaa.Lookup.t()} | {:error, Kuaa.Error.t()}
+  def business(%Client{} = client, params, opts \\ []) do
+    path = "/v1/lookups/business"
+
+    request = [
+      body: Kuaa.BusinessLookupRequest.to_map(params),
+      idempotency_key: opts[:idempotency_key],
+      api_key: opts[:api_key]
+    ]
+
+    with {:ok, envelope} <- Client.request(client, "POST", path, request) do
+      {:ok, Kuaa.Lookup.from_map(Map.fetch!(envelope, "data"))}
+    end
+  end
+
+  @doc """
+  Read a lookup.
+
+  Options: `:api_key`.
+  """
+  @spec get(Client.t(), String.t(), keyword()) ::
+          {:ok, Kuaa.Lookup.t()} | {:error, Kuaa.Error.t()}
+  def get(%Client{} = client, id, opts \\ []) do
+    path = "/v1/lookups/#{Client.segment(id)}"
+    request = [api_key: opts[:api_key]]
+
+    with {:ok, envelope} <- Client.request(client, "GET", path, request) do
+      {:ok, Kuaa.Lookup.from_map(Map.fetch!(envelope, "data"))}
+    end
+  end
+
+  @doc """
+  Look a CPF up.
+
+  Options: `:idempotency_key` and `:api_key`.
+  """
+  @spec person(Client.t(), Kuaa.PersonLookupRequest.t() | keyword() | map(), keyword()) ::
+          {:ok, Kuaa.Lookup.t()} | {:error, Kuaa.Error.t()}
+  def person(%Client{} = client, params, opts \\ []) do
+    path = "/v1/lookups/person"
+
+    request = [
+      body: Kuaa.PersonLookupRequest.to_map(params),
+      idempotency_key: opts[:idempotency_key],
+      api_key: opts[:api_key]
+    ]
+
+    with {:ok, envelope} <- Client.request(client, "POST", path, request) do
+      {:ok, Kuaa.Lookup.from_map(Map.fetch!(envelope, "data"))}
     end
   end
 end

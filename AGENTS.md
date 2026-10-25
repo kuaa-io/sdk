@@ -22,8 +22,11 @@ changing anything.
   (`ir.go`) and renders it (`emit.go`, `lang_<language>.go`). KUAA's contract
   writes its objects inline: the IR gives each shape one model, named after
   the property that holds it, with the `overrides` table in `ir.go` for the
-  few the rule names poorly. The operations come from kuaa.io's route names
-  (`api.cases.tags.store` is `case_tags.create`).
+  few the rule names poorly (`<model>.*` names every property of a model at
+  once), and `untypedMaps` for an object the contract writes without
+  properties although the API answers a map. The operations come from
+  kuaa.io's route names (`api.cases.tags.store` is `case_tags.create`; a
+  resource named alone, `api.health`, is `health.get`).
 - `openapi.json` is the document kuaa.io serves at `/docs/openapi.json`
   (`API_DOCS_ENABLED=true`). Never edit it here: change the API in kuaa.io
   (`routes/openapi.go`), boot it, and run

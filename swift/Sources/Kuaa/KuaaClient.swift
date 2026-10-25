@@ -18,6 +18,10 @@ public final class KuaaClient: Sendable {
     public let billing: BillingService
     /// The API's case_capture_sessions.
     public let caseCaptureSessions: CaseCaptureSessionsService
+    /// The API's case_chip_challenges.
+    public let caseChipChallenges: CaseChipChallengesService
+    /// The API's case_chip_reads.
+    public let caseChipReads: CaseChipReadsService
     /// The API's case_documents.
     public let caseDocuments: CaseDocumentsService
     /// The API's case_media.
@@ -30,6 +34,10 @@ public final class KuaaClient: Sendable {
     public let caseTags: CaseTagsService
     /// The API's cases.
     public let cases: CasesService
+    /// The API's health.
+    public let health: HealthService
+    /// The API's lookups.
+    public let lookups: LookupsService
     /// The API's parties.
     public let parties: PartiesService
     /// The API's webhooks.
@@ -60,12 +68,16 @@ public final class KuaaClient: Sendable {
         let requester = Requester(apiKey: apiKey, baseURL: base, timeout: timeout, transport: transport ?? Requester.urlSession, last: last)
         billing = BillingService(requester: requester)
         caseCaptureSessions = CaseCaptureSessionsService(requester: requester)
+        caseChipChallenges = CaseChipChallengesService(requester: requester)
+        caseChipReads = CaseChipReadsService(requester: requester)
         caseDocuments = CaseDocumentsService(requester: requester)
         caseMedia = CaseMediaService(requester: requester)
         caseOwnership = CaseOwnershipService(requester: requester)
         caseParties = CasePartiesService(requester: requester)
         caseTags = CaseTagsService(requester: requester)
         cases = CasesService(requester: requester)
+        health = HealthService(requester: requester)
+        lookups = LookupsService(requester: requester)
         parties = PartiesService(requester: requester)
         webhooks = WebhooksService(requester: requester)
         workflows = WorkflowsService(requester: requester)

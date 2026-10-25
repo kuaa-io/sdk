@@ -143,6 +143,16 @@ type BeneficialOwnerResolution struct {
 	Unresolved       []UnresolvedOwnership `json:"unresolved"`
 }
 
+// BusinessLookupRequest is a request body of KUAA's API.
+type BusinessLookupRequest struct {
+	// The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked.
+	Cnpj string `json:"cnpj"`
+	// Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+	Product *string `json:"product,omitempty"`
+	// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+	Purpose string `json:"purpose"`
+}
+
 // Capture is an object of KUAA's API.
 type Capture struct {
 	// One row per file, in the order sent.
@@ -218,6 +228,8 @@ type CaptureSession struct {
 	EmbedOrigin *string `json:"embed_origin,omitempty"`
 	ExpiresAt   string  `json:"expires_at"`
 	FinishedAt  *string `json:"finished_at,omitempty"`
+	// The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+	Handoff *string `json:"handoff,omitempty"`
 	// The capture session identifier.
 	ID     string `json:"id"`
 	Locale string `json:"locale"`
@@ -246,6 +258,8 @@ type CaptureSessionIssued struct {
 	EmbedOrigin *string `json:"embed_origin,omitempty"`
 	ExpiresAt   string  `json:"expires_at"`
 	FinishedAt  *string `json:"finished_at,omitempty"`
+	// The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+	Handoff *string `json:"handoff,omitempty"`
 	// The capture session identifier.
 	ID     string `json:"id"`
 	Locale string `json:"locale"`
@@ -279,6 +293,8 @@ type CaptureSessionRequest struct {
 	EmbedOrigin *string `json:"embed_origin,omitempty"`
 	// How long the link opens, in minutes. Default 1440 (one day).
 	ExpiresInMinutes *int64 `json:"expires_in_minutes,omitempty"`
+	// How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+	Handoff *string `json:"handoff,omitempty"`
 	// The party whose capture this is. Empty is the case's primary party.
 	PartyID *string `json:"party_id,omitempty"`
 	// Where the person is offered to go back to when they finish: an absolute https:// address.
@@ -430,6 +446,95 @@ type Check struct {
 	Status      string     `json:"status"`
 }
 
+// ChipChallenge is an object of KUAA's API.
+type ChipChallenge struct {
+	// The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back.
+	Challenge string `json:"challenge"`
+	// After it the challenge answers no read; it answers one read, once, before it.
+	ExpiresAt string `json:"expires_at"`
+	// The challenge_id the chip read names.
+	ID       string `json:"id"`
+	IssuedAt string `json:"issued_at"`
+	// The person whose chip is read.
+	PartyID string `json:"party_id"`
+}
+
+// ChipChallengeRequest is a request body of KUAA's API.
+type ChipChallengeRequest struct {
+	// The person whose chip is read. Empty is the case's primary party, which must be a person.
+	PartyID *string `json:"party_id,omitempty"`
+}
+
+// Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+type ChipOutcomes struct {
+	ActiveAuth          *string `json:"active_auth,omitempty"`
+	CertificateValidity *string `json:"certificate_validity,omitempty"`
+	Chain               *string `json:"chain,omitempty"`
+	ChipAuth            *string `json:"chip_auth,omitempty"`
+	ComConsistency      *string `json:"com_consistency,omitempty"`
+	DataGroupHashes     *string `json:"data_group_hashes,omitempty"`
+	FaceMatch           *string `json:"face_match,omitempty"`
+	FileStructure       *string `json:"file_structure,omitempty"`
+	MrzCheckDigits      *string `json:"mrz_check_digits,omitempty"`
+	MrzMatchesPrinted   *string `json:"mrz_matches_printed,omitempty"`
+	PassiveAuth         *string `json:"passive_auth,omitempty"`
+	Revocation          *string `json:"revocation,omitempty"`
+	SodSignature        *string `json:"sod_signature,omitempty"`
+}
+
+// ChipRead is an object of KUAA's API.
+type ChipRead struct {
+	Check string `json:"check"`
+	// The document_chip check the read was recorded as.
+	CheckID string `json:"check_id"`
+	// The chip gave a face image.
+	Dg2Present bool `json:"dg2_present"`
+	// The evidence of the examination.
+	EvidenceID string `json:"evidence_id"`
+	// The evidence of the comparison of the face image with the latest selfie, null when none ran.
+	FaceEvidenceID *string `json:"face_evidence_id"`
+	// Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+	Outcomes ChipOutcomes `json:"outcomes"`
+	// The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch.
+	Reasons map[string]string `json:"reasons"`
+	// fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+	Result string `json:"result"`
+}
+
+// ChipReadRequest is a request body of KUAA's API.
+type ChipReadRequest struct {
+	// The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+	AaSignature *string `json:"aa_signature,omitempty"`
+	// The Chip Authentication key the device used, when DG14 lists more than one.
+	CaKeyID *int64 `json:"ca_key_id,omitempty"`
+	// The Chip Authentication protocol the device ran, as the object identifier DG14 names it.
+	CaProtocol *string `json:"ca_protocol,omitempty"`
+	// What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+	CaStatus *string `json:"ca_status,omitempty"`
+	// The challenge issued for this read. It answers one read, once, before it expires.
+	ChallengeID string `json:"challenge_id"`
+	// DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded.
+	Dg1 string `json:"dg1"`
+	// DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+	Dg11 *string `json:"dg11,omitempty"`
+	// DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+	Dg12 *string `json:"dg12,omitempty"`
+	// DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded.
+	Dg14 *string `json:"dg14,omitempty"`
+	// DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+	Dg15 *string `json:"dg15,omitempty"`
+	// DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded.
+	Dg2 *string `json:"dg2,omitempty"`
+	// EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+	EfCardAccess *string `json:"ef_card_access,omitempty"`
+	// EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+	EfCom *string `json:"ef_com,omitempty"`
+	// EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded.
+	EfSod string `json:"ef_sod"`
+	// The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered.
+	PrintedMrz *string `json:"printed_mrz,omitempty"`
+}
+
 // The label of the organization's own set of situations a reviewer gave the case, such as "Aguardando compliance". It never changes status, status_market or the decision. Null when the case carries none, or for a key without tag.list.
 type CustomStatus struct {
 	// The name the organization gave it.
@@ -573,6 +678,13 @@ type Evidence struct {
 	Score *float64 `json:"score,omitempty"`
 }
 
+// FieldProvenance is an object of KUAA's API.
+type FieldProvenance struct {
+	RetrievedAt string `json:"retrieved_at"`
+	// directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox.
+	Source string `json:"source"`
+}
+
 // Finding is an object of KUAA's API.
 type Finding struct {
 	Code       string  `json:"code"`
@@ -583,12 +695,133 @@ type Finding struct {
 	Severity   string  `json:"severity"`
 }
 
+// HealthReport is an object of KUAA's API.
+type HealthReport struct {
+	// Every check kind the workflows run or an engine is registered for, by kind.
+	Checks []HealthReportCheck `json:"checks"`
+	// False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production.
+	Livemode bool `json:"livemode"`
+}
+
+// HealthReportCheck is an object of KUAA's API.
+type HealthReportCheck struct {
+	// available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+	Availability string `json:"availability"`
+	// The check kind, as a workflow task names it: face_match, liveness, document_ocr...
+	Check string `json:"check"`
+}
+
 // What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view.
 type Identity struct {
 	CreatedAt string `json:"created_at"`
 	ID        string `json:"id"`
 	// The names of the facts verified about it, never their values.
 	VerifiedAttributes []string `json:"verified_attributes"`
+}
+
+// Lookup is an object of KUAA's API.
+type Lookup struct {
+	// Present on a business lookup.
+	Company   *LookupCompany `json:"company,omitempty"`
+	Cost      LookupCost     `json:"cost"`
+	CreatedAt string         `json:"created_at"`
+	// The CPF or CNPJ, masked.
+	Document    string `json:"document"`
+	Environment string `json:"environment"`
+	ID          string `json:"id"`
+	Kind        string `json:"kind"`
+	// The LGPD article the purpose is made under, such as lgpd.art7.v.
+	LegalBasis string `json:"legal_basis"`
+	Livemode   bool   `json:"livemode"`
+	Object     string `json:"object"`
+	// Present on a person lookup.
+	Person *LookupPerson `json:"person,omitempty"`
+	// Where each field came from and when, by field name; a field with no value has no entry.
+	Provenance LookupProvenance `json:"provenance"`
+	Purpose    string           `json:"purpose"`
+	// Irregular: cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, deceased, sanctions_confirmed. Inconclusive: situacao_unknown, obito_unknown, sanctions_possible, not_found, screening_unavailable, daily_limit_reached (LOOKUP_DAILY_LIMIT; nothing was asked), bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable. Flagged only: pep, pep_possible, screening_partial (screening.unavailable names the missing sources), and aml_<reason> when AML was not answered.
+	Reasons     []string        `json:"reasons"`
+	RuleVersion string          `json:"rule_version"`
+	Screening   LookupScreening `json:"screening"`
+	Sources     []LookupSource  `json:"sources"`
+	// KUAA's conclusion under rule_version: irregular when the situação is a known one other than REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, the situação is empty or unknown, óbito could not be read, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity. failed is a lookup GET reads whose processing did not finish; retrying the same day is answered from the bureau's paid answer.
+	Status string `json:"status"`
+}
+
+// Present on a business lookup.
+type LookupCompany struct {
+	// The main CNAE code.
+	Cnae         *string `json:"cnae,omitempty"`
+	DataFundacao *string `json:"data_fundacao,omitempty"`
+	// The legal nature, as described.
+	NaturezaJuridica *string `json:"natureza_juridica,omitempty"`
+	// The registered name.
+	RazaoSocial *string `json:"razao_social,omitempty"`
+	// ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA.
+	SituacaoCadastral *string `json:"situacao_cadastral,omitempty"`
+}
+
+// LookupCost is an object of KUAA's API.
+type LookupCost struct {
+	// What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
+	BureauChargedCents int64 `json:"bureau_charged_cents"`
+	BureauPriceCents   int64 `json:"bureau_price_cents"`
+	// The KUAA credits the lookup was charged to the organization's credit wallet: one item per Direct Data query that answered and was billed (check.lookup_person, check.lookup_aml, check.lookup_business in the price list). Zero for a same-day repeat, a refusal, a transport error, the daily limit and the sandbox.
+	Credits int64 `json:"credits"`
+	// platform, organization or sandbox.
+	TokenSource *string `json:"token_source,omitempty"`
+}
+
+// Present on a person lookup.
+type LookupPerson struct {
+	BirthDate *string `json:"birth_date,omitempty"`
+	// From AML, when it was asked.
+	DeathDate *string `json:"death_date,omitempty"`
+	// Óbito, from Cadastro PF Plus or AML.
+	Deceased *bool `json:"deceased,omitempty"`
+	// The name the Receita Federal holds.
+	FullName *string `json:"full_name,omitempty"`
+	// A politically exposed person: an active PEP on the CGU list, or AML's PEP flag.
+	Pep bool `json:"pep"`
+	// REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO.
+	SituacaoCadastral     *string `json:"situacao_cadastral,omitempty"`
+	SituacaoCadastralDate *string `json:"situacao_cadastral_date,omitempty"`
+}
+
+// Where each field came from and when, by field name; a field with no value has no entry.
+type LookupProvenance struct {
+	BirthDate             *FieldProvenance `json:"birth_date,omitempty"`
+	Cnae                  *FieldProvenance `json:"cnae,omitempty"`
+	DataFundacao          *FieldProvenance `json:"data_fundacao,omitempty"`
+	DeathDate             *FieldProvenance `json:"death_date,omitempty"`
+	Deceased              *FieldProvenance `json:"deceased,omitempty"`
+	FullName              *FieldProvenance `json:"full_name,omitempty"`
+	NaturezaJuridica      *FieldProvenance `json:"natureza_juridica,omitempty"`
+	Pep                   *FieldProvenance `json:"pep,omitempty"`
+	RazaoSocial           *FieldProvenance `json:"razao_social,omitempty"`
+	SituacaoCadastral     *FieldProvenance `json:"situacao_cadastral,omitempty"`
+	SituacaoCadastralDate *FieldProvenance `json:"situacao_cadastral_date,omitempty"`
+}
+
+// LookupScreening is an object of KUAA's API.
+type LookupScreening struct {
+	Matches     []ScreeningMatch  `json:"matches"`
+	Sources     []ScreeningSource `json:"sources"`
+	Unavailable []string          `json:"unavailable"`
+}
+
+// LookupSource is an object of KUAA's API.
+type LookupSource struct {
+	// Answered from the organization's same-day query, at no cost.
+	Cached      bool    `json:"cached"`
+	ConsultaUid *string `json:"consulta_uid,omitempty"`
+	// found, not_found... when Direct Data answered.
+	Outcome *string `json:"outcome,omitempty"`
+	// Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable.
+	Reason      *string `json:"reason,omitempty"`
+	RetrievedAt *string `json:"retrieved_at,omitempty"`
+	// directd:<product>, or kuaa:sandbox:<product>.
+	Source string `json:"source"`
 }
 
 // Monitoring is an object of KUAA's API.
@@ -747,6 +980,16 @@ type PartySummary struct {
 	Name *string `json:"name"`
 }
 
+// PersonLookupRequest is a request body of KUAA's API.
+type PersonLookupRequest struct {
+	// The CPF, as text, with or without punctuation; its check digits are verified before anything is asked.
+	Cpf string `json:"cpf"`
+	// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+	Include []string `json:"include,omitempty"`
+	// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 7, IX), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+	Purpose string `json:"purpose"`
+}
+
 // The policy version that produced the decision: its id, version and content digest.
 type Policy struct {
 	Digest  string `json:"digest"`
@@ -808,6 +1051,29 @@ type Screening struct {
 	// The outcome of the screening step: hit, no_hit or possible_match. It is not a decision about a case.
 	Decision string `json:"decision"`
 	List     string `json:"list"`
+}
+
+// ScreeningMatch is an object of KUAA's API.
+type ScreeningMatch struct {
+	// confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+	Classification string `json:"classification"`
+	List           string `json:"list"`
+	MatchStatus    string `json:"match_status"`
+	// For a PEP: whether the five-year window after the function is still open.
+	PepActive *bool   `json:"pep_active,omitempty"`
+	Score     float64 `json:"score"`
+	// The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn.
+	Source string `json:"source"`
+	// The version of the source that was read.
+	SourceVersion string `json:"source_version"`
+}
+
+// ScreeningSource is an object of KUAA's API.
+type ScreeningSource struct {
+	List        string `json:"list"`
+	RetrievedAt string `json:"retrieved_at"`
+	Source      string `json:"source"`
+	Version     string `json:"version"`
 }
 
 // StatementEntry is an object of KUAA's API.
@@ -911,7 +1177,7 @@ type WebhookEvent struct {
 
 // WebhookEventData is an object of KUAA's API.
 type WebhookEventData struct {
-	// Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued.
+	// Present on every capture_session.* event: the hosted capture session, as answered when its link was issued.
 	CaptureSessionID *string `json:"capture_session_id,omitempty"`
 	CaseID           string  `json:"case_id"`
 	// Present on check.completed.
@@ -943,12 +1209,14 @@ type WebhookEventData struct {
 	Requirement *string `json:"requirement,omitempty"`
 	// Present on review.recorded.
 	ReviewID *string `json:"review_id,omitempty"`
-	// What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
+	// What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
 	Status string `json:"status"`
 	// Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision.
 	StatusMarket *string `json:"status_market,omitempty"`
-	TenantID     string  `json:"tenant_id"`
-	Type         string  `json:"type"`
+	// Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+	Step     *string `json:"step,omitempty"`
+	TenantID string  `json:"tenant_id"`
+	Type     string  `json:"type"`
 }
 
 // WebhookList is an object of KUAA's API.
@@ -1013,211 +1281,310 @@ type WorkflowVersion struct {
 
 // The values the API answers in an enumerated field.
 const (
-	AddedPartyKindPERSON                        = "PERSON"
-	AddedPartyKindBUSINESS                      = "BUSINESS"
-	BalanceModePrepaid                          = "prepaid"
-	BalanceModePostpaid                         = "postpaid"
-	BalanceModeOff                              = "off"
-	CaptureDocumentCaptureDocument              = "document"
-	CaptureDocumentCaptureSelfie                = "selfie"
-	CaptureDocumentCaptureLivenessFrame         = "liveness_frame"
-	CaptureSessionLocalePtBR                    = "pt-BR"
-	CaptureSessionStatusActive                  = "active"
-	CaptureSessionStatusFinished                = "finished"
-	CaptureSessionStatusRevoked                 = "revoked"
-	CaptureSessionStatusExpired                 = "expired"
-	CaptureSessionIssuedEmailStatusSent         = "sent"
-	CaptureSessionIssuedEmailStatusNoAddress    = "no_address"
-	CaptureSessionIssuedEmailStatusRateLimited  = "rate_limited"
-	CaptureSessionIssuedEmailStatusFailed       = "failed"
-	CaptureSessionIssuedEmailStatusUnavailable  = "unavailable"
-	CaptureSessionIssuedLocalePtBR              = "pt-BR"
-	CaptureSessionIssuedStatusActive            = "active"
-	CaptureSessionIssuedStatusFinished          = "finished"
-	CaptureSessionIssuedStatusRevoked           = "revoked"
-	CaptureSessionIssuedStatusExpired           = "expired"
-	CaseKindKYC                                 = "KYC"
-	CaseKindKYB                                 = "KYB"
-	CaseKindAGE                                 = "AGE"
-	CaseStatusOpen                              = "open"
-	CaseStatusProcessing                        = "processing"
-	CaseStatusAwaitingInput                     = "awaiting_input"
-	CaseStatusInReview                          = "in_review"
-	CaseStatusApproved                          = "approved"
-	CaseStatusRejected                          = "rejected"
-	CaseStatusCancelled                         = "cancelled"
-	CaseStatusExpired                           = "expired"
-	CaseStatusMarketPROCESSING                  = "PROCESSING"
-	CaseStatusMarketPENDINGOCR                  = "PENDING_OCR"
-	CaseStatusMarketPENDING                     = "PENDING"
-	CaseStatusMarketAPPROVED                    = "APPROVED"
-	CaseStatusMarketREPROVED                    = "REPROVED"
-	CaseStatusMarketBLOCKED                     = "BLOCKED"
-	CaseStatusMarketCANCELLED                   = "CANCELLED"
-	CaseStatusMarketEXPIRED                     = "EXPIRED"
-	CaseDecisionStatusOpen                      = "open"
-	CaseDecisionStatusProcessing                = "processing"
-	CaseDecisionStatusAwaitingInput             = "awaiting_input"
-	CaseDecisionStatusInReview                  = "in_review"
-	CaseDecisionStatusApproved                  = "approved"
-	CaseDecisionStatusRejected                  = "rejected"
-	CaseDecisionStatusCancelled                 = "cancelled"
-	CaseDecisionStatusExpired                   = "expired"
-	CaseDecisionStatusMarketPROCESSING          = "PROCESSING"
-	CaseDecisionStatusMarketPENDINGOCR          = "PENDING_OCR"
-	CaseDecisionStatusMarketPENDING             = "PENDING"
-	CaseDecisionStatusMarketAPPROVED            = "APPROVED"
-	CaseDecisionStatusMarketREPROVED            = "REPROVED"
-	CaseDecisionStatusMarketBLOCKED             = "BLOCKED"
-	CaseDecisionStatusMarketCANCELLED           = "CANCELLED"
-	CaseDecisionStatusMarketEXPIRED             = "EXPIRED"
-	CaseSummaryKindKYC                          = "KYC"
-	CaseSummaryKindKYB                          = "KYB"
-	CaseSummaryKindAGE                          = "AGE"
-	CaseSummaryStatusOpen                       = "open"
-	CaseSummaryStatusProcessing                 = "processing"
-	CaseSummaryStatusAwaitingInput              = "awaiting_input"
-	CaseSummaryStatusInReview                   = "in_review"
-	CaseSummaryStatusApproved                   = "approved"
-	CaseSummaryStatusRejected                   = "rejected"
-	CaseSummaryStatusCancelled                  = "cancelled"
-	CaseSummaryStatusExpired                    = "expired"
-	CaseSummaryStatusMarketPROCESSING           = "PROCESSING"
-	CaseSummaryStatusMarketPENDINGOCR           = "PENDING_OCR"
-	CaseSummaryStatusMarketPENDING              = "PENDING"
-	CaseSummaryStatusMarketAPPROVED             = "APPROVED"
-	CaseSummaryStatusMarketREPROVED             = "REPROVED"
-	CaseSummaryStatusMarketBLOCKED              = "BLOCKED"
-	CaseSummaryStatusMarketCANCELLED            = "CANCELLED"
-	CaseSummaryStatusMarketEXPIRED              = "EXPIRED"
-	CheckStatusRunning                          = "running"
-	CheckStatusCompleted                        = "completed"
-	CheckStatusFailed                           = "failed"
-	DecisionDecidedByKindEngine                 = "engine"
-	DecisionDecidedByKindReviewer               = "reviewer"
-	DecisionOutcomeApproved                     = "approved"
-	DecisionOutcomeRejected                     = "rejected"
-	DecisionOutcomeManualReview                 = "manual_review"
-	DecisionOutcomeRequestInformation           = "request_information"
-	DocumentCaptureDocument                     = "document"
-	DocumentCaptureSelfie                       = "selfie"
-	DocumentRequirementIdentityDocument         = "identity_document"
-	DocumentRequirementSelfie                   = "selfie"
-	DocumentDecisionDecisionApproved            = "approved"
-	DocumentDecisionDecisionRejected            = "rejected"
-	DocumentDecisionDecisionRerequested         = "rerequested"
-	DossierKindKYC                              = "KYC"
-	DossierKindKYB                              = "KYB"
-	DossierKindAGE                              = "AGE"
-	DossierStatusOpen                           = "open"
-	DossierStatusProcessing                     = "processing"
-	DossierStatusAwaitingInput                  = "awaiting_input"
-	DossierStatusInReview                       = "in_review"
-	DossierStatusApproved                       = "approved"
-	DossierStatusRejected                       = "rejected"
-	DossierStatusCancelled                      = "cancelled"
-	DossierStatusExpired                        = "expired"
-	DossierStatusMarketPROCESSING               = "PROCESSING"
-	DossierStatusMarketPENDINGOCR               = "PENDING_OCR"
-	DossierStatusMarketPENDING                  = "PENDING"
-	DossierStatusMarketAPPROVED                 = "APPROVED"
-	DossierStatusMarketREPROVED                 = "REPROVED"
-	DossierStatusMarketBLOCKED                  = "BLOCKED"
-	DossierStatusMarketCANCELLED                = "CANCELLED"
-	DossierStatusMarketEXPIRED                  = "EXPIRED"
-	DossierPartyKindPERSON                      = "PERSON"
-	DossierPartyKindBUSINESS                    = "BUSINESS"
-	EvidenceResultPass                          = "pass"
-	EvidenceResultFail                          = "fail"
-	EvidenceResultInconclusive                  = "inconclusive"
-	EvidenceResultError                         = "error"
-	FindingSeverityInfo                         = "info"
-	FindingSeverityLow                          = "low"
-	FindingSeverityMedium                       = "medium"
-	FindingSeverityHigh                         = "high"
-	FindingSeverityCritical                     = "critical"
-	PartyKindPERSON                             = "PERSON"
-	PartyKindBUSINESS                           = "BUSINESS"
-	PartyProfileKindPERSON                      = "PERSON"
-	PartyProfileKindBUSINESS                    = "BUSINESS"
-	PartyProfileCaseKindKYC                     = "KYC"
-	PartyProfileCaseKindKYB                     = "KYB"
-	PartyProfileCaseKindAGE                     = "AGE"
-	PartyProfileCaseStatusOpen                  = "open"
-	PartyProfileCaseStatusProcessing            = "processing"
-	PartyProfileCaseStatusAwaitingInput         = "awaiting_input"
-	PartyProfileCaseStatusInReview              = "in_review"
-	PartyProfileCaseStatusApproved              = "approved"
-	PartyProfileCaseStatusRejected              = "rejected"
-	PartyProfileCaseStatusCancelled             = "cancelled"
-	PartyProfileCaseStatusExpired               = "expired"
-	PartyProfileCaseStatusMarketPROCESSING      = "PROCESSING"
-	PartyProfileCaseStatusMarketPENDINGOCR      = "PENDING_OCR"
-	PartyProfileCaseStatusMarketPENDING         = "PENDING"
-	PartyProfileCaseStatusMarketAPPROVED        = "APPROVED"
-	PartyProfileCaseStatusMarketREPROVED        = "REPROVED"
-	PartyProfileCaseStatusMarketBLOCKED         = "BLOCKED"
-	PartyProfileCaseStatusMarketCANCELLED       = "CANCELLED"
-	PartyProfileCaseStatusMarketEXPIRED         = "EXPIRED"
-	PartySummaryKindPERSON                      = "PERSON"
-	PartySummaryKindBUSINESS                    = "BUSINESS"
-	RelationshipRoleLegalRepresentative         = "legal_representative"
-	RelationshipRoleAdministrator               = "administrator"
-	RelationshipRoleShareholder                 = "shareholder"
-	RelationshipRoleBeneficialOwner             = "beneficial_owner"
-	RelationshipRoleAttorney                    = "attorney"
-	ReviewActionApprove                         = "approve"
-	ReviewActionReject                          = "reject"
-	ReviewActionRequestInformation              = "request_information"
-	ReviewActionRequestRecapture                = "request_recapture"
-	ReviewActionEscalate                        = "escalate"
-	RunStatusOpen                               = "open"
-	RunStatusProcessing                         = "processing"
-	RunStatusAwaitingInput                      = "awaiting_input"
-	RunStatusInReview                           = "in_review"
-	RunStatusApproved                           = "approved"
-	RunStatusRejected                           = "rejected"
-	RunStatusCancelled                          = "cancelled"
-	RunStatusExpired                            = "expired"
-	RunStatusMarketPROCESSING                   = "PROCESSING"
-	RunStatusMarketPENDINGOCR                   = "PENDING_OCR"
-	RunStatusMarketPENDING                      = "PENDING"
-	RunStatusMarketAPPROVED                     = "APPROVED"
-	RunStatusMarketREPROVED                     = "REPROVED"
-	RunStatusMarketBLOCKED                      = "BLOCKED"
-	RunStatusMarketCANCELLED                    = "CANCELLED"
-	RunStatusMarketEXPIRED                      = "EXPIRED"
-	ScreeningListSanctions                      = "sanctions"
-	ScreeningListPep                            = "pep"
-	WebhookEventDatacontenttypeApplicationjson  = "application/json"
-	WebhookEventSpecversion10                   = "1.0"
-	WebhookEventTypeCaseCreated                 = "case.created"
-	WebhookEventTypeCaseUpdated                 = "case.updated"
-	WebhookEventTypeCheckCompleted              = "check.completed"
-	WebhookEventTypeDecisionRecorded            = "decision.recorded"
-	WebhookEventTypeReviewRecorded              = "review.recorded"
-	WebhookEventTypeCaptureSessionFinished      = "capture_session.finished"
-	WebhookEventTypeDocumentDecided             = "document.decided"
-	WebhookEventDataDecisionApproved            = "approved"
-	WebhookEventDataDecisionRejected            = "rejected"
-	WebhookEventDataDecisionRerequested         = "rerequested"
-	WebhookEventDataEnvironmentLive             = "live"
-	WebhookEventDataEnvironmentSandbox          = "sandbox"
-	WebhookEventDataRequirementIdentityDocument = "identity_document"
-	WebhookEventDataRequirementSelfie           = "selfie"
-	WebhookEventDataStatusMarketPROCESSING      = "PROCESSING"
-	WebhookEventDataStatusMarketPENDINGOCR      = "PENDING_OCR"
-	WebhookEventDataStatusMarketPENDING         = "PENDING"
-	WebhookEventDataStatusMarketAPPROVED        = "APPROVED"
-	WebhookEventDataStatusMarketREPROVED        = "REPROVED"
-	WebhookEventDataStatusMarketBLOCKED         = "BLOCKED"
-	WebhookEventDataStatusMarketCANCELLED       = "CANCELLED"
-	WebhookEventDataStatusMarketEXPIRED         = "EXPIRED"
-	WebhookEventDataTypeCaseCreated             = "case.created"
-	WebhookEventDataTypeCaseUpdated             = "case.updated"
-	WebhookEventDataTypeCheckCompleted          = "check.completed"
-	WebhookEventDataTypeDecisionRecorded        = "decision.recorded"
-	WebhookEventDataTypeReviewRecorded          = "review.recorded"
-	WebhookEventDataTypeCaptureSessionFinished  = "capture_session.finished"
-	WebhookEventDataTypeDocumentDecided         = "document.decided"
+	AddedPartyKindPERSON                                = "PERSON"
+	AddedPartyKindBUSINESS                              = "BUSINESS"
+	BalanceModePrepaid                                  = "prepaid"
+	BalanceModePostpaid                                 = "postpaid"
+	BalanceModeOff                                      = "off"
+	CaptureDocumentCaptureDocument                      = "document"
+	CaptureDocumentCaptureSelfie                        = "selfie"
+	CaptureDocumentCaptureLivenessFrame                 = "liveness_frame"
+	CaptureSessionHandoffNever                          = "never"
+	CaptureSessionHandoffSuggest                        = "suggest"
+	CaptureSessionHandoffRequire                        = "require"
+	CaptureSessionLocalePtBR                            = "pt-BR"
+	CaptureSessionStatusActive                          = "active"
+	CaptureSessionStatusFinished                        = "finished"
+	CaptureSessionStatusRevoked                         = "revoked"
+	CaptureSessionStatusExpired                         = "expired"
+	CaptureSessionIssuedEmailStatusSent                 = "sent"
+	CaptureSessionIssuedEmailStatusNoAddress            = "no_address"
+	CaptureSessionIssuedEmailStatusRateLimited          = "rate_limited"
+	CaptureSessionIssuedEmailStatusFailed               = "failed"
+	CaptureSessionIssuedEmailStatusUnavailable          = "unavailable"
+	CaptureSessionIssuedHandoffNever                    = "never"
+	CaptureSessionIssuedHandoffSuggest                  = "suggest"
+	CaptureSessionIssuedHandoffRequire                  = "require"
+	CaptureSessionIssuedLocalePtBR                      = "pt-BR"
+	CaptureSessionIssuedStatusActive                    = "active"
+	CaptureSessionIssuedStatusFinished                  = "finished"
+	CaptureSessionIssuedStatusRevoked                   = "revoked"
+	CaptureSessionIssuedStatusExpired                   = "expired"
+	CaseKindKYC                                         = "KYC"
+	CaseKindKYB                                         = "KYB"
+	CaseKindAGE                                         = "AGE"
+	CaseStatusOpen                                      = "open"
+	CaseStatusProcessing                                = "processing"
+	CaseStatusAwaitingInput                             = "awaiting_input"
+	CaseStatusInReview                                  = "in_review"
+	CaseStatusApproved                                  = "approved"
+	CaseStatusRejected                                  = "rejected"
+	CaseStatusCancelled                                 = "cancelled"
+	CaseStatusExpired                                   = "expired"
+	CaseStatusMarketPROCESSING                          = "PROCESSING"
+	CaseStatusMarketPENDINGOCR                          = "PENDING_OCR"
+	CaseStatusMarketPENDING                             = "PENDING"
+	CaseStatusMarketAPPROVED                            = "APPROVED"
+	CaseStatusMarketREPROVED                            = "REPROVED"
+	CaseStatusMarketBLOCKED                             = "BLOCKED"
+	CaseStatusMarketCANCELLED                           = "CANCELLED"
+	CaseStatusMarketEXPIRED                             = "EXPIRED"
+	CaseDecisionStatusOpen                              = "open"
+	CaseDecisionStatusProcessing                        = "processing"
+	CaseDecisionStatusAwaitingInput                     = "awaiting_input"
+	CaseDecisionStatusInReview                          = "in_review"
+	CaseDecisionStatusApproved                          = "approved"
+	CaseDecisionStatusRejected                          = "rejected"
+	CaseDecisionStatusCancelled                         = "cancelled"
+	CaseDecisionStatusExpired                           = "expired"
+	CaseDecisionStatusMarketPROCESSING                  = "PROCESSING"
+	CaseDecisionStatusMarketPENDINGOCR                  = "PENDING_OCR"
+	CaseDecisionStatusMarketPENDING                     = "PENDING"
+	CaseDecisionStatusMarketAPPROVED                    = "APPROVED"
+	CaseDecisionStatusMarketREPROVED                    = "REPROVED"
+	CaseDecisionStatusMarketBLOCKED                     = "BLOCKED"
+	CaseDecisionStatusMarketCANCELLED                   = "CANCELLED"
+	CaseDecisionStatusMarketEXPIRED                     = "EXPIRED"
+	CaseSummaryKindKYC                                  = "KYC"
+	CaseSummaryKindKYB                                  = "KYB"
+	CaseSummaryKindAGE                                  = "AGE"
+	CaseSummaryStatusOpen                               = "open"
+	CaseSummaryStatusProcessing                         = "processing"
+	CaseSummaryStatusAwaitingInput                      = "awaiting_input"
+	CaseSummaryStatusInReview                           = "in_review"
+	CaseSummaryStatusApproved                           = "approved"
+	CaseSummaryStatusRejected                           = "rejected"
+	CaseSummaryStatusCancelled                          = "cancelled"
+	CaseSummaryStatusExpired                            = "expired"
+	CaseSummaryStatusMarketPROCESSING                   = "PROCESSING"
+	CaseSummaryStatusMarketPENDINGOCR                   = "PENDING_OCR"
+	CaseSummaryStatusMarketPENDING                      = "PENDING"
+	CaseSummaryStatusMarketAPPROVED                     = "APPROVED"
+	CaseSummaryStatusMarketREPROVED                     = "REPROVED"
+	CaseSummaryStatusMarketBLOCKED                      = "BLOCKED"
+	CaseSummaryStatusMarketCANCELLED                    = "CANCELLED"
+	CaseSummaryStatusMarketEXPIRED                      = "EXPIRED"
+	CheckStatusRunning                                  = "running"
+	CheckStatusCompleted                                = "completed"
+	CheckStatusFailed                                   = "failed"
+	ChipOutcomesActiveAuthPassed                        = "passed"
+	ChipOutcomesActiveAuthFailed                        = "failed"
+	ChipOutcomesActiveAuthNotPresent                    = "not_present"
+	ChipOutcomesActiveAuthUnverifiable                  = "unverifiable"
+	ChipOutcomesCertificateValidityPassed               = "passed"
+	ChipOutcomesCertificateValidityFailed               = "failed"
+	ChipOutcomesCertificateValidityNotPresent           = "not_present"
+	ChipOutcomesCertificateValidityUnverifiable         = "unverifiable"
+	ChipOutcomesChainPassed                             = "passed"
+	ChipOutcomesChainFailed                             = "failed"
+	ChipOutcomesChainNotPresent                         = "not_present"
+	ChipOutcomesChainUnverifiable                       = "unverifiable"
+	ChipOutcomesChipAuthPassed                          = "passed"
+	ChipOutcomesChipAuthFailed                          = "failed"
+	ChipOutcomesChipAuthNotPresent                      = "not_present"
+	ChipOutcomesChipAuthUnverifiable                    = "unverifiable"
+	ChipOutcomesComConsistencyPassed                    = "passed"
+	ChipOutcomesComConsistencyFailed                    = "failed"
+	ChipOutcomesComConsistencyNotPresent                = "not_present"
+	ChipOutcomesComConsistencyUnverifiable              = "unverifiable"
+	ChipOutcomesDataGroupHashesPassed                   = "passed"
+	ChipOutcomesDataGroupHashesFailed                   = "failed"
+	ChipOutcomesDataGroupHashesNotPresent               = "not_present"
+	ChipOutcomesDataGroupHashesUnverifiable             = "unverifiable"
+	ChipOutcomesFaceMatchPassed                         = "passed"
+	ChipOutcomesFaceMatchFailed                         = "failed"
+	ChipOutcomesFaceMatchNotPresent                     = "not_present"
+	ChipOutcomesFaceMatchUnverifiable                   = "unverifiable"
+	ChipOutcomesFileStructurePassed                     = "passed"
+	ChipOutcomesFileStructureFailed                     = "failed"
+	ChipOutcomesFileStructureNotPresent                 = "not_present"
+	ChipOutcomesFileStructureUnverifiable               = "unverifiable"
+	ChipOutcomesMrzCheckDigitsPassed                    = "passed"
+	ChipOutcomesMrzCheckDigitsFailed                    = "failed"
+	ChipOutcomesMrzCheckDigitsNotPresent                = "not_present"
+	ChipOutcomesMrzCheckDigitsUnverifiable              = "unverifiable"
+	ChipOutcomesMrzMatchesPrintedPassed                 = "passed"
+	ChipOutcomesMrzMatchesPrintedFailed                 = "failed"
+	ChipOutcomesMrzMatchesPrintedNotPresent             = "not_present"
+	ChipOutcomesMrzMatchesPrintedUnverifiable           = "unverifiable"
+	ChipOutcomesPassiveAuthPassed                       = "passed"
+	ChipOutcomesPassiveAuthFailed                       = "failed"
+	ChipOutcomesPassiveAuthNotPresent                   = "not_present"
+	ChipOutcomesPassiveAuthUnverifiable                 = "unverifiable"
+	ChipOutcomesRevocationPassed                        = "passed"
+	ChipOutcomesRevocationFailed                        = "failed"
+	ChipOutcomesRevocationNotPresent                    = "not_present"
+	ChipOutcomesRevocationUnverifiable                  = "unverifiable"
+	ChipOutcomesSodSignaturePassed                      = "passed"
+	ChipOutcomesSodSignatureFailed                      = "failed"
+	ChipOutcomesSodSignatureNotPresent                  = "not_present"
+	ChipOutcomesSodSignatureUnverifiable                = "unverifiable"
+	ChipReadCheckDocumentChip                           = "document_chip"
+	ChipReadResultPass                                  = "pass"
+	ChipReadResultFail                                  = "fail"
+	ChipReadResultInconclusive                          = "inconclusive"
+	DecisionDecidedByKindEngine                         = "engine"
+	DecisionDecidedByKindReviewer                       = "reviewer"
+	DecisionOutcomeApproved                             = "approved"
+	DecisionOutcomeRejected                             = "rejected"
+	DecisionOutcomeManualReview                         = "manual_review"
+	DecisionOutcomeRequestInformation                   = "request_information"
+	DocumentCaptureDocument                             = "document"
+	DocumentCaptureSelfie                               = "selfie"
+	DocumentRequirementIdentityDocument                 = "identity_document"
+	DocumentRequirementSelfie                           = "selfie"
+	DocumentDecisionDecisionApproved                    = "approved"
+	DocumentDecisionDecisionRejected                    = "rejected"
+	DocumentDecisionDecisionRerequested                 = "rerequested"
+	DossierKindKYC                                      = "KYC"
+	DossierKindKYB                                      = "KYB"
+	DossierKindAGE                                      = "AGE"
+	DossierStatusOpen                                   = "open"
+	DossierStatusProcessing                             = "processing"
+	DossierStatusAwaitingInput                          = "awaiting_input"
+	DossierStatusInReview                               = "in_review"
+	DossierStatusApproved                               = "approved"
+	DossierStatusRejected                               = "rejected"
+	DossierStatusCancelled                              = "cancelled"
+	DossierStatusExpired                                = "expired"
+	DossierStatusMarketPROCESSING                       = "PROCESSING"
+	DossierStatusMarketPENDINGOCR                       = "PENDING_OCR"
+	DossierStatusMarketPENDING                          = "PENDING"
+	DossierStatusMarketAPPROVED                         = "APPROVED"
+	DossierStatusMarketREPROVED                         = "REPROVED"
+	DossierStatusMarketBLOCKED                          = "BLOCKED"
+	DossierStatusMarketCANCELLED                        = "CANCELLED"
+	DossierStatusMarketEXPIRED                          = "EXPIRED"
+	DossierPartyKindPERSON                              = "PERSON"
+	DossierPartyKindBUSINESS                            = "BUSINESS"
+	EvidenceResultPass                                  = "pass"
+	EvidenceResultFail                                  = "fail"
+	EvidenceResultInconclusive                          = "inconclusive"
+	EvidenceResultError                                 = "error"
+	FindingSeverityInfo                                 = "info"
+	FindingSeverityLow                                  = "low"
+	FindingSeverityMedium                               = "medium"
+	FindingSeverityHigh                                 = "high"
+	FindingSeverityCritical                             = "critical"
+	HealthReportCheckAvailabilityAvailable              = "available"
+	HealthReportCheckAvailabilityDevOnly                = "dev_only"
+	HealthReportCheckAvailabilityUnavailable            = "unavailable"
+	LookupEnvironmentLive                               = "live"
+	LookupEnvironmentSandbox                            = "sandbox"
+	LookupKindPerson                                    = "person"
+	LookupKindBusiness                                  = "business"
+	LookupObjectLookup                                  = "lookup"
+	LookupPurposeOnboarding                             = "onboarding"
+	LookupPurposeFraudPrevention                        = "fraud_prevention"
+	LookupPurposeLegalObligation                        = "legal_obligation"
+	LookupPurposeCreditProtection                       = "credit_protection"
+	LookupPurposeContractExecution                      = "contract_execution"
+	LookupStatusRegular                                 = "regular"
+	LookupStatusIrregular                               = "irregular"
+	LookupStatusInconclusive                            = "inconclusive"
+	LookupStatusFailed                                  = "failed"
+	PartyKindPERSON                                     = "PERSON"
+	PartyKindBUSINESS                                   = "BUSINESS"
+	PartyProfileKindPERSON                              = "PERSON"
+	PartyProfileKindBUSINESS                            = "BUSINESS"
+	PartyProfileCaseKindKYC                             = "KYC"
+	PartyProfileCaseKindKYB                             = "KYB"
+	PartyProfileCaseKindAGE                             = "AGE"
+	PartyProfileCaseStatusOpen                          = "open"
+	PartyProfileCaseStatusProcessing                    = "processing"
+	PartyProfileCaseStatusAwaitingInput                 = "awaiting_input"
+	PartyProfileCaseStatusInReview                      = "in_review"
+	PartyProfileCaseStatusApproved                      = "approved"
+	PartyProfileCaseStatusRejected                      = "rejected"
+	PartyProfileCaseStatusCancelled                     = "cancelled"
+	PartyProfileCaseStatusExpired                       = "expired"
+	PartyProfileCaseStatusMarketPROCESSING              = "PROCESSING"
+	PartyProfileCaseStatusMarketPENDINGOCR              = "PENDING_OCR"
+	PartyProfileCaseStatusMarketPENDING                 = "PENDING"
+	PartyProfileCaseStatusMarketAPPROVED                = "APPROVED"
+	PartyProfileCaseStatusMarketREPROVED                = "REPROVED"
+	PartyProfileCaseStatusMarketBLOCKED                 = "BLOCKED"
+	PartyProfileCaseStatusMarketCANCELLED               = "CANCELLED"
+	PartyProfileCaseStatusMarketEXPIRED                 = "EXPIRED"
+	PartySummaryKindPERSON                              = "PERSON"
+	PartySummaryKindBUSINESS                            = "BUSINESS"
+	RelationshipRoleLegalRepresentative                 = "legal_representative"
+	RelationshipRoleAdministrator                       = "administrator"
+	RelationshipRoleShareholder                         = "shareholder"
+	RelationshipRoleBeneficialOwner                     = "beneficial_owner"
+	RelationshipRoleAttorney                            = "attorney"
+	ReviewActionApprove                                 = "approve"
+	ReviewActionReject                                  = "reject"
+	ReviewActionRequestInformation                      = "request_information"
+	ReviewActionRequestRecapture                        = "request_recapture"
+	ReviewActionEscalate                                = "escalate"
+	RunStatusOpen                                       = "open"
+	RunStatusProcessing                                 = "processing"
+	RunStatusAwaitingInput                              = "awaiting_input"
+	RunStatusInReview                                   = "in_review"
+	RunStatusApproved                                   = "approved"
+	RunStatusRejected                                   = "rejected"
+	RunStatusCancelled                                  = "cancelled"
+	RunStatusExpired                                    = "expired"
+	RunStatusMarketPROCESSING                           = "PROCESSING"
+	RunStatusMarketPENDINGOCR                           = "PENDING_OCR"
+	RunStatusMarketPENDING                              = "PENDING"
+	RunStatusMarketAPPROVED                             = "APPROVED"
+	RunStatusMarketREPROVED                             = "REPROVED"
+	RunStatusMarketBLOCKED                              = "BLOCKED"
+	RunStatusMarketCANCELLED                            = "CANCELLED"
+	RunStatusMarketEXPIRED                              = "EXPIRED"
+	ScreeningListSanctions                              = "sanctions"
+	ScreeningListPep                                    = "pep"
+	ScreeningMatchClassificationConfirmed               = "confirmed"
+	ScreeningMatchClassificationStrong                  = "strong"
+	ScreeningMatchClassificationPossible                = "possible"
+	ScreeningMatchListSanctions                         = "sanctions"
+	ScreeningMatchListPep                               = "pep"
+	WebhookEventDatacontenttypeApplicationjson          = "application/json"
+	WebhookEventSpecversion10                           = "1.0"
+	WebhookEventTypeCaseCreated                         = "case.created"
+	WebhookEventTypeCaseUpdated                         = "case.updated"
+	WebhookEventTypeCheckCompleted                      = "check.completed"
+	WebhookEventTypeDecisionRecorded                    = "decision.recorded"
+	WebhookEventTypeReviewRecorded                      = "review.recorded"
+	WebhookEventTypeCaptureSessionFinished              = "capture_session.finished"
+	WebhookEventTypeDocumentDecided                     = "document.decided"
+	WebhookEventTypeCaptureSessionOpened                = "capture_session.opened"
+	WebhookEventTypeCaptureSessionConsentGiven          = "capture_session.consent_given"
+	WebhookEventTypeCaptureSessionDocumentSubmitted     = "capture_session.document_submitted"
+	WebhookEventTypeCaptureSessionSelfieSubmitted       = "capture_session.selfie_submitted"
+	WebhookEventTypeCaptureSessionExpired               = "capture_session.expired"
+	WebhookEventTypeCaptureSessionRevoked               = "capture_session.revoked"
+	WebhookEventDataDecisionApproved                    = "approved"
+	WebhookEventDataDecisionRejected                    = "rejected"
+	WebhookEventDataDecisionRerequested                 = "rerequested"
+	WebhookEventDataEnvironmentLive                     = "live"
+	WebhookEventDataEnvironmentSandbox                  = "sandbox"
+	WebhookEventDataRequirementIdentityDocument         = "identity_document"
+	WebhookEventDataRequirementSelfie                   = "selfie"
+	WebhookEventDataStatusMarketPROCESSING              = "PROCESSING"
+	WebhookEventDataStatusMarketPENDINGOCR              = "PENDING_OCR"
+	WebhookEventDataStatusMarketPENDING                 = "PENDING"
+	WebhookEventDataStatusMarketAPPROVED                = "APPROVED"
+	WebhookEventDataStatusMarketREPROVED                = "REPROVED"
+	WebhookEventDataStatusMarketBLOCKED                 = "BLOCKED"
+	WebhookEventDataStatusMarketCANCELLED               = "CANCELLED"
+	WebhookEventDataStatusMarketEXPIRED                 = "EXPIRED"
+	WebhookEventDataStepConsent                         = "consent"
+	WebhookEventDataStepDocument                        = "document"
+	WebhookEventDataStepSelfie                          = "selfie"
+	WebhookEventDataTypeCaseCreated                     = "case.created"
+	WebhookEventDataTypeCaseUpdated                     = "case.updated"
+	WebhookEventDataTypeCheckCompleted                  = "check.completed"
+	WebhookEventDataTypeDecisionRecorded                = "decision.recorded"
+	WebhookEventDataTypeReviewRecorded                  = "review.recorded"
+	WebhookEventDataTypeCaptureSessionFinished          = "capture_session.finished"
+	WebhookEventDataTypeDocumentDecided                 = "document.decided"
+	WebhookEventDataTypeCaptureSessionOpened            = "capture_session.opened"
+	WebhookEventDataTypeCaptureSessionConsentGiven      = "capture_session.consent_given"
+	WebhookEventDataTypeCaptureSessionDocumentSubmitted = "capture_session.document_submitted"
+	WebhookEventDataTypeCaptureSessionSelfieSubmitted   = "capture_session.selfie_submitted"
+	WebhookEventDataTypeCaptureSessionExpired           = "capture_session.expired"
+	WebhookEventDataTypeCaptureSessionRevoked           = "capture_session.revoked"
 )

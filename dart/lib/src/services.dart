@@ -114,6 +114,54 @@ class CaseCaptureSessionsService {
   }
 }
 
+/// The API's case_chip_challenges.
+class CaseChipChallengesService {
+  const CaseChipChallengesService(this._client);
+
+  final Requester _client;
+
+  /// Issue a chip read challenge.
+  Future<ChipChallenge> create(
+    String id,
+    ChipChallengeRequest params, {
+    String? idempotencyKey,
+    String? apiKey,
+  }) async {
+    final envelope = await _client.request(
+      'POST',
+      '/v1/cases/${Uri.encodeComponent(id)}/chip/challenges',
+      body: params.toJson(),
+      idempotencyKey: idempotencyKey,
+      apiKey: apiKey,
+    );
+    return ChipChallenge.fromJson(readObject(envelope['data']));
+  }
+}
+
+/// The API's case_chip_reads.
+class CaseChipReadsService {
+  const CaseChipReadsService(this._client);
+
+  final Requester _client;
+
+  /// Submit a passport chip read.
+  Future<ChipRead> create(
+    String id,
+    ChipReadRequest params, {
+    String? idempotencyKey,
+    String? apiKey,
+  }) async {
+    final envelope = await _client.request(
+      'POST',
+      '/v1/cases/${Uri.encodeComponent(id)}/chip/reads',
+      body: params.toJson(),
+      idempotencyKey: idempotencyKey,
+      apiKey: apiKey,
+    );
+    return ChipRead.fromJson(readObject(envelope['data']));
+  }
+}
+
 /// The API's case_documents.
 class CaseDocumentsService {
   const CaseDocumentsService(this._client);
@@ -451,6 +499,77 @@ class CasesService {
       apiKey: apiKey,
     );
     return Case.fromJson(readObject(envelope['data']));
+  }
+}
+
+/// The API's health.
+class HealthService {
+  const HealthService(this._client);
+
+  final Requester _client;
+
+  /// Read the availability of the engines.
+  Future<HealthReport> get({
+    String? apiKey,
+  }) async {
+    final envelope = await _client.request(
+      'GET',
+      '/v1/health',
+      apiKey: apiKey,
+    );
+    return HealthReport.fromJson(readObject(envelope['data']));
+  }
+}
+
+/// The API's lookups.
+class LookupsService {
+  const LookupsService(this._client);
+
+  final Requester _client;
+
+  /// Look a CNPJ up.
+  Future<Lookup> business(
+    BusinessLookupRequest params, {
+    String? idempotencyKey,
+    String? apiKey,
+  }) async {
+    final envelope = await _client.request(
+      'POST',
+      '/v1/lookups/business',
+      body: params.toJson(),
+      idempotencyKey: idempotencyKey,
+      apiKey: apiKey,
+    );
+    return Lookup.fromJson(readObject(envelope['data']));
+  }
+
+  /// Read a lookup.
+  Future<Lookup> get(
+    String id, {
+    String? apiKey,
+  }) async {
+    final envelope = await _client.request(
+      'GET',
+      '/v1/lookups/${Uri.encodeComponent(id)}',
+      apiKey: apiKey,
+    );
+    return Lookup.fromJson(readObject(envelope['data']));
+  }
+
+  /// Look a CPF up.
+  Future<Lookup> person(
+    PersonLookupRequest params, {
+    String? idempotencyKey,
+    String? apiKey,
+  }) async {
+    final envelope = await _client.request(
+      'POST',
+      '/v1/lookups/person',
+      body: params.toJson(),
+      idempotencyKey: idempotencyKey,
+      apiKey: apiKey,
+    );
+    return Lookup.fromJson(readObject(envelope['data']));
   }
 }
 

@@ -37,6 +37,12 @@ public final class WebhookEventData {
     public static final String STATUS_MARKET_CANCELLED = "CANCELLED";
     /** A value of {@link #getStatusMarket()}. */
     public static final String STATUS_MARKET_EXPIRED = "EXPIRED";
+    /** A value of {@link #getStep()}. */
+    public static final String STEP_CONSENT = "consent";
+    /** A value of {@link #getStep()}. */
+    public static final String STEP_DOCUMENT = "document";
+    /** A value of {@link #getStep()}. */
+    public static final String STEP_SELFIE = "selfie";
     /** A value of {@link #getType()}. */
     public static final String TYPE_CASE_CREATED = "case.created";
     /** A value of {@link #getType()}. */
@@ -51,6 +57,18 @@ public final class WebhookEventData {
     public static final String TYPE_CAPTURE_SESSION_FINISHED = "capture_session.finished";
     /** A value of {@link #getType()}. */
     public static final String TYPE_DOCUMENT_DECIDED = "document.decided";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_OPENED = "capture_session.opened";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_CONSENT_GIVEN = "capture_session.consent_given";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_DOCUMENT_SUBMITTED = "capture_session.document_submitted";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_SELFIE_SUBMITTED = "capture_session.selfie_submitted";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_EXPIRED = "capture_session.expired";
+    /** A value of {@link #getType()}. */
+    public static final String TYPE_CAPTURE_SESSION_REVOKED = "capture_session.revoked";
 
     private final String captureSessionId;
     private final String caseId;
@@ -71,10 +89,11 @@ public final class WebhookEventData {
     private final String reviewId;
     private final String status;
     private final String statusMarket;
+    private final String step;
     private final String tenantId;
     private final String type;
 
-    WebhookEventData(String captureSessionId, String caseId, String checkId, String decision, String decisionId, String documentDecisionId, String documentId, String documentSide, String documentType, String environment, String eventId, String finishedAt, boolean livemode, String occurredAt, String parentCaseId, String requirement, String reviewId, String status, String statusMarket, String tenantId, String type) {
+    WebhookEventData(String captureSessionId, String caseId, String checkId, String decision, String decisionId, String documentDecisionId, String documentId, String documentSide, String documentType, String environment, String eventId, String finishedAt, boolean livemode, String occurredAt, String parentCaseId, String requirement, String reviewId, String status, String statusMarket, String step, String tenantId, String type) {
         this.captureSessionId = captureSessionId;
         this.caseId = caseId;
         this.checkId = checkId;
@@ -94,6 +113,7 @@ public final class WebhookEventData {
         this.reviewId = reviewId;
         this.status = status;
         this.statusMarket = statusMarket;
+        this.step = step;
         this.tenantId = tenantId;
         this.type = type;
     }
@@ -119,11 +139,12 @@ public final class WebhookEventData {
                 Json.optional(data, "review_id", Json::asString),
                 Json.required(data, "status", Json::asString),
                 Json.optional(data, "status_market", Json::asString),
+                Json.optional(data, "step", Json::asString),
                 Json.required(data, "tenant_id", Json::asString),
                 Json.required(data, "type", Json::asString));
     }
 
-    /** @return Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued. (null when the API sends none) */
+    /** @return Present on every capture_session.* event: the hosted capture session, as answered when its link was issued. (null when the API sends none) */
     public String getCaptureSessionId() {
         return captureSessionId;
     }
@@ -208,7 +229,7 @@ public final class WebhookEventData {
         return reviewId;
     }
 
-    /** @return What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided. */
+    /** @return What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided. */
     public String getStatus() {
         return status;
     }
@@ -216,6 +237,11 @@ public final class WebhookEventData {
     /** @return Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision. (null when the API sends none) */
     public String getStatusMarket() {
         return statusMarket;
+    }
+
+    /** @return Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished. (null when the API sends none) */
+    public String getStep() {
+        return step;
     }
 
     /** @return the API's {@code tenant_id} */
@@ -230,6 +256,6 @@ public final class WebhookEventData {
 
     @Override
     public String toString() {
-        return "WebhookEventData{" + "captureSessionId=" + captureSessionId + ", caseId=" + caseId + ", checkId=" + checkId + ", decision=" + decision + ", decisionId=" + decisionId + ", documentDecisionId=" + documentDecisionId + ", documentId=" + documentId + ", documentSide=" + documentSide + ", documentType=" + documentType + ", environment=" + environment + ", eventId=" + eventId + ", finishedAt=" + finishedAt + ", livemode=" + livemode + ", occurredAt=" + occurredAt + ", parentCaseId=" + parentCaseId + ", requirement=" + requirement + ", reviewId=" + reviewId + ", status=" + status + ", statusMarket=" + statusMarket + ", tenantId=" + tenantId + ", type=" + type + "}";
+        return "WebhookEventData{" + "captureSessionId=" + captureSessionId + ", caseId=" + caseId + ", checkId=" + checkId + ", decision=" + decision + ", decisionId=" + decisionId + ", documentDecisionId=" + documentDecisionId + ", documentId=" + documentId + ", documentSide=" + documentSide + ", documentType=" + documentType + ", environment=" + environment + ", eventId=" + eventId + ", finishedAt=" + finishedAt + ", livemode=" + livemode + ", occurredAt=" + occurredAt + ", parentCaseId=" + parentCaseId + ", requirement=" + requirement + ", reviewId=" + reviewId + ", status=" + status + ", statusMarket=" + statusMarket + ", step=" + step + ", tenantId=" + tenantId + ", type=" + type + "}";
     }
 }

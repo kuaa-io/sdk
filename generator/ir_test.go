@@ -22,8 +22,8 @@ func TestTheContractReadsIntoTheIR(t *testing.T) {
 			count++
 		}
 	}
-	if count != 27 {
-		t.Errorf("%d operations, the contract has 27", count)
+	if count != 33 {
+		t.Errorf("%d operations, the contract has 33", count)
 	}
 	list := services["cases"]["list"]
 	if list == nil || !list.Paginated || list.Item != "CaseSummary" || list.ItemField != "cases" || list.Path != "/v1/cases" {
@@ -57,6 +57,23 @@ func TestTheContractReadsIntoTheIR(t *testing.T) {
 	if decision := services["cases"]["decision"]; decision.Response != "CaseDecision" {
 		t.Fatalf("cases.decision answers %s", decision.Response)
 	}
+	// The lookups stand outside any case: person and business are writes
+	// with their own bodies, and get reads one back; all three answer Lookup.
+	if person := services["lookups"]["person"]; person == nil || person.Body == nil || person.Body.Name != "PersonLookupRequest" ||
+		!person.Write || person.Response != "Lookup" || person.Path != "/v1/lookups/person" {
+		t.Fatalf("lookups.person = %+v", person)
+	}
+	if business := services["lookups"]["business"]; business == nil || business.Body == nil || business.Body.Name != "BusinessLookupRequest" ||
+		!business.Write || business.Response != "Lookup" {
+		t.Fatalf("lookups.business = %+v", business)
+	}
+	if get := services["lookups"]["get"]; get == nil || get.Body != nil || get.Write || get.Response != "Lookup" || len(get.PathParams) != 1 {
+		t.Fatalf("lookups.get = %+v", get)
+	}
+	// A resource the route names alone is read: api.health is health.get.
+	if health := services["health"]["get"]; health == nil || health.Response != "HealthReport" {
+		t.Fatalf("health.get = %+v", health)
+	}
 	models := map[string]*Model{}
 	for _, model := range ir.Models {
 		if models[model.Name] != nil {
@@ -65,7 +82,9 @@ func TestTheContractReadsIntoTheIR(t *testing.T) {
 		models[model.Name] = model
 	}
 	for _, name := range []string{"Case", "Party", "Relationship", "Run", "Dossier", "Decision", "Document", "Webhook",
-		"WebhookEvent", "WebhookEventData", "Workflow", "WorkflowVersion", "BeneficialOwner", "StatementEntry", "Balance"} {
+		"WebhookEvent", "WebhookEventData", "Workflow", "WorkflowVersion", "BeneficialOwner", "StatementEntry", "Balance",
+		"Lookup", "LookupPerson", "LookupCompany", "LookupProvenance", "FieldProvenance", "LookupScreening", "ScreeningMatch",
+		"ScreeningSource", "LookupSource", "LookupCost"} {
 		if models[name] == nil {
 			t.Fatalf("model %s missing", name)
 		}
@@ -73,6 +92,19 @@ func TestTheContractReadsIntoTheIR(t *testing.T) {
 	for name := range models {
 		if name == "Problem" || len(name) > 8 && name[len(name)-8:] == "Response" {
 			t.Fatalf("%s became a model", name)
+		}
+	}
+	// Every field of a lookup's provenance is one origin, one model.
+	for _, field := range models["LookupProvenance"].Fields {
+		if field.Type.Kind != "model" || field.Type.Model != "FieldProvenance" {
+			t.Fatalf("LookupProvenance.%s = %+v", field.Wire, field.Type)
+		}
+	}
+	// ChipRead.reasons, an object the contract leaves without properties, is
+	// the map of strings the API answers.
+	for _, field := range models["ChipRead"].Fields {
+		if field.Wire == "reasons" && (field.Type.Kind != "map" || field.Type.Items.Kind != "string") {
+			t.Fatalf("ChipRead.reasons = %+v", field.Type)
 		}
 	}
 	// The decision the case answers and the one the dossier lists are the

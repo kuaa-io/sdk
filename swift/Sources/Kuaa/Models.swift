@@ -262,6 +262,8 @@ public struct CaptureSession: Codable, Sendable, Hashable {
     public let embedOrigin: String?
     public let expiresAt: String
     public let finishedAt: String?
+    /// The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+    public let handoff: CaptureSessionHandoff?
     /// The capture session identifier.
     public let id: String
     public let locale: CaptureSessionLocale
@@ -277,13 +279,14 @@ public struct CaptureSession: Codable, Sendable, Hashable {
     public let steps: [CaptureSessionSteps]
     public let workflow: CaptureSessionWorkflow
 
-    public init(caseID: String, completedSteps: [CaptureSessionCompletedSteps], createdAt: String, expiresAt: String, id: String, locale: CaptureSessionLocale, partyID: String, reasons: [String], status: CaptureSessionStatus, steps: [CaptureSessionSteps], workflow: CaptureSessionWorkflow, embedOrigin: String? = nil, finishedAt: String? = nil, returnURL: String? = nil, revokedAt: String? = nil) {
+    public init(caseID: String, completedSteps: [CaptureSessionCompletedSteps], createdAt: String, expiresAt: String, id: String, locale: CaptureSessionLocale, partyID: String, reasons: [String], status: CaptureSessionStatus, steps: [CaptureSessionSteps], workflow: CaptureSessionWorkflow, embedOrigin: String? = nil, finishedAt: String? = nil, handoff: CaptureSessionHandoff? = nil, returnURL: String? = nil, revokedAt: String? = nil) {
         self.caseID = caseID
         self.completedSteps = completedSteps
         self.createdAt = createdAt
         self.embedOrigin = embedOrigin
         self.expiresAt = expiresAt
         self.finishedAt = finishedAt
+        self.handoff = handoff
         self.id = id
         self.locale = locale
         self.partyID = partyID
@@ -302,6 +305,7 @@ public struct CaptureSession: Codable, Sendable, Hashable {
         case embedOrigin = "embed_origin"
         case expiresAt = "expires_at"
         case finishedAt = "finished_at"
+        case handoff
         case id
         case locale
         case partyID = "party_id"
@@ -326,6 +330,8 @@ public struct CaptureSessionIssued: Codable, Sendable, Hashable {
     public let embedOrigin: String?
     public let expiresAt: String
     public let finishedAt: String?
+    /// The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+    public let handoff: CaptureSessionIssuedHandoff?
     /// The capture session identifier.
     public let id: String
     public let locale: CaptureSessionIssuedLocale
@@ -345,7 +351,7 @@ public struct CaptureSessionIssued: Codable, Sendable, Hashable {
     public let url: String?
     public let workflow: CaptureSessionWorkflow
 
-    public init(caseID: String, completedSteps: [CaptureSessionIssuedCompletedSteps], createdAt: String, emailStatus: CaptureSessionIssuedEmailStatus?, expiresAt: String, id: String, locale: CaptureSessionIssuedLocale, partyID: String, reasons: [String], status: CaptureSessionIssuedStatus, steps: [CaptureSessionIssuedSteps], token: String?, url: String?, workflow: CaptureSessionWorkflow, embedOrigin: String? = nil, finishedAt: String? = nil, returnURL: String? = nil, revokedAt: String? = nil) {
+    public init(caseID: String, completedSteps: [CaptureSessionIssuedCompletedSteps], createdAt: String, emailStatus: CaptureSessionIssuedEmailStatus?, expiresAt: String, id: String, locale: CaptureSessionIssuedLocale, partyID: String, reasons: [String], status: CaptureSessionIssuedStatus, steps: [CaptureSessionIssuedSteps], token: String?, url: String?, workflow: CaptureSessionWorkflow, embedOrigin: String? = nil, finishedAt: String? = nil, handoff: CaptureSessionIssuedHandoff? = nil, returnURL: String? = nil, revokedAt: String? = nil) {
         self.caseID = caseID
         self.completedSteps = completedSteps
         self.createdAt = createdAt
@@ -353,6 +359,7 @@ public struct CaptureSessionIssued: Codable, Sendable, Hashable {
         self.embedOrigin = embedOrigin
         self.expiresAt = expiresAt
         self.finishedAt = finishedAt
+        self.handoff = handoff
         self.id = id
         self.locale = locale
         self.partyID = partyID
@@ -374,6 +381,7 @@ public struct CaptureSessionIssued: Codable, Sendable, Hashable {
         case embedOrigin = "embed_origin"
         case expiresAt = "expires_at"
         case finishedAt = "finished_at"
+        case handoff
         case id
         case locale
         case partyID = "party_id"
@@ -605,6 +613,125 @@ public struct Check: Codable, Sendable, Hashable {
         case partyID = "party_id"
         case startedAt = "started_at"
         case status
+    }
+}
+
+/// ChipChallenge is an object of KUAA's API.
+public struct ChipChallenge: Codable, Sendable, Hashable {
+    /// The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back.
+    public let challenge: String
+    /// After it the challenge answers no read; it answers one read, once, before it.
+    public let expiresAt: String
+    /// The challenge_id the chip read names.
+    public let id: String
+    public let issuedAt: String
+    /// The person whose chip is read.
+    public let partyID: String
+
+    public init(challenge: String, expiresAt: String, id: String, issuedAt: String, partyID: String) {
+        self.challenge = challenge
+        self.expiresAt = expiresAt
+        self.id = id
+        self.issuedAt = issuedAt
+        self.partyID = partyID
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case challenge
+        case expiresAt = "expires_at"
+        case id
+        case issuedAt = "issued_at"
+        case partyID = "party_id"
+    }
+}
+
+/// Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+public struct ChipOutcomes: Codable, Sendable, Hashable {
+    public let activeAuth: ChipOutcomesActiveAuth?
+    public let certificateValidity: ChipOutcomesCertificateValidity?
+    public let chain: ChipOutcomesChain?
+    public let chipAuth: ChipOutcomesChipAuth?
+    public let comConsistency: ChipOutcomesComConsistency?
+    public let dataGroupHashes: ChipOutcomesDataGroupHashes?
+    public let faceMatch: ChipOutcomesFaceMatch?
+    public let fileStructure: ChipOutcomesFileStructure?
+    public let mrzCheckDigits: ChipOutcomesMrzCheckDigits?
+    public let mrzMatchesPrinted: ChipOutcomesMrzMatchesPrinted?
+    public let passiveAuth: ChipOutcomesPassiveAuth?
+    public let revocation: ChipOutcomesRevocation?
+    public let sodSignature: ChipOutcomesSodSignature?
+
+    public init(activeAuth: ChipOutcomesActiveAuth? = nil, certificateValidity: ChipOutcomesCertificateValidity? = nil, chain: ChipOutcomesChain? = nil, chipAuth: ChipOutcomesChipAuth? = nil, comConsistency: ChipOutcomesComConsistency? = nil, dataGroupHashes: ChipOutcomesDataGroupHashes? = nil, faceMatch: ChipOutcomesFaceMatch? = nil, fileStructure: ChipOutcomesFileStructure? = nil, mrzCheckDigits: ChipOutcomesMrzCheckDigits? = nil, mrzMatchesPrinted: ChipOutcomesMrzMatchesPrinted? = nil, passiveAuth: ChipOutcomesPassiveAuth? = nil, revocation: ChipOutcomesRevocation? = nil, sodSignature: ChipOutcomesSodSignature? = nil) {
+        self.activeAuth = activeAuth
+        self.certificateValidity = certificateValidity
+        self.chain = chain
+        self.chipAuth = chipAuth
+        self.comConsistency = comConsistency
+        self.dataGroupHashes = dataGroupHashes
+        self.faceMatch = faceMatch
+        self.fileStructure = fileStructure
+        self.mrzCheckDigits = mrzCheckDigits
+        self.mrzMatchesPrinted = mrzMatchesPrinted
+        self.passiveAuth = passiveAuth
+        self.revocation = revocation
+        self.sodSignature = sodSignature
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case activeAuth = "active_auth"
+        case certificateValidity = "certificate_validity"
+        case chain
+        case chipAuth = "chip_auth"
+        case comConsistency = "com_consistency"
+        case dataGroupHashes = "data_group_hashes"
+        case faceMatch = "face_match"
+        case fileStructure = "file_structure"
+        case mrzCheckDigits = "mrz_check_digits"
+        case mrzMatchesPrinted = "mrz_matches_printed"
+        case passiveAuth = "passive_auth"
+        case revocation
+        case sodSignature = "sod_signature"
+    }
+}
+
+/// ChipRead is an object of KUAA's API.
+public struct ChipRead: Codable, Sendable, Hashable {
+    public let check: ChipReadCheck
+    /// The document_chip check the read was recorded as.
+    public let checkID: String
+    /// The chip gave a face image.
+    public let dg2Present: Bool
+    /// The evidence of the examination.
+    public let evidenceID: String
+    /// The evidence of the comparison of the face image with the latest selfie, null when none ran.
+    public let faceEvidenceID: String?
+    /// Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+    public let outcomes: ChipOutcomes
+    /// The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch.
+    public let reasons: [String: String]
+    /// fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+    public let result: ChipReadResult
+
+    public init(check: ChipReadCheck, checkID: String, dg2Present: Bool, evidenceID: String, faceEvidenceID: String?, outcomes: ChipOutcomes, reasons: [String: String], result: ChipReadResult) {
+        self.check = check
+        self.checkID = checkID
+        self.dg2Present = dg2Present
+        self.evidenceID = evidenceID
+        self.faceEvidenceID = faceEvidenceID
+        self.outcomes = outcomes
+        self.reasons = reasons
+        self.result = result
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case check
+        case checkID = "check_id"
+        case dg2Present = "dg2_present"
+        case evidenceID = "evidence_id"
+        case faceEvidenceID = "face_evidence_id"
+        case outcomes
+        case reasons
+        case result
     }
 }
 
@@ -939,6 +1066,23 @@ public struct Evidence: Codable, Sendable, Hashable {
     }
 }
 
+/// FieldProvenance is an object of KUAA's API.
+public struct FieldProvenance: Codable, Sendable, Hashable {
+    public let retrievedAt: String
+    /// directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox.
+    public let source: String
+
+    public init(retrievedAt: String, source: String) {
+        self.retrievedAt = retrievedAt
+        self.source = source
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case retrievedAt = "retrieved_at"
+        case source
+    }
+}
+
 /// Finding is an object of KUAA's API.
 public struct Finding: Codable, Sendable, Hashable {
     public let code: String
@@ -967,6 +1111,42 @@ public struct Finding: Codable, Sendable, Hashable {
     }
 }
 
+/// HealthReport is an object of KUAA's API.
+public struct HealthReport: Codable, Sendable, Hashable {
+    /// Every check kind the workflows run or an engine is registered for, by kind.
+    public let checks: [HealthReportCheck]
+    /// False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production.
+    public let livemode: Bool
+
+    public init(checks: [HealthReportCheck], livemode: Bool) {
+        self.checks = checks
+        self.livemode = livemode
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case checks
+        case livemode
+    }
+}
+
+/// HealthReportCheck is an object of KUAA's API.
+public struct HealthReportCheck: Codable, Sendable, Hashable {
+    /// available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+    public let availability: HealthReportCheckAvailability
+    /// The check kind, as a workflow task names it: face_match, liveness, document_ocr...
+    public let check: String
+
+    public init(availability: HealthReportCheckAvailability, check: String) {
+        self.availability = availability
+        self.check = check
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case availability
+        case check
+    }
+}
+
 /// What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view.
 public struct Identity: Codable, Sendable, Hashable {
     public let createdAt: String
@@ -984,6 +1164,257 @@ public struct Identity: Codable, Sendable, Hashable {
         case createdAt = "created_at"
         case id
         case verifiedAttributes = "verified_attributes"
+    }
+}
+
+/// Lookup is an object of KUAA's API.
+public struct Lookup: Codable, Sendable, Hashable {
+    /// Present on a business lookup.
+    public let company: LookupCompany?
+    public let cost: LookupCost
+    public let createdAt: String
+    /// The CPF or CNPJ, masked.
+    public let document: String
+    public let environment: LookupEnvironment
+    public let id: String
+    public let kind: LookupKind
+    /// The LGPD article the purpose is made under, such as lgpd.art7.v.
+    public let legalBasis: String
+    public let livemode: Bool
+    public let object: LookupObject
+    /// Present on a person lookup.
+    public let person: LookupPerson?
+    /// Where each field came from and when, by field name; a field with no value has no entry.
+    public let provenance: LookupProvenance
+    public let purpose: LookupPurpose
+    /// cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_<reason> when AML was not answered.
+    public let reasons: [String]
+    public let ruleVersion: String
+    public let screening: LookupScreening
+    public let sources: [LookupSource]
+    /// KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+    public let status: LookupStatus
+
+    public init(cost: LookupCost, createdAt: String, document: String, environment: LookupEnvironment, id: String, kind: LookupKind, legalBasis: String, livemode: Bool, object: LookupObject, provenance: LookupProvenance, purpose: LookupPurpose, reasons: [String], ruleVersion: String, screening: LookupScreening, sources: [LookupSource], status: LookupStatus, company: LookupCompany? = nil, person: LookupPerson? = nil) {
+        self.company = company
+        self.cost = cost
+        self.createdAt = createdAt
+        self.document = document
+        self.environment = environment
+        self.id = id
+        self.kind = kind
+        self.legalBasis = legalBasis
+        self.livemode = livemode
+        self.object = object
+        self.person = person
+        self.provenance = provenance
+        self.purpose = purpose
+        self.reasons = reasons
+        self.ruleVersion = ruleVersion
+        self.screening = screening
+        self.sources = sources
+        self.status = status
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case company
+        case cost
+        case createdAt = "created_at"
+        case document
+        case environment
+        case id
+        case kind
+        case legalBasis = "legal_basis"
+        case livemode
+        case object
+        case person
+        case provenance
+        case purpose
+        case reasons
+        case ruleVersion = "rule_version"
+        case screening
+        case sources
+        case status
+    }
+}
+
+/// Present on a business lookup.
+public struct LookupCompany: Codable, Sendable, Hashable {
+    /// The main CNAE code.
+    public let cnae: String?
+    public let dataFundacao: String?
+    /// The legal nature, as described.
+    public let naturezaJuridica: String?
+    /// The registered name.
+    public let razaoSocial: String?
+    /// ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA.
+    public let situacaoCadastral: String?
+
+    public init(cnae: String? = nil, dataFundacao: String? = nil, naturezaJuridica: String? = nil, razaoSocial: String? = nil, situacaoCadastral: String? = nil) {
+        self.cnae = cnae
+        self.dataFundacao = dataFundacao
+        self.naturezaJuridica = naturezaJuridica
+        self.razaoSocial = razaoSocial
+        self.situacaoCadastral = situacaoCadastral
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case cnae
+        case dataFundacao = "data_fundacao"
+        case naturezaJuridica = "natureza_juridica"
+        case razaoSocial = "razao_social"
+        case situacaoCadastral = "situacao_cadastral"
+    }
+}
+
+/// LookupCost is an object of KUAA's API.
+public struct LookupCost: Codable, Sendable, Hashable {
+    /// What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
+    public let bureauChargedCents: Int
+    public let bureauPriceCents: Int
+    /// platform, organization or sandbox.
+    public let tokenSource: String?
+
+    public init(bureauChargedCents: Int, bureauPriceCents: Int, tokenSource: String? = nil) {
+        self.bureauChargedCents = bureauChargedCents
+        self.bureauPriceCents = bureauPriceCents
+        self.tokenSource = tokenSource
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case bureauChargedCents = "bureau_charged_cents"
+        case bureauPriceCents = "bureau_price_cents"
+        case tokenSource = "token_source"
+    }
+}
+
+/// Present on a person lookup.
+public struct LookupPerson: Codable, Sendable, Hashable {
+    public let birthDate: String?
+    /// From AML, when it was asked.
+    public let deathDate: String?
+    /// Óbito, from Cadastro PF Plus or AML.
+    public let deceased: Bool?
+    /// The name the Receita Federal holds.
+    public let fullName: String?
+    /// A politically exposed person: an active PEP on the CGU list, or AML's PEP flag.
+    public let pep: Bool
+    /// REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO.
+    public let situacaoCadastral: String?
+    public let situacaoCadastralDate: String?
+
+    public init(pep: Bool, birthDate: String? = nil, deathDate: String? = nil, deceased: Bool? = nil, fullName: String? = nil, situacaoCadastral: String? = nil, situacaoCadastralDate: String? = nil) {
+        self.birthDate = birthDate
+        self.deathDate = deathDate
+        self.deceased = deceased
+        self.fullName = fullName
+        self.pep = pep
+        self.situacaoCadastral = situacaoCadastral
+        self.situacaoCadastralDate = situacaoCadastralDate
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case birthDate = "birth_date"
+        case deathDate = "death_date"
+        case deceased
+        case fullName = "full_name"
+        case pep
+        case situacaoCadastral = "situacao_cadastral"
+        case situacaoCadastralDate = "situacao_cadastral_date"
+    }
+}
+
+/// Where each field came from and when, by field name; a field with no value has no entry.
+public struct LookupProvenance: Codable, Sendable, Hashable {
+    public let birthDate: FieldProvenance?
+    public let cnae: FieldProvenance?
+    public let dataFundacao: FieldProvenance?
+    public let deathDate: FieldProvenance?
+    public let deceased: FieldProvenance?
+    public let fullName: FieldProvenance?
+    public let naturezaJuridica: FieldProvenance?
+    public let pep: FieldProvenance?
+    public let razaoSocial: FieldProvenance?
+    public let situacaoCadastral: FieldProvenance?
+    public let situacaoCadastralDate: FieldProvenance?
+
+    public init(birthDate: FieldProvenance? = nil, cnae: FieldProvenance? = nil, dataFundacao: FieldProvenance? = nil, deathDate: FieldProvenance? = nil, deceased: FieldProvenance? = nil, fullName: FieldProvenance? = nil, naturezaJuridica: FieldProvenance? = nil, pep: FieldProvenance? = nil, razaoSocial: FieldProvenance? = nil, situacaoCadastral: FieldProvenance? = nil, situacaoCadastralDate: FieldProvenance? = nil) {
+        self.birthDate = birthDate
+        self.cnae = cnae
+        self.dataFundacao = dataFundacao
+        self.deathDate = deathDate
+        self.deceased = deceased
+        self.fullName = fullName
+        self.naturezaJuridica = naturezaJuridica
+        self.pep = pep
+        self.razaoSocial = razaoSocial
+        self.situacaoCadastral = situacaoCadastral
+        self.situacaoCadastralDate = situacaoCadastralDate
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case birthDate = "birth_date"
+        case cnae
+        case dataFundacao = "data_fundacao"
+        case deathDate = "death_date"
+        case deceased
+        case fullName = "full_name"
+        case naturezaJuridica = "natureza_juridica"
+        case pep
+        case razaoSocial = "razao_social"
+        case situacaoCadastral = "situacao_cadastral"
+        case situacaoCadastralDate = "situacao_cadastral_date"
+    }
+}
+
+/// LookupScreening is an object of KUAA's API.
+public struct LookupScreening: Codable, Sendable, Hashable {
+    public let matches: [ScreeningMatch]
+    public let sources: [ScreeningSource]
+    public let unavailable: [String]
+
+    public init(matches: [ScreeningMatch], sources: [ScreeningSource], unavailable: [String]) {
+        self.matches = matches
+        self.sources = sources
+        self.unavailable = unavailable
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case matches
+        case sources
+        case unavailable
+    }
+}
+
+/// LookupSource is an object of KUAA's API.
+public struct LookupSource: Codable, Sendable, Hashable {
+    /// Answered from the organization's same-day query, at no cost.
+    public let cached: Bool
+    public let consultaUid: String?
+    /// found, not_found... when Direct Data answered.
+    public let outcome: String?
+    /// Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable.
+    public let reason: String?
+    public let retrievedAt: String?
+    /// directd:<product>, or kuaa:sandbox:<product>.
+    public let source: String
+
+    public init(cached: Bool, source: String, consultaUid: String? = nil, outcome: String? = nil, reason: String? = nil, retrievedAt: String? = nil) {
+        self.cached = cached
+        self.consultaUid = consultaUid
+        self.outcome = outcome
+        self.reason = reason
+        self.retrievedAt = retrievedAt
+        self.source = source
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case cached
+        case consultaUid = "consulta_uid"
+        case outcome
+        case reason
+        case retrievedAt = "retrieved_at"
+        case source
     }
 }
 
@@ -1452,6 +1883,63 @@ public struct Screening: Codable, Sendable, Hashable {
     }
 }
 
+/// ScreeningMatch is an object of KUAA's API.
+public struct ScreeningMatch: Codable, Sendable, Hashable {
+    /// confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+    public let classification: ScreeningMatchClassification
+    public let list: ScreeningMatchList
+    public let matchStatus: String
+    /// For a PEP: whether the five-year window after the function is still open.
+    public let pepActive: Bool?
+    public let score: Double
+    /// The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn.
+    public let source: String
+    /// The version of the source that was read.
+    public let sourceVersion: String
+
+    public init(classification: ScreeningMatchClassification, list: ScreeningMatchList, matchStatus: String, score: Double, source: String, sourceVersion: String, pepActive: Bool? = nil) {
+        self.classification = classification
+        self.list = list
+        self.matchStatus = matchStatus
+        self.pepActive = pepActive
+        self.score = score
+        self.source = source
+        self.sourceVersion = sourceVersion
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case classification
+        case list
+        case matchStatus = "match_status"
+        case pepActive = "pep_active"
+        case score
+        case source
+        case sourceVersion = "source_version"
+    }
+}
+
+/// ScreeningSource is an object of KUAA's API.
+public struct ScreeningSource: Codable, Sendable, Hashable {
+    public let list: String
+    public let retrievedAt: String
+    public let source: String
+    public let version: String
+
+    public init(list: String, retrievedAt: String, source: String, version: String) {
+        self.list = list
+        self.retrievedAt = retrievedAt
+        self.source = source
+        self.version = version
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case list
+        case retrievedAt = "retrieved_at"
+        case source
+        case version
+    }
+}
+
 /// StatementEntry is an object of KUAA's API.
 public struct StatementEntry: Codable, Sendable, Hashable {
     /// Signed, in the smallest unit: negative leaves the wallet, positive enters it.
@@ -1675,7 +2163,7 @@ public struct WebhookEvent: Codable, Sendable, Hashable {
 
 /// WebhookEventData is an object of KUAA's API.
 public struct WebhookEventData: Codable, Sendable, Hashable {
-    /// Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued.
+    /// Present on every capture_session.* event: the hosted capture session, as answered when its link was issued.
     public let captureSessionID: String?
     public let caseID: String
     /// Present on check.completed.
@@ -1707,14 +2195,16 @@ public struct WebhookEventData: Codable, Sendable, Hashable {
     public let requirement: WebhookEventDataRequirement?
     /// Present on review.recorded.
     public let reviewID: String?
-    /// What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
+    /// What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
     public let status: String
     /// Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision.
     public let statusMarket: WebhookEventDataStatusMarket?
+    /// Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+    public let step: WebhookEventDataStep?
     public let tenantID: String
     public let type: WebhookEventDataType
 
-    public init(caseID: String, environment: WebhookEventDataEnvironment, eventID: String, livemode: Bool, occurredAt: String, status: String, tenantID: String, type: WebhookEventDataType, captureSessionID: String? = nil, checkID: String? = nil, decision: WebhookEventDataDecision? = nil, decisionID: String? = nil, documentDecisionID: String? = nil, documentID: String? = nil, documentSide: String? = nil, documentType: String? = nil, finishedAt: String? = nil, parentCaseID: String? = nil, requirement: WebhookEventDataRequirement? = nil, reviewID: String? = nil, statusMarket: WebhookEventDataStatusMarket? = nil) {
+    public init(caseID: String, environment: WebhookEventDataEnvironment, eventID: String, livemode: Bool, occurredAt: String, status: String, tenantID: String, type: WebhookEventDataType, captureSessionID: String? = nil, checkID: String? = nil, decision: WebhookEventDataDecision? = nil, decisionID: String? = nil, documentDecisionID: String? = nil, documentID: String? = nil, documentSide: String? = nil, documentType: String? = nil, finishedAt: String? = nil, parentCaseID: String? = nil, requirement: WebhookEventDataRequirement? = nil, reviewID: String? = nil, statusMarket: WebhookEventDataStatusMarket? = nil, step: WebhookEventDataStep? = nil) {
         self.captureSessionID = captureSessionID
         self.caseID = caseID
         self.checkID = checkID
@@ -1734,6 +2224,7 @@ public struct WebhookEventData: Codable, Sendable, Hashable {
         self.reviewID = reviewID
         self.status = status
         self.statusMarket = statusMarket
+        self.step = step
         self.tenantID = tenantID
         self.type = type
     }
@@ -1758,6 +2249,7 @@ public struct WebhookEventData: Codable, Sendable, Hashable {
         case reviewID = "review_id"
         case status
         case statusMarket = "status_market"
+        case step
         case tenantID = "tenant_id"
         case type
     }
@@ -2030,6 +2522,38 @@ public struct AddPartyRequestRelationship: Encodable, Sendable, Hashable {
     }
 }
 
+/// BusinessLookupRequest is a request body of KUAA's API.
+///
+/// The initializer takes the required fields first; an optional field left
+/// nil is not sent.
+public struct BusinessLookupRequest: Encodable, Sendable, Hashable {
+    /// The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked.
+    public var cnpj: String
+    /// Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+    public var product: BusinessLookupRequestProduct?
+    /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+    public var purpose: BusinessLookupRequestPurpose
+
+    public init(cnpj: String, purpose: BusinessLookupRequestPurpose, product: BusinessLookupRequestProduct? = nil) {
+        self.cnpj = cnpj
+        self.product = product
+        self.purpose = purpose
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case cnpj
+        case product
+        case purpose
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(cnpj, forKey: .cnpj)
+        try container.encodeIfPresent(product, forKey: .product)
+        try container.encode(purpose, forKey: .purpose)
+    }
+}
+
 /// CaptureForm is a multipart body of KUAA's API.
 ///
 /// The initializer takes the required fields first; an optional field left
@@ -2107,6 +2631,8 @@ public struct CaptureSessionRequest: Encodable, Sendable, Hashable {
     public var embedOrigin: String?
     /// How long the link opens, in minutes. Default 1440 (one day).
     public var expiresInMinutes: Int?
+    /// How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+    public var handoff: CaptureSessionRequestHandoff?
     /// The party whose capture this is. Empty is the case's primary party.
     public var partyID: String?
     /// Where the person is offered to go back to when they finish: an absolute https:// address.
@@ -2114,10 +2640,11 @@ public struct CaptureSessionRequest: Encodable, Sendable, Hashable {
     /// E-mail the link to the person, in Portuguese and under the organization's brand: to email when given, to the e-mail on file for the party otherwise. A link issued after the case was sent back is e-mailed as a request to send again, with the reason in plain words. At most 5 e-mails per case in 24 hours; data.email_status says what happened, and the link is issued either way.
     public var sendEmail: Bool?
 
-    public init(email: String? = nil, embedOrigin: String? = nil, expiresInMinutes: Int? = nil, partyID: String? = nil, returnURL: String? = nil, sendEmail: Bool? = nil) {
+    public init(email: String? = nil, embedOrigin: String? = nil, expiresInMinutes: Int? = nil, handoff: CaptureSessionRequestHandoff? = nil, partyID: String? = nil, returnURL: String? = nil, sendEmail: Bool? = nil) {
         self.email = email
         self.embedOrigin = embedOrigin
         self.expiresInMinutes = expiresInMinutes
+        self.handoff = handoff
         self.partyID = partyID
         self.returnURL = returnURL
         self.sendEmail = sendEmail
@@ -2127,6 +2654,7 @@ public struct CaptureSessionRequest: Encodable, Sendable, Hashable {
         case email
         case embedOrigin = "embed_origin"
         case expiresInMinutes = "expires_in_minutes"
+        case handoff
         case partyID = "party_id"
         case returnURL = "return_url"
         case sendEmail = "send_email"
@@ -2137,6 +2665,7 @@ public struct CaptureSessionRequest: Encodable, Sendable, Hashable {
         try container.encodeIfPresent(email, forKey: .email)
         try container.encodeIfPresent(embedOrigin, forKey: .embedOrigin)
         try container.encodeIfPresent(expiresInMinutes, forKey: .expiresInMinutes)
+        try container.encodeIfPresent(handoff, forKey: .handoff)
         try container.encodeIfPresent(partyID, forKey: .partyID)
         try container.encodeIfPresent(returnURL, forKey: .returnURL)
         try container.encodeIfPresent(sendEmail, forKey: .sendEmail)
@@ -2321,6 +2850,120 @@ public struct CaseTagsRequest: Encodable, Sendable, Hashable {
     }
 }
 
+/// ChipChallengeRequest is a request body of KUAA's API.
+///
+/// The initializer takes the required fields first; an optional field left
+/// nil is not sent.
+public struct ChipChallengeRequest: Encodable, Sendable, Hashable {
+    /// The person whose chip is read. Empty is the case's primary party, which must be a person.
+    public var partyID: String?
+
+    public init(partyID: String? = nil) {
+        self.partyID = partyID
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case partyID = "party_id"
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(partyID, forKey: .partyID)
+    }
+}
+
+/// ChipReadRequest is a request body of KUAA's API.
+///
+/// The initializer takes the required fields first; an optional field left
+/// nil is not sent.
+public struct ChipReadRequest: Encodable, Sendable, Hashable {
+    /// The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    public var aaSignature: String?
+    /// The Chip Authentication key the device used, when DG14 lists more than one.
+    public var caKeyID: Int?
+    /// The Chip Authentication protocol the device ran, as the object identifier DG14 names it.
+    public var caProtocol: String?
+    /// What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+    public var caStatus: ChipReadRequestCaStatus?
+    /// The challenge issued for this read. It answers one read, once, before it expires.
+    public var challengeID: String
+    /// DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded.
+    public var dg1: String
+    /// DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    public var dg11: String?
+    /// DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+    public var dg12: String?
+    /// DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded.
+    public var dg14: String?
+    /// DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    public var dg15: String?
+    /// DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded.
+    public var dg2: String?
+    /// EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+    public var efCardAccess: String?
+    /// EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+    public var efCom: String?
+    /// EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded.
+    public var efSod: String
+    /// The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered.
+    public var printedMrz: String?
+
+    public init(challengeID: String, dg1: String, efSod: String, aaSignature: String? = nil, caKeyID: Int? = nil, caProtocol: String? = nil, caStatus: ChipReadRequestCaStatus? = nil, dg11: String? = nil, dg12: String? = nil, dg14: String? = nil, dg15: String? = nil, dg2: String? = nil, efCardAccess: String? = nil, efCom: String? = nil, printedMrz: String? = nil) {
+        self.aaSignature = aaSignature
+        self.caKeyID = caKeyID
+        self.caProtocol = caProtocol
+        self.caStatus = caStatus
+        self.challengeID = challengeID
+        self.dg1 = dg1
+        self.dg11 = dg11
+        self.dg12 = dg12
+        self.dg14 = dg14
+        self.dg15 = dg15
+        self.dg2 = dg2
+        self.efCardAccess = efCardAccess
+        self.efCom = efCom
+        self.efSod = efSod
+        self.printedMrz = printedMrz
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case aaSignature = "aa_signature"
+        case caKeyID = "ca_key_id"
+        case caProtocol = "ca_protocol"
+        case caStatus = "ca_status"
+        case challengeID = "challenge_id"
+        case dg1
+        case dg11
+        case dg12
+        case dg14
+        case dg15
+        case dg2
+        case efCardAccess = "ef_card_access"
+        case efCom = "ef_com"
+        case efSod = "ef_sod"
+        case printedMrz = "printed_mrz"
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(aaSignature, forKey: .aaSignature)
+        try container.encodeIfPresent(caKeyID, forKey: .caKeyID)
+        try container.encodeIfPresent(caProtocol, forKey: .caProtocol)
+        try container.encodeIfPresent(caStatus, forKey: .caStatus)
+        try container.encode(challengeID, forKey: .challengeID)
+        try container.encode(dg1, forKey: .dg1)
+        try container.encodeIfPresent(dg11, forKey: .dg11)
+        try container.encodeIfPresent(dg12, forKey: .dg12)
+        try container.encodeIfPresent(dg14, forKey: .dg14)
+        try container.encodeIfPresent(dg15, forKey: .dg15)
+        try container.encodeIfPresent(dg2, forKey: .dg2)
+        try container.encodeIfPresent(efCardAccess, forKey: .efCardAccess)
+        try container.encodeIfPresent(efCom, forKey: .efCom)
+        try container.encode(efSod, forKey: .efSod)
+        try container.encodeIfPresent(printedMrz, forKey: .printedMrz)
+    }
+}
+
 /// OwnershipRequest is a request body of KUAA's API.
 ///
 /// The initializer takes the required fields first; an optional field left
@@ -2387,6 +3030,38 @@ public struct OwnershipRequestDeclaration: Encodable, Sendable, Hashable {
         try container.encodeIfPresent(relationshipID, forKey: .relationshipID)
         try container.encode(sharePercent, forKey: .sharePercent)
         try container.encodeIfPresent(toPartyID, forKey: .toPartyID)
+    }
+}
+
+/// PersonLookupRequest is a request body of KUAA's API.
+///
+/// The initializer takes the required fields first; an optional field left
+/// nil is not sent.
+public struct PersonLookupRequest: Encodable, Sendable, Hashable {
+    /// The CPF, as text, with or without punctuation; its check digits are verified before anything is asked.
+    public var cpf: String
+    /// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+    public var include: [PersonLookupRequestInclude]?
+    /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+    public var purpose: PersonLookupRequestPurpose
+
+    public init(cpf: String, purpose: PersonLookupRequestPurpose, include: [PersonLookupRequestInclude]? = nil) {
+        self.cpf = cpf
+        self.include = include
+        self.purpose = purpose
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case cpf
+        case include
+        case purpose
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(cpf, forKey: .cpf)
+        try container.encodeIfPresent(include, forKey: .include)
+        try container.encode(purpose, forKey: .purpose)
     }
 }
 
@@ -2554,6 +3229,52 @@ public struct BeneficialOwnerBasis: RawRepresentable, Codable, Sendable, Hashabl
     public static let declared = BeneficialOwnerBasis(rawValue: "declared")
 }
 
+/// The values of `BusinessLookupRequest.product`. Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct BusinessLookupRequestProduct: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `basic`
+    public static let basic = BusinessLookupRequestProduct(rawValue: "basic")
+    /// `plus`
+    public static let plus = BusinessLookupRequestProduct(rawValue: "plus")
+}
+
+/// The values of `BusinessLookupRequest.purpose`. Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct BusinessLookupRequestPurpose: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `onboarding`
+    public static let onboarding = BusinessLookupRequestPurpose(rawValue: "onboarding")
+    /// `fraud_prevention`
+    public static let fraudPrevention = BusinessLookupRequestPurpose(rawValue: "fraud_prevention")
+    /// `legal_obligation`
+    public static let legalObligation = BusinessLookupRequestPurpose(rawValue: "legal_obligation")
+    /// `credit_protection`
+    public static let creditProtection = BusinessLookupRequestPurpose(rawValue: "credit_protection")
+    /// `contract_execution`
+    public static let contractExecution = BusinessLookupRequestPurpose(rawValue: "contract_execution")
+}
+
 /// The values of `CaptureDocument.capture`.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -2682,6 +3403,28 @@ public struct CaptureSessionCompletedSteps: RawRepresentable, Codable, Sendable,
     public static let review = CaptureSessionCompletedSteps(rawValue: "review")
 }
 
+/// The values of `CaptureSession.handoff`. The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct CaptureSessionHandoff: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `never`
+    public static let never = CaptureSessionHandoff(rawValue: "never")
+    /// `suggest`
+    public static let suggest = CaptureSessionHandoff(rawValue: "suggest")
+    /// `require`
+    public static let require = CaptureSessionHandoff(rawValue: "require")
+}
+
 /// The values of `CaptureSession.locale`.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -2802,6 +3545,28 @@ public struct CaptureSessionIssuedEmailStatus: RawRepresentable, Codable, Sendab
     public static let unavailable = CaptureSessionIssuedEmailStatus(rawValue: "unavailable")
 }
 
+/// The values of `CaptureSessionIssued.handoff`. The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct CaptureSessionIssuedHandoff: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `never`
+    public static let never = CaptureSessionIssuedHandoff(rawValue: "never")
+    /// `suggest`
+    public static let suggest = CaptureSessionIssuedHandoff(rawValue: "suggest")
+    /// `require`
+    public static let require = CaptureSessionIssuedHandoff(rawValue: "require")
+}
+
 /// The values of `CaptureSessionIssued.locale`.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -2868,6 +3633,28 @@ public struct CaptureSessionIssuedSteps: RawRepresentable, Codable, Sendable, Ha
     public static let selfie = CaptureSessionIssuedSteps(rawValue: "selfie")
     /// `review`
     public static let review = CaptureSessionIssuedSteps(rawValue: "review")
+}
+
+/// The values of `CaptureSessionRequest.handoff`. How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct CaptureSessionRequestHandoff: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `never`
+    public static let never = CaptureSessionRequestHandoff(rawValue: "never")
+    /// `suggest`
+    public static let suggest = CaptureSessionRequestHandoff(rawValue: "suggest")
+    /// `require`
+    public static let require = CaptureSessionRequestHandoff(rawValue: "require")
 }
 
 /// The values of `Case.kind`.
@@ -3170,6 +3957,378 @@ public struct CheckStatus: RawRepresentable, Codable, Sendable, Hashable, Expres
     public static let failed = CheckStatus(rawValue: "failed")
 }
 
+/// The values of `ChipOutcomes.active_auth`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesActiveAuth: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesActiveAuth(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesActiveAuth(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesActiveAuth(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesActiveAuth(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.certificate_validity`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesCertificateValidity: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesCertificateValidity(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesCertificateValidity(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesCertificateValidity(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesCertificateValidity(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.chain`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesChain: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesChain(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesChain(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesChain(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesChain(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.chip_auth`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesChipAuth: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesChipAuth(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesChipAuth(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesChipAuth(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesChipAuth(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.com_consistency`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesComConsistency: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesComConsistency(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesComConsistency(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesComConsistency(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesComConsistency(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.data_group_hashes`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesDataGroupHashes: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesDataGroupHashes(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesDataGroupHashes(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesDataGroupHashes(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesDataGroupHashes(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.face_match`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesFaceMatch: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesFaceMatch(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesFaceMatch(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesFaceMatch(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesFaceMatch(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.file_structure`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesFileStructure: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesFileStructure(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesFileStructure(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesFileStructure(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesFileStructure(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.mrz_check_digits`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesMrzCheckDigits: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesMrzCheckDigits(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesMrzCheckDigits(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesMrzCheckDigits(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesMrzCheckDigits(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.mrz_matches_printed`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesMrzMatchesPrinted: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesMrzMatchesPrinted(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesMrzMatchesPrinted(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesMrzMatchesPrinted(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesMrzMatchesPrinted(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.passive_auth`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesPassiveAuth: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesPassiveAuth(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesPassiveAuth(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesPassiveAuth(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesPassiveAuth(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.revocation`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesRevocation: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesRevocation(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesRevocation(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesRevocation(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesRevocation(rawValue: "unverifiable")
+}
+
+/// The values of `ChipOutcomes.sod_signature`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipOutcomesSodSignature: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `passed`
+    public static let passed = ChipOutcomesSodSignature(rawValue: "passed")
+    /// `failed`
+    public static let failed = ChipOutcomesSodSignature(rawValue: "failed")
+    /// `not_present`
+    public static let notPresent = ChipOutcomesSodSignature(rawValue: "not_present")
+    /// `unverifiable`
+    public static let unverifiable = ChipOutcomesSodSignature(rawValue: "unverifiable")
+}
+
+/// The values of `ChipRead.check`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipReadCheck: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `document_chip`
+    public static let documentChip = ChipReadCheck(rawValue: "document_chip")
+}
+
+/// The values of `ChipRead.result`. fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipReadResult: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `pass`
+    public static let pass = ChipReadResult(rawValue: "pass")
+    /// `fail`
+    public static let fail = ChipReadResult(rawValue: "fail")
+    /// `inconclusive`
+    public static let inconclusive = ChipReadResult(rawValue: "inconclusive")
+}
+
+/// The values of `ChipReadRequest.ca_status`. What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ChipReadRequestCaStatus: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `completed`
+    public static let completed = ChipReadRequestCaStatus(rawValue: "completed")
+    /// `failed`
+    public static let failed = ChipReadRequestCaStatus(rawValue: "failed")
+}
+
 /// The values of `Decision.decided_by_kind`. engine is the policy engine; reviewer is a person.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -3432,6 +4591,134 @@ public struct FindingSeverity: RawRepresentable, Codable, Sendable, Hashable, Ex
     public static let critical = FindingSeverity(rawValue: "critical")
 }
 
+/// The values of `HealthReportCheck.availability`. available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct HealthReportCheckAvailability: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `available`
+    public static let available = HealthReportCheckAvailability(rawValue: "available")
+    /// `dev_only`
+    public static let devOnly = HealthReportCheckAvailability(rawValue: "dev_only")
+    /// `unavailable`
+    public static let unavailable = HealthReportCheckAvailability(rawValue: "unavailable")
+}
+
+/// The values of `Lookup.environment`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct LookupEnvironment: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `live`
+    public static let live = LookupEnvironment(rawValue: "live")
+    /// `sandbox`
+    public static let sandbox = LookupEnvironment(rawValue: "sandbox")
+}
+
+/// The values of `Lookup.kind`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct LookupKind: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `person`
+    public static let person = LookupKind(rawValue: "person")
+    /// `business`
+    public static let business = LookupKind(rawValue: "business")
+}
+
+/// The values of `Lookup.object`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct LookupObject: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `lookup`
+    public static let lookup = LookupObject(rawValue: "lookup")
+}
+
+/// The values of `Lookup.purpose`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct LookupPurpose: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `onboarding`
+    public static let onboarding = LookupPurpose(rawValue: "onboarding")
+    /// `fraud_prevention`
+    public static let fraudPrevention = LookupPurpose(rawValue: "fraud_prevention")
+    /// `legal_obligation`
+    public static let legalObligation = LookupPurpose(rawValue: "legal_obligation")
+    /// `credit_protection`
+    public static let creditProtection = LookupPurpose(rawValue: "credit_protection")
+    /// `contract_execution`
+    public static let contractExecution = LookupPurpose(rawValue: "contract_execution")
+}
+
+/// The values of `Lookup.status`. KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct LookupStatus: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `regular`
+    public static let regular = LookupStatus(rawValue: "regular")
+    /// `irregular`
+    public static let irregular = LookupStatus(rawValue: "irregular")
+    /// `inconclusive`
+    public static let inconclusive = LookupStatus(rawValue: "inconclusive")
+}
+
 /// The values of `OwnershipRequestDeclaration.basis`. What the share rests on. Empty is declaration.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -3600,6 +4887,50 @@ public struct PartySummaryKind: RawRepresentable, Codable, Sendable, Hashable, E
     public static let business = PartySummaryKind(rawValue: "BUSINESS")
 }
 
+/// The values of `PersonLookupRequest.include`. aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct PersonLookupRequestInclude: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `aml`
+    public static let aml = PersonLookupRequestInclude(rawValue: "aml")
+}
+
+/// The values of `PersonLookupRequest.purpose`. Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct PersonLookupRequestPurpose: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `onboarding`
+    public static let onboarding = PersonLookupRequestPurpose(rawValue: "onboarding")
+    /// `fraud_prevention`
+    public static let fraudPrevention = PersonLookupRequestPurpose(rawValue: "fraud_prevention")
+    /// `legal_obligation`
+    public static let legalObligation = PersonLookupRequestPurpose(rawValue: "legal_obligation")
+    /// `credit_protection`
+    public static let creditProtection = PersonLookupRequestPurpose(rawValue: "credit_protection")
+    /// `contract_execution`
+    public static let contractExecution = PersonLookupRequestPurpose(rawValue: "contract_execution")
+}
+
 /// The values of `Relationship.role`. Reads "from_party_id is <role> of to_party_id".
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -3736,6 +5067,48 @@ public struct ScreeningList: RawRepresentable, Codable, Sendable, Hashable, Expr
     public static let pep = ScreeningList(rawValue: "pep")
 }
 
+/// The values of `ScreeningMatch.classification`. confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ScreeningMatchClassification: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `confirmed`
+    public static let confirmed = ScreeningMatchClassification(rawValue: "confirmed")
+    /// `strong`
+    public static let strong = ScreeningMatchClassification(rawValue: "strong")
+    /// `possible`
+    public static let possible = ScreeningMatchClassification(rawValue: "possible")
+}
+
+/// The values of `ScreeningMatch.list`.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct ScreeningMatchList: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `sanctions`
+    public static let sanctions = ScreeningMatchList(rawValue: "sanctions")
+    /// `pep`
+    public static let pep = ScreeningMatchList(rawValue: "pep")
+}
+
 /// The values of `Webhook.events`.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -3764,6 +5137,18 @@ public struct WebhookEvents: RawRepresentable, Codable, Sendable, Hashable, Expr
     public static let captureSessionFinished = WebhookEvents(rawValue: "capture_session.finished")
     /// `document.decided`
     public static let documentDecided = WebhookEvents(rawValue: "document.decided")
+    /// `capture_session.opened`
+    public static let captureSessionOpened = WebhookEvents(rawValue: "capture_session.opened")
+    /// `capture_session.consent_given`
+    public static let captureSessionConsentGiven = WebhookEvents(rawValue: "capture_session.consent_given")
+    /// `capture_session.document_submitted`
+    public static let captureSessionDocumentSubmitted = WebhookEvents(rawValue: "capture_session.document_submitted")
+    /// `capture_session.selfie_submitted`
+    public static let captureSessionSelfieSubmitted = WebhookEvents(rawValue: "capture_session.selfie_submitted")
+    /// `capture_session.expired`
+    public static let captureSessionExpired = WebhookEvents(rawValue: "capture_session.expired")
+    /// `capture_session.revoked`
+    public static let captureSessionRevoked = WebhookEvents(rawValue: "capture_session.revoked")
 }
 
 /// The values of `WebhookCreated.events`.
@@ -3794,6 +5179,18 @@ public struct WebhookCreatedEvents: RawRepresentable, Codable, Sendable, Hashabl
     public static let captureSessionFinished = WebhookCreatedEvents(rawValue: "capture_session.finished")
     /// `document.decided`
     public static let documentDecided = WebhookCreatedEvents(rawValue: "document.decided")
+    /// `capture_session.opened`
+    public static let captureSessionOpened = WebhookCreatedEvents(rawValue: "capture_session.opened")
+    /// `capture_session.consent_given`
+    public static let captureSessionConsentGiven = WebhookCreatedEvents(rawValue: "capture_session.consent_given")
+    /// `capture_session.document_submitted`
+    public static let captureSessionDocumentSubmitted = WebhookCreatedEvents(rawValue: "capture_session.document_submitted")
+    /// `capture_session.selfie_submitted`
+    public static let captureSessionSelfieSubmitted = WebhookCreatedEvents(rawValue: "capture_session.selfie_submitted")
+    /// `capture_session.expired`
+    public static let captureSessionExpired = WebhookCreatedEvents(rawValue: "capture_session.expired")
+    /// `capture_session.revoked`
+    public static let captureSessionRevoked = WebhookCreatedEvents(rawValue: "capture_session.revoked")
 }
 
 /// The values of `WebhookEvent.datacontenttype`.
@@ -3860,6 +5257,18 @@ public struct WebhookEventType: RawRepresentable, Codable, Sendable, Hashable, E
     public static let captureSessionFinished = WebhookEventType(rawValue: "capture_session.finished")
     /// `document.decided`
     public static let documentDecided = WebhookEventType(rawValue: "document.decided")
+    /// `capture_session.opened`
+    public static let captureSessionOpened = WebhookEventType(rawValue: "capture_session.opened")
+    /// `capture_session.consent_given`
+    public static let captureSessionConsentGiven = WebhookEventType(rawValue: "capture_session.consent_given")
+    /// `capture_session.document_submitted`
+    public static let captureSessionDocumentSubmitted = WebhookEventType(rawValue: "capture_session.document_submitted")
+    /// `capture_session.selfie_submitted`
+    public static let captureSessionSelfieSubmitted = WebhookEventType(rawValue: "capture_session.selfie_submitted")
+    /// `capture_session.expired`
+    public static let captureSessionExpired = WebhookEventType(rawValue: "capture_session.expired")
+    /// `capture_session.revoked`
+    public static let captureSessionRevoked = WebhookEventType(rawValue: "capture_session.revoked")
 }
 
 /// The values of `WebhookEventData.decision`. Present on document.decided: what the reviewer decided about the document. It never decides the case; the reviewer's reason is not sent.
@@ -3956,6 +5365,28 @@ public struct WebhookEventDataStatusMarket: RawRepresentable, Codable, Sendable,
     public static let expired = WebhookEventDataStatusMarket(rawValue: "EXPIRED")
 }
 
+/// The values of `WebhookEventData.step`. Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+///
+/// A value this SDK does not know yet is kept as it came, in `rawValue`.
+public struct WebhookEventDataStep: RawRepresentable, Codable, Sendable, Hashable, ExpressibleByStringLiteral {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: String) {
+        self.rawValue = value
+    }
+
+    /// `consent`
+    public static let consent = WebhookEventDataStep(rawValue: "consent")
+    /// `document`
+    public static let document = WebhookEventDataStep(rawValue: "document")
+    /// `selfie`
+    public static let selfie = WebhookEventDataStep(rawValue: "selfie")
+}
+
 /// The values of `WebhookEventData.type`.
 ///
 /// A value this SDK does not know yet is kept as it came, in `rawValue`.
@@ -3984,6 +5415,18 @@ public struct WebhookEventDataType: RawRepresentable, Codable, Sendable, Hashabl
     public static let captureSessionFinished = WebhookEventDataType(rawValue: "capture_session.finished")
     /// `document.decided`
     public static let documentDecided = WebhookEventDataType(rawValue: "document.decided")
+    /// `capture_session.opened`
+    public static let captureSessionOpened = WebhookEventDataType(rawValue: "capture_session.opened")
+    /// `capture_session.consent_given`
+    public static let captureSessionConsentGiven = WebhookEventDataType(rawValue: "capture_session.consent_given")
+    /// `capture_session.document_submitted`
+    public static let captureSessionDocumentSubmitted = WebhookEventDataType(rawValue: "capture_session.document_submitted")
+    /// `capture_session.selfie_submitted`
+    public static let captureSessionSelfieSubmitted = WebhookEventDataType(rawValue: "capture_session.selfie_submitted")
+    /// `capture_session.expired`
+    public static let captureSessionExpired = WebhookEventDataType(rawValue: "capture_session.expired")
+    /// `capture_session.revoked`
+    public static let captureSessionRevoked = WebhookEventDataType(rawValue: "capture_session.revoked")
 }
 
 /// The values of `WebhookRequest.events`. The events the endpoint receives.
@@ -4014,6 +5457,18 @@ public struct WebhookRequestEvents: RawRepresentable, Codable, Sendable, Hashabl
     public static let captureSessionFinished = WebhookRequestEvents(rawValue: "capture_session.finished")
     /// `document.decided`
     public static let documentDecided = WebhookRequestEvents(rawValue: "document.decided")
+    /// `capture_session.opened`
+    public static let captureSessionOpened = WebhookRequestEvents(rawValue: "capture_session.opened")
+    /// `capture_session.consent_given`
+    public static let captureSessionConsentGiven = WebhookRequestEvents(rawValue: "capture_session.consent_given")
+    /// `capture_session.document_submitted`
+    public static let captureSessionDocumentSubmitted = WebhookRequestEvents(rawValue: "capture_session.document_submitted")
+    /// `capture_session.selfie_submitted`
+    public static let captureSessionSelfieSubmitted = WebhookRequestEvents(rawValue: "capture_session.selfie_submitted")
+    /// `capture_session.expired`
+    public static let captureSessionExpired = WebhookRequestEvents(rawValue: "capture_session.expired")
+    /// `capture_session.revoked`
+    public static let captureSessionRevoked = WebhookRequestEvents(rawValue: "capture_session.revoked")
 }
 
 /// The values of `Workflow.default_for`. The case kinds that run this workflow by default.

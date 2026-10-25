@@ -55,6 +55,30 @@ class CaseCaptureSessionsService:
         return models.CaptureSession.from_dict(envelope["data"])
 
 
+class CaseChipChallengesService:
+    """The API's case_chip_challenges."""
+
+    def __init__(self, client: Requester) -> None:
+        self._client = client
+
+    def create(self, id: str, params: models.ChipChallengeRequest, *, idempotency_key: str | None = None, api_key: str | None = None) -> models.ChipChallenge:
+        """Issue a chip read challenge."""
+        envelope = self._client.request("POST", f"/v1/cases/{segment(id)}/chip/challenges", body=params, idempotency_key=idempotency_key, api_key=api_key)
+        return models.ChipChallenge.from_dict(envelope["data"])
+
+
+class CaseChipReadsService:
+    """The API's case_chip_reads."""
+
+    def __init__(self, client: Requester) -> None:
+        self._client = client
+
+    def create(self, id: str, params: models.ChipReadRequest, *, idempotency_key: str | None = None, api_key: str | None = None) -> models.ChipRead:
+        """Submit a passport chip read."""
+        envelope = self._client.request("POST", f"/v1/cases/{segment(id)}/chip/reads", body=params, idempotency_key=idempotency_key, api_key=api_key)
+        return models.ChipRead.from_dict(envelope["data"])
+
+
 class CaseDocumentsService:
     """The API's case_documents."""
 
@@ -179,6 +203,40 @@ class CasesService:
         """Update a case."""
         envelope = self._client.request("PATCH", f"/v1/cases/{segment(id)}", body=params, idempotency_key=idempotency_key, api_key=api_key)
         return models.Case.from_dict(envelope["data"])
+
+
+class HealthService:
+    """The API's health."""
+
+    def __init__(self, client: Requester) -> None:
+        self._client = client
+
+    def get(self, *, api_key: str | None = None) -> models.HealthReport:
+        """Read the availability of the engines."""
+        envelope = self._client.request("GET", "/v1/health", api_key=api_key)
+        return models.HealthReport.from_dict(envelope["data"])
+
+
+class LookupsService:
+    """The API's lookups."""
+
+    def __init__(self, client: Requester) -> None:
+        self._client = client
+
+    def business(self, params: models.BusinessLookupRequest, *, idempotency_key: str | None = None, api_key: str | None = None) -> models.Lookup:
+        """Look a CNPJ up."""
+        envelope = self._client.request("POST", "/v1/lookups/business", body=params, idempotency_key=idempotency_key, api_key=api_key)
+        return models.Lookup.from_dict(envelope["data"])
+
+    def get(self, id: str, *, api_key: str | None = None) -> models.Lookup:
+        """Read a lookup."""
+        envelope = self._client.request("GET", f"/v1/lookups/{segment(id)}", api_key=api_key)
+        return models.Lookup.from_dict(envelope["data"])
+
+    def person(self, params: models.PersonLookupRequest, *, idempotency_key: str | None = None, api_key: str | None = None) -> models.Lookup:
+        """Look a CPF up."""
+        envelope = self._client.request("POST", "/v1/lookups/person", body=params, idempotency_key=idempotency_key, api_key=api_key)
+        return models.Lookup.from_dict(envelope["data"])
 
 
 class PartiesService:

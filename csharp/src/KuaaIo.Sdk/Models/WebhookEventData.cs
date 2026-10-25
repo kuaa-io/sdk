@@ -54,6 +54,15 @@ public sealed record WebhookEventData
     /// <summary>A value of <see cref="StatusMarket"/>.</summary>
     public const string StatusMarketEXPIRED = "EXPIRED";
 
+    /// <summary>A value of <see cref="Step"/>.</summary>
+    public const string StepConsent = "consent";
+
+    /// <summary>A value of <see cref="Step"/>.</summary>
+    public const string StepDocument = "document";
+
+    /// <summary>A value of <see cref="Step"/>.</summary>
+    public const string StepSelfie = "selfie";
+
     /// <summary>A value of <see cref="Type"/>.</summary>
     public const string TypeCaseCreated = "case.created";
 
@@ -75,7 +84,25 @@ public sealed record WebhookEventData
     /// <summary>A value of <see cref="Type"/>.</summary>
     public const string TypeDocumentDecided = "document.decided";
 
-    /// <summary>Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued. Null when the API sends none.</summary>
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionOpened = "capture_session.opened";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionConsentGiven = "capture_session.consent_given";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionDocumentSubmitted = "capture_session.document_submitted";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionSelfieSubmitted = "capture_session.selfie_submitted";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionExpired = "capture_session.expired";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionRevoked = "capture_session.revoked";
+
+    /// <summary>Present on every capture_session.* event: the hosted capture session, as answered when its link was issued. Null when the API sends none.</summary>
     [JsonPropertyName("capture_session_id")]
     public string? CaptureSessionId { get; init; }
 
@@ -143,13 +170,17 @@ public sealed record WebhookEventData
     [JsonPropertyName("review_id")]
     public string? ReviewId { get; init; }
 
-    /// <summary>What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.</summary>
+    /// <summary>What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.</summary>
     [JsonPropertyName("status")]
     public required string Status { get; init; }
 
     /// <summary>Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision. Null when the API sends none.</summary>
     [JsonPropertyName("status_market")]
     public string? StatusMarket { get; init; }
+
+    /// <summary>Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished. Null when the API sends none.</summary>
+    [JsonPropertyName("step")]
+    public string? Step { get; init; }
 
     /// <summary>The API's <c>tenant_id</c>.</summary>
     [JsonPropertyName("tenant_id")]

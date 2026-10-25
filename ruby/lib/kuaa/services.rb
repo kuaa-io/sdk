@@ -69,6 +69,38 @@ module Kuaa
     end
   end
 
+  # The API's case_chip_challenges.
+  class CaseChipChallengesService
+    def initialize(client)
+      @client = client
+    end
+
+    # Issue a chip read challenge.
+    #
+    # @param params [ChipChallengeRequest, Hash]
+    # @return [ChipChallenge]
+    def create(id, params, idempotency_key: nil, api_key: nil)
+      envelope = @client.request("POST", "/v1/cases/#{Kuaa.segment(id)}/chip/challenges", body: ChipChallengeRequest.coerce(params).to_wire, idempotency_key: idempotency_key, api_key: api_key)
+      ChipChallenge.from_hash(envelope.fetch("data"))
+    end
+  end
+
+  # The API's case_chip_reads.
+  class CaseChipReadsService
+    def initialize(client)
+      @client = client
+    end
+
+    # Submit a passport chip read.
+    #
+    # @param params [ChipReadRequest, Hash]
+    # @return [ChipRead]
+    def create(id, params, idempotency_key: nil, api_key: nil)
+      envelope = @client.request("POST", "/v1/cases/#{Kuaa.segment(id)}/chip/reads", body: ChipReadRequest.coerce(params).to_wire, idempotency_key: idempotency_key, api_key: api_key)
+      ChipRead.from_hash(envelope.fetch("data"))
+    end
+  end
+
   # The API's case_documents.
   class CaseDocumentsService
     def initialize(client)
@@ -254,6 +286,54 @@ module Kuaa
     def update(id, params, idempotency_key: nil, api_key: nil)
       envelope = @client.request("PATCH", "/v1/cases/#{Kuaa.segment(id)}", body: CasePatchRequest.coerce(params).to_wire, idempotency_key: idempotency_key, api_key: api_key)
       Case.from_hash(envelope.fetch("data"))
+    end
+  end
+
+  # The API's health.
+  class HealthService
+    def initialize(client)
+      @client = client
+    end
+
+    # Read the availability of the engines.
+    #
+    # @return [HealthReport]
+    def get(api_key: nil)
+      envelope = @client.request("GET", "/v1/health", api_key: api_key)
+      HealthReport.from_hash(envelope.fetch("data"))
+    end
+  end
+
+  # The API's lookups.
+  class LookupsService
+    def initialize(client)
+      @client = client
+    end
+
+    # Look a CNPJ up.
+    #
+    # @param params [BusinessLookupRequest, Hash]
+    # @return [Lookup]
+    def business(params, idempotency_key: nil, api_key: nil)
+      envelope = @client.request("POST", "/v1/lookups/business", body: BusinessLookupRequest.coerce(params).to_wire, idempotency_key: idempotency_key, api_key: api_key)
+      Lookup.from_hash(envelope.fetch("data"))
+    end
+
+    # Read a lookup.
+    #
+    # @return [Lookup]
+    def get(id, api_key: nil)
+      envelope = @client.request("GET", "/v1/lookups/#{Kuaa.segment(id)}", api_key: api_key)
+      Lookup.from_hash(envelope.fetch("data"))
+    end
+
+    # Look a CPF up.
+    #
+    # @param params [PersonLookupRequest, Hash]
+    # @return [Lookup]
+    def person(params, idempotency_key: nil, api_key: nil)
+      envelope = @client.request("POST", "/v1/lookups/person", body: PersonLookupRequest.coerce(params).to_wire, idempotency_key: idempotency_key, api_key: api_key)
+      Lookup.from_hash(envelope.fetch("data"))
     end
   end
 

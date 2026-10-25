@@ -10,7 +10,7 @@ namespace Kuaa\Models;
 final class WebhookEventData
 {
     public function __construct(
-        /** Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued. */
+        /** Present on every capture_session.* event: the hosted capture session, as answered when its link was issued. */
         public readonly ?string $captureSessionId,
         public readonly string $caseId,
         /** Present on check.completed. */
@@ -51,15 +51,20 @@ final class WebhookEventData
         public readonly ?string $requirement,
         /** Present on review.recorded. */
         public readonly ?string $reviewId,
-        /** What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided. */
+        /** What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided. */
         public readonly string $status,
         /**
          * Present on case.created, case.updated and capture_session.finished: The status in the vocabulary of the Brazilian KYC market, beside status, which keeps its values: PROCESSING (open, processing, awaiting_input), PENDING_OCR (in_review because a document reading check -- OCR or validation -- failed or timed out), PENDING (in_review, waiting for a human decision), APPROVED (approved), REPROVED (rejected), BLOCKED (rejected by the policy's block outcome, such as a confirmed sanctions match), CANCELLED (cancelled) and EXPIRED (expired). CANCELLED and EXPIRED are closed without a decision. It never changes the decision.
          * @var 'PROCESSING'|'PENDING_OCR'|'PENDING'|'APPROVED'|'REPROVED'|'BLOCKED'|'CANCELLED'|'EXPIRED'|null
          */
         public readonly ?string $statusMarket,
+        /**
+         * Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+         * @var 'consent'|'document'|'selfie'|null
+         */
+        public readonly ?string $step,
         public readonly string $tenantId,
-        /** @var 'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided' */
+        /** @var 'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided'|'capture_session.opened'|'capture_session.consent_given'|'capture_session.document_submitted'|'capture_session.selfie_submitted'|'capture_session.expired'|'capture_session.revoked' */
         public readonly string $type,
     ) {
     }
@@ -89,6 +94,7 @@ final class WebhookEventData
             reviewId: $data['review_id'] ?? null,
             status: $data['status'],
             statusMarket: $data['status_market'] ?? null,
+            step: $data['step'] ?? null,
             tenantId: $data['tenant_id'],
             type: $data['type'],
         );

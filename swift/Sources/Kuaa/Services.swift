@@ -56,6 +56,30 @@ public struct CaseCaptureSessionsService: Sendable {
     }
 }
 
+/// The API's case_chip_challenges: `kuaa.caseChipChallenges`.
+public struct CaseChipChallengesService: Sendable {
+    let requester: Requester
+
+    /// Issue a chip read challenge.
+    public func create(_ id: String, _ params: ChipChallengeRequest, idempotencyKey: String? = nil, apiKey: String? = nil) async throws -> ChipChallenge {
+        return try await requester.request(
+            "POST", "/v1/cases/\(escape(id))/chip/challenges", body: .json(params), idempotencyKey: idempotencyKey, apiKey: apiKey
+        )
+    }
+}
+
+/// The API's case_chip_reads: `kuaa.caseChipReads`.
+public struct CaseChipReadsService: Sendable {
+    let requester: Requester
+
+    /// Submit a passport chip read.
+    public func create(_ id: String, _ params: ChipReadRequest, idempotencyKey: String? = nil, apiKey: String? = nil) async throws -> ChipRead {
+        return try await requester.request(
+            "POST", "/v1/cases/\(escape(id))/chip/reads", body: .json(params), idempotencyKey: idempotencyKey, apiKey: apiKey
+        )
+    }
+}
+
 /// The API's case_documents: `kuaa.caseDocuments`.
 public struct CaseDocumentsService: Sendable {
     let requester: Requester
@@ -207,6 +231,44 @@ public struct CasesService: Sendable {
     public func update(_ id: String, _ params: CasePatchRequest, idempotencyKey: String? = nil, apiKey: String? = nil) async throws -> Case {
         return try await requester.request(
             "PATCH", "/v1/cases/\(escape(id))", body: .json(params), idempotencyKey: idempotencyKey, apiKey: apiKey
+        )
+    }
+}
+
+/// The API's health: `kuaa.health`.
+public struct HealthService: Sendable {
+    let requester: Requester
+
+    /// Read the availability of the engines.
+    public func get(apiKey: String? = nil) async throws -> HealthReport {
+        return try await requester.request(
+            "GET", "/v1/health", apiKey: apiKey
+        )
+    }
+}
+
+/// The API's lookups: `kuaa.lookups`.
+public struct LookupsService: Sendable {
+    let requester: Requester
+
+    /// Look a CNPJ up.
+    public func business(_ params: BusinessLookupRequest, idempotencyKey: String? = nil, apiKey: String? = nil) async throws -> Lookup {
+        return try await requester.request(
+            "POST", "/v1/lookups/business", body: .json(params), idempotencyKey: idempotencyKey, apiKey: apiKey
+        )
+    }
+
+    /// Read a lookup.
+    public func get(_ id: String, apiKey: String? = nil) async throws -> Lookup {
+        return try await requester.request(
+            "GET", "/v1/lookups/\(escape(id))", apiKey: apiKey
+        )
+    }
+
+    /// Look a CPF up.
+    public func person(_ params: PersonLookupRequest, idempotencyKey: String? = nil, apiKey: String? = nil) async throws -> Lookup {
+        return try await requester.request(
+            "POST", "/v1/lookups/person", body: .json(params), idempotencyKey: idempotencyKey, apiKey: apiKey
         )
     }
 }

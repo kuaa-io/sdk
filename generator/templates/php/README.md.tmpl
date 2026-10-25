@@ -35,6 +35,19 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 
 Os objetos respondidos são classes com propriedades `readonly` em camelCase (`$case->externalReference`); o case é `Kuaa\Models\CaseModel`, porque `case` é palavra reservada do PHP. Os corpos das escritas são arrays com os nomes da API (`['external_reference' => …]`), descritos para o PHPStan. As listas paginadas respondem uma `Kuaa\Page` (`items`, `nextCursor`, `hasMore`), e o `…Iter` percorre todas as páginas pelo cursor. O envio de imagens (`$kuaa->caseMedia->create`) vai como `multipart/form-data`, com cada arquivo num `Kuaa\File` (ou `Kuaa\File::fromPath`).
 
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```php
+$lookup = $kuaa->lookups->person(['cpf' => '000.000.001-91', 'purpose' => 'onboarding'], idempotencyKey: 'consulta-0001');
+echo $lookup->status, ' ', implode(',', $lookup->reasons), PHP_EOL;
+echo $lookup->provenance->situacaoCadastral?->source, PHP_EOL;
+
+$company = $kuaa->lookups->business(['cnpj' => 'SA.NDB.OX0/0001-25', 'purpose' => 'onboarding'], idempotencyKey: 'consulta-0002');
+$again = $kuaa->lookups->get($lookup->id);
+```
+
 ## Erros
 
 Uma recusa da API lança `Kuaa\KuaaException`, com `status`, `errorCode` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `fields` (as mensagens de cada campo), `retryAfter` em segundos (num 429 ou 503) e `requestId`.

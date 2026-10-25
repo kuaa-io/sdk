@@ -67,12 +67,16 @@ public sealed class KuaaClient
             ?? (options.Handler is null ? SharedHttp : new HttpClient(options.Handler, disposeHandler: false) { Timeout = System.Threading.Timeout.InfiniteTimeSpan });
         Billing = new BillingService(this);
         CaseCaptureSessions = new CaseCaptureSessionsService(this);
+        CaseChipChallenges = new CaseChipChallengesService(this);
+        CaseChipReads = new CaseChipReadsService(this);
         CaseDocuments = new CaseDocumentsService(this);
         CaseMedia = new CaseMediaService(this);
         CaseOwnership = new CaseOwnershipService(this);
         CaseParties = new CasePartiesService(this);
         CaseTags = new CaseTagsService(this);
         Cases = new CasesService(this);
+        Health = new HealthService(this);
+        Lookups = new LookupsService(this);
         Parties = new PartiesService(this);
         Webhooks = new WebhooksService(this);
         Workflows = new WorkflowsService(this);
@@ -83,6 +87,12 @@ public sealed class KuaaClient
 
     /// <summary>The API's case_capture_sessions.</summary>
     public CaseCaptureSessionsService CaseCaptureSessions { get; }
+
+    /// <summary>The API's case_chip_challenges.</summary>
+    public CaseChipChallengesService CaseChipChallenges { get; }
+
+    /// <summary>The API's case_chip_reads.</summary>
+    public CaseChipReadsService CaseChipReads { get; }
 
     /// <summary>The API's case_documents.</summary>
     public CaseDocumentsService CaseDocuments { get; }
@@ -101,6 +111,12 @@ public sealed class KuaaClient
 
     /// <summary>The API's cases.</summary>
     public CasesService Cases { get; }
+
+    /// <summary>The API's health.</summary>
+    public HealthService Health { get; }
+
+    /// <summary>The API's lookups.</summary>
+    public LookupsService Lookups { get; }
 
     /// <summary>The API's parties.</summary>
     public PartiesService Parties { get; }

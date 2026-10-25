@@ -9,6 +9,15 @@ namespace KuaaIo.Sdk;
 /// <summary>CaptureSessionRequest is a request body of KUAA's API.</summary>
 public sealed record CaptureSessionRequest
 {
+    /// <summary>A value of <see cref="Handoff"/>.</summary>
+    public const string HandoffNever = "never";
+
+    /// <summary>A value of <see cref="Handoff"/>.</summary>
+    public const string HandoffSuggest = "suggest";
+
+    /// <summary>A value of <see cref="Handoff"/>.</summary>
+    public const string HandoffRequire = "require";
+
     /// <summary>The address to e-mail the link to, instead of the one on file. Given alone, it asks for the e-mail too. It is not stored and not audited: the audit keeps only that a link was e-mailed. Left out of the request when null.</summary>
     [JsonPropertyName("email")]
     public string? Email { get; init; }
@@ -20,6 +29,10 @@ public sealed record CaptureSessionRequest
     /// <summary>How long the link opens, in minutes. Default 1440 (one day). Left out of the request when null.</summary>
     [JsonPropertyName("expires_in_minutes")]
     public long? ExpiresInMinutes { get; init; }
+
+    /// <summary>How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control. Left out of the request when null.</summary>
+    [JsonPropertyName("handoff")]
+    public string? Handoff { get; init; }
 
     /// <summary>The party whose capture this is. Empty is the case's primary party. Left out of the request when null.</summary>
     [JsonPropertyName("party_id")]

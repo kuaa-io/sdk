@@ -385,7 +385,7 @@ module Kuaa
 
   # CaptureSession is an object of KUAA's API.
   class CaptureSession < Model
-    MEMBERS = %i[case_id completed_steps created_at embed_origin expires_at finished_at id locale party_id reasons return_url revoked_at status steps workflow].freeze
+    MEMBERS = %i[case_id completed_steps created_at embed_origin expires_at finished_at handoff id locale party_id reasons return_url revoked_at status steps workflow].freeze
 
     # @return [String]
     attr_reader :case_id
@@ -406,6 +406,10 @@ module Kuaa
 
     # @return [String, nil]
     attr_reader :finished_at
+
+    # The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+    # @return [String ("never", "suggest", "require"), nil]
+    attr_reader :handoff
 
     # The capture session identifier.
     # @return [String]
@@ -439,13 +443,14 @@ module Kuaa
     # @return [CaptureSessionWorkflow]
     attr_reader :workflow
 
-    def initialize(case_id:, completed_steps:, created_at:, embed_origin: nil, expires_at:, finished_at: nil, id:, locale:, party_id:, reasons:, return_url: nil, revoked_at: nil, status:, steps:, workflow:)
+    def initialize(case_id:, completed_steps:, created_at:, embed_origin: nil, expires_at:, finished_at: nil, handoff: nil, id:, locale:, party_id:, reasons:, return_url: nil, revoked_at: nil, status:, steps:, workflow:)
       @case_id = case_id
       @completed_steps = completed_steps
       @created_at = created_at
       @embed_origin = embed_origin
       @expires_at = expires_at
       @finished_at = finished_at
+      @handoff = handoff
       @id = id
       @locale = locale
       @party_id = party_id
@@ -467,6 +472,7 @@ module Kuaa
         embed_origin: data["embed_origin"],
         expires_at: data.fetch("expires_at"),
         finished_at: data["finished_at"],
+        handoff: data["handoff"],
         id: data.fetch("id"),
         locale: data.fetch("locale"),
         party_id: data.fetch("party_id"),
@@ -482,7 +488,7 @@ module Kuaa
 
   # CaptureSessionIssued is an object of KUAA's API.
   class CaptureSessionIssued < Model
-    MEMBERS = %i[case_id completed_steps created_at email_status embed_origin expires_at finished_at id locale party_id reasons return_url revoked_at status steps token url workflow].freeze
+    MEMBERS = %i[case_id completed_steps created_at email_status embed_origin expires_at finished_at handoff id locale party_id reasons return_url revoked_at status steps token url workflow].freeze
 
     # @return [String]
     attr_reader :case_id
@@ -507,6 +513,10 @@ module Kuaa
 
     # @return [String, nil]
     attr_reader :finished_at
+
+    # The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+    # @return [String ("never", "suggest", "require"), nil]
+    attr_reader :handoff
 
     # The capture session identifier.
     # @return [String]
@@ -548,7 +558,7 @@ module Kuaa
     # @return [CaptureSessionWorkflow]
     attr_reader :workflow
 
-    def initialize(case_id:, completed_steps:, created_at:, email_status:, embed_origin: nil, expires_at:, finished_at: nil, id:, locale:, party_id:, reasons:, return_url: nil, revoked_at: nil, status:, steps:, token:, url:, workflow:)
+    def initialize(case_id:, completed_steps:, created_at:, email_status:, embed_origin: nil, expires_at:, finished_at: nil, handoff: nil, id:, locale:, party_id:, reasons:, return_url: nil, revoked_at: nil, status:, steps:, token:, url:, workflow:)
       @case_id = case_id
       @completed_steps = completed_steps
       @created_at = created_at
@@ -556,6 +566,7 @@ module Kuaa
       @embed_origin = embed_origin
       @expires_at = expires_at
       @finished_at = finished_at
+      @handoff = handoff
       @id = id
       @locale = locale
       @party_id = party_id
@@ -580,6 +591,7 @@ module Kuaa
         embed_origin: data["embed_origin"],
         expires_at: data.fetch("expires_at"),
         finished_at: data["finished_at"],
+        handoff: data["handoff"],
         id: data.fetch("id"),
         locale: data.fetch("locale"),
         party_id: data.fetch("party_id"),
@@ -936,6 +948,192 @@ module Kuaa
         party_id: data["party_id"],
         started_at: data.fetch("started_at"),
         status: data.fetch("status")
+      )
+    end
+  end
+
+  # ChipChallenge is an object of KUAA's API.
+  class ChipChallenge < Model
+    MEMBERS = %i[challenge expires_at id issued_at party_id].freeze
+
+    # The eight bytes, in standard base64, the device sends the chip in INTERNAL AUTHENTICATE. The read is examined against the server's own copy; this one is never read back.
+    # @return [String]
+    attr_reader :challenge
+
+    # After it the challenge answers no read; it answers one read, once, before it.
+    # @return [String]
+    attr_reader :expires_at
+
+    # The challenge_id the chip read names.
+    # @return [String]
+    attr_reader :id
+
+    # @return [String]
+    attr_reader :issued_at
+
+    # The person whose chip is read.
+    # @return [String]
+    attr_reader :party_id
+
+    def initialize(challenge:, expires_at:, id:, issued_at:, party_id:)
+      @challenge = challenge
+      @expires_at = expires_at
+      @id = id
+      @issued_at = issued_at
+      @party_id = party_id
+      freeze
+    end
+
+    # Builds a ChipChallenge from the API's JSON.
+    def self.from_hash(data)
+      new(
+        challenge: data.fetch("challenge"),
+        expires_at: data.fetch("expires_at"),
+        id: data.fetch("id"),
+        issued_at: data.fetch("issued_at"),
+        party_id: data.fetch("party_id")
+      )
+    end
+  end
+
+  # Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+  class ChipOutcomes < Model
+    MEMBERS = %i[active_auth certificate_validity chain chip_auth com_consistency data_group_hashes face_match file_structure mrz_check_digits mrz_matches_printed passive_auth revocation sod_signature].freeze
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :active_auth
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :certificate_validity
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :chain
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :chip_auth
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :com_consistency
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :data_group_hashes
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :face_match
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :file_structure
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :mrz_check_digits
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :mrz_matches_printed
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :passive_auth
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :revocation
+
+    # @return [String ("passed", "failed", "not_present", "unverifiable"), nil]
+    attr_reader :sod_signature
+
+    def initialize(active_auth: nil, certificate_validity: nil, chain: nil, chip_auth: nil, com_consistency: nil, data_group_hashes: nil, face_match: nil, file_structure: nil, mrz_check_digits: nil, mrz_matches_printed: nil, passive_auth: nil, revocation: nil, sod_signature: nil)
+      @active_auth = active_auth
+      @certificate_validity = certificate_validity
+      @chain = chain
+      @chip_auth = chip_auth
+      @com_consistency = com_consistency
+      @data_group_hashes = data_group_hashes
+      @face_match = face_match
+      @file_structure = file_structure
+      @mrz_check_digits = mrz_check_digits
+      @mrz_matches_printed = mrz_matches_printed
+      @passive_auth = passive_auth
+      @revocation = revocation
+      @sod_signature = sod_signature
+      freeze
+    end
+
+    # Builds a ChipOutcomes from the API's JSON.
+    def self.from_hash(data)
+      new(
+        active_auth: data["active_auth"],
+        certificate_validity: data["certificate_validity"],
+        chain: data["chain"],
+        chip_auth: data["chip_auth"],
+        com_consistency: data["com_consistency"],
+        data_group_hashes: data["data_group_hashes"],
+        face_match: data["face_match"],
+        file_structure: data["file_structure"],
+        mrz_check_digits: data["mrz_check_digits"],
+        mrz_matches_printed: data["mrz_matches_printed"],
+        passive_auth: data["passive_auth"],
+        revocation: data["revocation"],
+        sod_signature: data["sod_signature"]
+      )
+    end
+  end
+
+  # ChipRead is an object of KUAA's API.
+  class ChipRead < Model
+    MEMBERS = %i[check check_id dg2_present evidence_id face_evidence_id outcomes reasons result].freeze
+
+    # @return [String ("document_chip")]
+    attr_reader :check
+
+    # The document_chip check the read was recorded as.
+    # @return [String]
+    attr_reader :check_id
+
+    # The chip gave a face image.
+    # @return [Boolean]
+    attr_reader :dg2_present
+
+    # The evidence of the examination.
+    # @return [String]
+    attr_reader :evidence_id
+
+    # The evidence of the comparison of the face image with the latest selfie, null when none ran.
+    # @return [String, nil]
+    attr_reader :face_evidence_id
+
+    # Each outcome of the read, the fact chip.<name> a policy reads. unverifiable is never a pass.
+    # @return [ChipOutcomes]
+    attr_reader :outcomes
+
+    # The machine-readable reason of each outcome that is not a plain pass, such as no_trust_store or hash_mismatch.
+    # @return [Hash{String => String}]
+    attr_reader :reasons
+
+    # fail when an outcome failed, pass when Passive Authentication passed and nothing failed, inconclusive otherwise. A measurement, never an approval: the policy decides.
+    # @return [String ("pass", "fail", "inconclusive")]
+    attr_reader :result
+
+    def initialize(check:, check_id:, dg2_present:, evidence_id:, face_evidence_id:, outcomes:, reasons:, result:)
+      @check = check
+      @check_id = check_id
+      @dg2_present = dg2_present
+      @evidence_id = evidence_id
+      @face_evidence_id = face_evidence_id
+      @outcomes = outcomes
+      @reasons = reasons
+      @result = result
+      freeze
+    end
+
+    # Builds a ChipRead from the API's JSON.
+    def self.from_hash(data)
+      new(
+        check: data.fetch("check"),
+        check_id: data.fetch("check_id"),
+        dg2_present: data.fetch("dg2_present"),
+        evidence_id: data.fetch("evidence_id"),
+        face_evidence_id: data["face_evidence_id"],
+        outcomes: ChipOutcomes.from_hash(data.fetch("outcomes")),
+        reasons: data.fetch("reasons"),
+        result: data.fetch("result")
       )
     end
   end
@@ -1450,6 +1648,32 @@ module Kuaa
     end
   end
 
+  # FieldProvenance is an object of KUAA's API.
+  class FieldProvenance < Model
+    MEMBERS = %i[retrieved_at source].freeze
+
+    # @return [String]
+    attr_reader :retrieved_at
+
+    # directd:<product> for a value of the Direct Data bureau, kuaa:screening:<list> for one of KUAA's lists, kuaa:sandbox:<product> in the sandbox.
+    # @return [String]
+    attr_reader :source
+
+    def initialize(retrieved_at:, source:)
+      @retrieved_at = retrieved_at
+      @source = source
+      freeze
+    end
+
+    # Builds a FieldProvenance from the API's JSON.
+    def self.from_hash(data)
+      new(
+        retrieved_at: data.fetch("retrieved_at"),
+        source: data.fetch("source")
+      )
+    end
+  end
+
   # Finding is an object of KUAA's API.
   class Finding < Model
     MEMBERS = %i[code evidence_id id party_id recorded_at severity].freeze
@@ -1495,6 +1719,60 @@ module Kuaa
     end
   end
 
+  # HealthReport is an object of KUAA's API.
+  class HealthReport < Model
+    MEMBERS = %i[checks livemode].freeze
+
+    # Every check kind the workflows run or an engine is registered for, by kind.
+    # @return [Array<HealthReportCheck>]
+    attr_reader :checks
+
+    # False when the answer comes from the organization's sandbox: synthetic data, engine doubles chosen by the documented magic values, nothing billed and no official source consulted. True in production.
+    # @return [Boolean]
+    attr_reader :livemode
+
+    def initialize(checks:, livemode:)
+      @checks = checks
+      @livemode = livemode
+      freeze
+    end
+
+    # Builds a HealthReport from the API's JSON.
+    def self.from_hash(data)
+      new(
+        checks: data.fetch("checks").map { |item| HealthReportCheck.from_hash(item) },
+        livemode: data.fetch("livemode")
+      )
+    end
+  end
+
+  # HealthReportCheck is an object of KUAA's API.
+  class HealthReportCheck < Model
+    MEMBERS = %i[availability check].freeze
+
+    # available: an engine answers the check. dev_only: an engine answers it with a model not cleared for production, so its evidence is inconclusive by design. unavailable: no engine answers it here, and its evidence says the engine is not configured.
+    # @return [String ("available", "dev_only", "unavailable")]
+    attr_reader :availability
+
+    # The check kind, as a workflow task names it: face_match, liveness, document_ocr...
+    # @return [String]
+    attr_reader :check
+
+    def initialize(availability:, check:)
+      @availability = availability
+      @check = check
+      freeze
+    end
+
+    # Builds a HealthReportCheck from the API's JSON.
+    def self.from_hash(data)
+      new(
+        availability: data.fetch("availability"),
+        check: data.fetch("check")
+      )
+    end
+  end
+
   # What KUAA verified about the identifier across cases. Null when nothing was, or for a key without identity.view.
   class Identity < Model
     MEMBERS = %i[created_at id verified_attributes].freeze
@@ -1522,6 +1800,398 @@ module Kuaa
         created_at: data.fetch("created_at"),
         id: data.fetch("id"),
         verified_attributes: data.fetch("verified_attributes")
+      )
+    end
+  end
+
+  # Lookup is an object of KUAA's API.
+  class Lookup < Model
+    MEMBERS = %i[company cost created_at document environment id kind legal_basis livemode object person provenance purpose reasons rule_version screening sources status].freeze
+
+    # Present on a business lookup.
+    # @return [LookupCompany, nil]
+    attr_reader :company
+
+    # @return [LookupCost]
+    attr_reader :cost
+
+    # @return [String]
+    attr_reader :created_at
+
+    # The CPF or CNPJ, masked.
+    # @return [String]
+    attr_reader :document
+
+    # @return [String ("live", "sandbox")]
+    attr_reader :environment
+
+    # @return [String]
+    attr_reader :id
+
+    # @return [String ("person", "business")]
+    attr_reader :kind
+
+    # The LGPD article the purpose is made under, such as lgpd.art7.v.
+    # @return [String]
+    attr_reader :legal_basis
+
+    # @return [Boolean]
+    attr_reader :livemode
+
+    # @return [String ("lookup")]
+    attr_reader :object
+
+    # Present on a person lookup.
+    # @return [LookupPerson, nil]
+    attr_reader :person
+
+    # Where each field came from and when, by field name; a field with no value has no entry.
+    # @return [LookupProvenance]
+    attr_reader :provenance
+
+    # @return [String ("onboarding", "fraud_prevention", "legal_obligation", "credit_protection", "contract_execution")]
+    attr_reader :purpose
+
+    # cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization, cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null, cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep, pep_possible, not_found, screening_unavailable, screening_partial, bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable, and aml_<reason> when AML was not answered.
+    # @return [Array<String>]
+    attr_reader :reasons
+
+    # @return [String]
+    attr_reader :rule_version
+
+    # @return [LookupScreening]
+    attr_reader :screening
+
+    # @return [Array<LookupSource>]
+    attr_reader :sources
+
+    # KUAA's conclusion under rule_version: irregular when the situação is not REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions list holds the document itself; inconclusive when the registry could not be read or held nothing, a sanctions list holds the name only, or no list could be read; regular otherwise. A PEP is a reason, not an irregularity.
+    # @return [String ("regular", "irregular", "inconclusive")]
+    attr_reader :status
+
+    def initialize(company: nil, cost:, created_at:, document:, environment:, id:, kind:, legal_basis:, livemode:, object:, person: nil, provenance:, purpose:, reasons:, rule_version:, screening:, sources:, status:)
+      @company = company
+      @cost = cost
+      @created_at = created_at
+      @document = document
+      @environment = environment
+      @id = id
+      @kind = kind
+      @legal_basis = legal_basis
+      @livemode = livemode
+      @object = object
+      @person = person
+      @provenance = provenance
+      @purpose = purpose
+      @reasons = reasons
+      @rule_version = rule_version
+      @screening = screening
+      @sources = sources
+      @status = status
+      freeze
+    end
+
+    # Builds a Lookup from the API's JSON.
+    def self.from_hash(data)
+      new(
+        company: data["company"]&.then { |value| LookupCompany.from_hash(value) },
+        cost: LookupCost.from_hash(data.fetch("cost")),
+        created_at: data.fetch("created_at"),
+        document: data.fetch("document"),
+        environment: data.fetch("environment"),
+        id: data.fetch("id"),
+        kind: data.fetch("kind"),
+        legal_basis: data.fetch("legal_basis"),
+        livemode: data.fetch("livemode"),
+        object: data.fetch("object"),
+        person: data["person"]&.then { |value| LookupPerson.from_hash(value) },
+        provenance: LookupProvenance.from_hash(data.fetch("provenance")),
+        purpose: data.fetch("purpose"),
+        reasons: data.fetch("reasons"),
+        rule_version: data.fetch("rule_version"),
+        screening: LookupScreening.from_hash(data.fetch("screening")),
+        sources: data.fetch("sources").map { |item| LookupSource.from_hash(item) },
+        status: data.fetch("status")
+      )
+    end
+  end
+
+  # Present on a business lookup.
+  class LookupCompany < Model
+    MEMBERS = %i[cnae data_fundacao natureza_juridica razao_social situacao_cadastral].freeze
+
+    # The main CNAE code.
+    # @return [String, nil]
+    attr_reader :cnae
+
+    # @return [String, nil]
+    attr_reader :data_fundacao
+
+    # The legal nature, as described.
+    # @return [String, nil]
+    attr_reader :natureza_juridica
+
+    # The registered name.
+    # @return [String, nil]
+    attr_reader :razao_social
+
+    # ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA.
+    # @return [String, nil]
+    attr_reader :situacao_cadastral
+
+    def initialize(cnae: nil, data_fundacao: nil, natureza_juridica: nil, razao_social: nil, situacao_cadastral: nil)
+      @cnae = cnae
+      @data_fundacao = data_fundacao
+      @natureza_juridica = natureza_juridica
+      @razao_social = razao_social
+      @situacao_cadastral = situacao_cadastral
+      freeze
+    end
+
+    # Builds a LookupCompany from the API's JSON.
+    def self.from_hash(data)
+      new(
+        cnae: data["cnae"],
+        data_fundacao: data["data_fundacao"],
+        natureza_juridica: data["natureza_juridica"],
+        razao_social: data["razao_social"],
+        situacao_cadastral: data["situacao_cadastral"]
+      )
+    end
+  end
+
+  # LookupCost is an object of KUAA's API.
+  class LookupCost < Model
+    MEMBERS = %i[bureau_charged_cents bureau_price_cents token_source].freeze
+
+    # What Direct Data billed: zero for a same-day repeat, a sandbox or a query that was not billable.
+    # @return [Integer]
+    attr_reader :bureau_charged_cents
+
+    # @return [Integer]
+    attr_reader :bureau_price_cents
+
+    # platform, organization or sandbox.
+    # @return [String, nil]
+    attr_reader :token_source
+
+    def initialize(bureau_charged_cents:, bureau_price_cents:, token_source: nil)
+      @bureau_charged_cents = bureau_charged_cents
+      @bureau_price_cents = bureau_price_cents
+      @token_source = token_source
+      freeze
+    end
+
+    # Builds a LookupCost from the API's JSON.
+    def self.from_hash(data)
+      new(
+        bureau_charged_cents: data.fetch("bureau_charged_cents"),
+        bureau_price_cents: data.fetch("bureau_price_cents"),
+        token_source: data["token_source"]
+      )
+    end
+  end
+
+  # Present on a person lookup.
+  class LookupPerson < Model
+    MEMBERS = %i[birth_date death_date deceased full_name pep situacao_cadastral situacao_cadastral_date].freeze
+
+    # @return [String, nil]
+    attr_reader :birth_date
+
+    # From AML, when it was asked.
+    # @return [String, nil]
+    attr_reader :death_date
+
+    # Óbito, from Cadastro PF Plus or AML.
+    # @return [Boolean, nil]
+    attr_reader :deceased
+
+    # The name the Receita Federal holds.
+    # @return [String, nil]
+    attr_reader :full_name
+
+    # A politically exposed person: an active PEP on the CGU list, or AML's PEP flag.
+    # @return [Boolean]
+    attr_reader :pep
+
+    # REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE REGULARIZAÇÃO.
+    # @return [String, nil]
+    attr_reader :situacao_cadastral
+
+    # @return [String, nil]
+    attr_reader :situacao_cadastral_date
+
+    def initialize(birth_date: nil, death_date: nil, deceased: nil, full_name: nil, pep:, situacao_cadastral: nil, situacao_cadastral_date: nil)
+      @birth_date = birth_date
+      @death_date = death_date
+      @deceased = deceased
+      @full_name = full_name
+      @pep = pep
+      @situacao_cadastral = situacao_cadastral
+      @situacao_cadastral_date = situacao_cadastral_date
+      freeze
+    end
+
+    # Builds a LookupPerson from the API's JSON.
+    def self.from_hash(data)
+      new(
+        birth_date: data["birth_date"],
+        death_date: data["death_date"],
+        deceased: data["deceased"],
+        full_name: data["full_name"],
+        pep: data.fetch("pep"),
+        situacao_cadastral: data["situacao_cadastral"],
+        situacao_cadastral_date: data["situacao_cadastral_date"]
+      )
+    end
+  end
+
+  # Where each field came from and when, by field name; a field with no value has no entry.
+  class LookupProvenance < Model
+    MEMBERS = %i[birth_date cnae data_fundacao death_date deceased full_name natureza_juridica pep razao_social situacao_cadastral situacao_cadastral_date].freeze
+
+    # @return [FieldProvenance, nil]
+    attr_reader :birth_date
+
+    # @return [FieldProvenance, nil]
+    attr_reader :cnae
+
+    # @return [FieldProvenance, nil]
+    attr_reader :data_fundacao
+
+    # @return [FieldProvenance, nil]
+    attr_reader :death_date
+
+    # @return [FieldProvenance, nil]
+    attr_reader :deceased
+
+    # @return [FieldProvenance, nil]
+    attr_reader :full_name
+
+    # @return [FieldProvenance, nil]
+    attr_reader :natureza_juridica
+
+    # @return [FieldProvenance, nil]
+    attr_reader :pep
+
+    # @return [FieldProvenance, nil]
+    attr_reader :razao_social
+
+    # @return [FieldProvenance, nil]
+    attr_reader :situacao_cadastral
+
+    # @return [FieldProvenance, nil]
+    attr_reader :situacao_cadastral_date
+
+    def initialize(birth_date: nil, cnae: nil, data_fundacao: nil, death_date: nil, deceased: nil, full_name: nil, natureza_juridica: nil, pep: nil, razao_social: nil, situacao_cadastral: nil, situacao_cadastral_date: nil)
+      @birth_date = birth_date
+      @cnae = cnae
+      @data_fundacao = data_fundacao
+      @death_date = death_date
+      @deceased = deceased
+      @full_name = full_name
+      @natureza_juridica = natureza_juridica
+      @pep = pep
+      @razao_social = razao_social
+      @situacao_cadastral = situacao_cadastral
+      @situacao_cadastral_date = situacao_cadastral_date
+      freeze
+    end
+
+    # Builds a LookupProvenance from the API's JSON.
+    def self.from_hash(data)
+      new(
+        birth_date: data["birth_date"]&.then { |value| FieldProvenance.from_hash(value) },
+        cnae: data["cnae"]&.then { |value| FieldProvenance.from_hash(value) },
+        data_fundacao: data["data_fundacao"]&.then { |value| FieldProvenance.from_hash(value) },
+        death_date: data["death_date"]&.then { |value| FieldProvenance.from_hash(value) },
+        deceased: data["deceased"]&.then { |value| FieldProvenance.from_hash(value) },
+        full_name: data["full_name"]&.then { |value| FieldProvenance.from_hash(value) },
+        natureza_juridica: data["natureza_juridica"]&.then { |value| FieldProvenance.from_hash(value) },
+        pep: data["pep"]&.then { |value| FieldProvenance.from_hash(value) },
+        razao_social: data["razao_social"]&.then { |value| FieldProvenance.from_hash(value) },
+        situacao_cadastral: data["situacao_cadastral"]&.then { |value| FieldProvenance.from_hash(value) },
+        situacao_cadastral_date: data["situacao_cadastral_date"]&.then { |value| FieldProvenance.from_hash(value) }
+      )
+    end
+  end
+
+  # LookupScreening is an object of KUAA's API.
+  class LookupScreening < Model
+    MEMBERS = %i[matches sources unavailable].freeze
+
+    # @return [Array<ScreeningMatch>]
+    attr_reader :matches
+
+    # @return [Array<ScreeningSource>]
+    attr_reader :sources
+
+    # @return [Array<String>]
+    attr_reader :unavailable
+
+    def initialize(matches:, sources:, unavailable:)
+      @matches = matches
+      @sources = sources
+      @unavailable = unavailable
+      freeze
+    end
+
+    # Builds a LookupScreening from the API's JSON.
+    def self.from_hash(data)
+      new(
+        matches: data.fetch("matches").map { |item| ScreeningMatch.from_hash(item) },
+        sources: data.fetch("sources").map { |item| ScreeningSource.from_hash(item) },
+        unavailable: data.fetch("unavailable")
+      )
+    end
+  end
+
+  # LookupSource is an object of KUAA's API.
+  class LookupSource < Model
+    MEMBERS = %i[cached consulta_uid outcome reason retrieved_at source].freeze
+
+    # Answered from the organization's same-day query, at no cost.
+    # @return [Boolean]
+    attr_reader :cached
+
+    # @return [String, nil]
+    attr_reader :consulta_uid
+
+    # found, not_found... when Direct Data answered.
+    # @return [String, nil]
+    attr_reader :outcome
+
+    # Why nothing was answered: bureau_not_enabled, product_disabled, no_token, budget_exceeded, provider_unavailable.
+    # @return [String, nil]
+    attr_reader :reason
+
+    # @return [String, nil]
+    attr_reader :retrieved_at
+
+    # directd:<product>, or kuaa:sandbox:<product>.
+    # @return [String]
+    attr_reader :source
+
+    def initialize(cached:, consulta_uid: nil, outcome: nil, reason: nil, retrieved_at: nil, source:)
+      @cached = cached
+      @consulta_uid = consulta_uid
+      @outcome = outcome
+      @reason = reason
+      @retrieved_at = retrieved_at
+      @source = source
+      freeze
+    end
+
+    # Builds a LookupSource from the API's JSON.
+    def self.from_hash(data)
+      new(
+        cached: data.fetch("cached"),
+        consulta_uid: data["consulta_uid"],
+        outcome: data["outcome"],
+        reason: data["reason"],
+        retrieved_at: data["retrieved_at"],
+        source: data.fetch("source")
       )
     end
   end
@@ -2243,6 +2913,95 @@ module Kuaa
     end
   end
 
+  # ScreeningMatch is an object of KUAA's API.
+  class ScreeningMatch < Model
+    MEMBERS = %i[classification list match_status pep_active score source source_version].freeze
+
+    # confirmed: the full CPF or CNPJ is listed. strong: the name and another attribute agree. possible: the name alone.
+    # @return [String ("confirmed", "strong", "possible")]
+    attr_reader :classification
+
+    # @return [String ("sanctions", "pep")]
+    attr_reader :list
+
+    # @return [String]
+    attr_reader :match_status
+
+    # For a PEP: whether the five-year window after the function is still open.
+    # @return [Boolean, nil]
+    attr_reader :pep_active
+
+    # @return [Float]
+    attr_reader :score
+
+    # The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn.
+    # @return [String]
+    attr_reader :source
+
+    # The version of the source that was read.
+    # @return [String]
+    attr_reader :source_version
+
+    def initialize(classification:, list:, match_status:, pep_active: nil, score:, source:, source_version:)
+      @classification = classification
+      @list = list
+      @match_status = match_status
+      @pep_active = pep_active
+      @score = score
+      @source = source
+      @source_version = source_version
+      freeze
+    end
+
+    # Builds a ScreeningMatch from the API's JSON.
+    def self.from_hash(data)
+      new(
+        classification: data.fetch("classification"),
+        list: data.fetch("list"),
+        match_status: data.fetch("match_status"),
+        pep_active: data["pep_active"],
+        score: data.fetch("score"),
+        source: data.fetch("source"),
+        source_version: data.fetch("source_version")
+      )
+    end
+  end
+
+  # ScreeningSource is an object of KUAA's API.
+  class ScreeningSource < Model
+    MEMBERS = %i[list retrieved_at source version].freeze
+
+    # @return [String]
+    attr_reader :list
+
+    # @return [String]
+    attr_reader :retrieved_at
+
+    # @return [String]
+    attr_reader :source
+
+    # @return [String]
+    attr_reader :version
+
+    def initialize(list:, retrieved_at:, source:, version:)
+      @list = list
+      @retrieved_at = retrieved_at
+      @source = source
+      @version = version
+      freeze
+    end
+
+    # Builds a ScreeningSource from the API's JSON.
+    def self.from_hash(data)
+      new(
+        list: data.fetch("list"),
+        retrieved_at: data.fetch("retrieved_at"),
+        source: data.fetch("source"),
+        version: data.fetch("version")
+      )
+    end
+  end
+
   # StatementEntry is an object of KUAA's API.
   class StatementEntry < Model
     MEMBERS = %i[amount at balance_after case_id check id kind operation_id price_key price_list_version reason step_seq].freeze
@@ -2422,7 +3181,7 @@ module Kuaa
     # @return [String, nil]
     attr_reader :disabled_reason
 
-    # @return [Array<String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided")>]
+    # @return [Array<String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked")>]
     attr_reader :events
 
     # The endpoint identifier.
@@ -2481,7 +3240,7 @@ module Kuaa
     # @return [String, nil]
     attr_reader :disabled_reason
 
-    # @return [Array<String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided")>]
+    # @return [Array<String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked")>]
     attr_reader :events
 
     # The endpoint identifier.
@@ -2556,7 +3315,7 @@ module Kuaa
     # @return [String]
     attr_reader :time
 
-    # @return [String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided")]
+    # @return [String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked")]
     attr_reader :type
 
     def initialize(data:, datacontenttype:, id:, source:, specversion:, subject:, time:, type:)
@@ -2588,9 +3347,9 @@ module Kuaa
 
   # WebhookEventData is an object of KUAA's API.
   class WebhookEventData < Model
-    MEMBERS = %i[capture_session_id case_id check_id decision decision_id document_decision_id document_id document_side document_type environment event_id finished_at livemode occurred_at parent_case_id requirement review_id status status_market tenant_id type].freeze
+    MEMBERS = %i[capture_session_id case_id check_id decision decision_id document_decision_id document_id document_side document_type environment event_id finished_at livemode occurred_at parent_case_id requirement review_id status status_market step tenant_id type].freeze
 
-    # Present on capture_session.finished: the hosted capture session the person sent, as answered when its link was issued.
+    # Present on every capture_session.* event: the hosted capture session, as answered when its link was issued.
     # @return [String, nil]
     attr_reader :capture_session_id
 
@@ -2656,7 +3415,7 @@ module Kuaa
     # @return [String, nil]
     attr_reader :review_id
 
-    # What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
+    # What the event left behind: the case's status for case.*, the check's for check.completed, the outcome for decision.recorded, the reviewer's action for review.recorded, finished for capture_session.finished, the session's status after the event (active, expired or revoked) for the other capture_session.* events, and the reviewer's decision about the document (approved, rejected or rerequested) for document.decided.
     # @return [String]
     attr_reader :status
 
@@ -2664,13 +3423,17 @@ module Kuaa
     # @return [String ("PROCESSING", "PENDING_OCR", "PENDING", "APPROVED", "REPROVED", "BLOCKED", "CANCELLED", "EXPIRED"), nil]
     attr_reader :status_market
 
+    # Present on capture_session.consent_given, .document_submitted and .selfie_submitted: the step of the hosted capture the person finished.
+    # @return [String ("consent", "document", "selfie"), nil]
+    attr_reader :step
+
     # @return [String]
     attr_reader :tenant_id
 
-    # @return [String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided")]
+    # @return [String ("case.created", "case.updated", "check.completed", "decision.recorded", "review.recorded", "capture_session.finished", "document.decided", "capture_session.opened", "capture_session.consent_given", "capture_session.document_submitted", "capture_session.selfie_submitted", "capture_session.expired", "capture_session.revoked")]
     attr_reader :type
 
-    def initialize(capture_session_id: nil, case_id:, check_id: nil, decision: nil, decision_id: nil, document_decision_id: nil, document_id: nil, document_side: nil, document_type: nil, environment:, event_id:, finished_at: nil, livemode:, occurred_at:, parent_case_id: nil, requirement: nil, review_id: nil, status:, status_market: nil, tenant_id:, type:)
+    def initialize(capture_session_id: nil, case_id:, check_id: nil, decision: nil, decision_id: nil, document_decision_id: nil, document_id: nil, document_side: nil, document_type: nil, environment:, event_id:, finished_at: nil, livemode:, occurred_at:, parent_case_id: nil, requirement: nil, review_id: nil, status:, status_market: nil, step: nil, tenant_id:, type:)
       @capture_session_id = capture_session_id
       @case_id = case_id
       @check_id = check_id
@@ -2690,6 +3453,7 @@ module Kuaa
       @review_id = review_id
       @status = status
       @status_market = status_market
+      @step = step
       @tenant_id = tenant_id
       @type = type
       freeze
@@ -2717,6 +3481,7 @@ module Kuaa
         review_id: data["review_id"],
         status: data.fetch("status"),
         status_market: data["status_market"],
+        step: data["step"],
         tenant_id: data.fetch("tenant_id"),
         type: data.fetch("type")
       )

@@ -20,7 +20,7 @@ final class CaseCaptureSessionsService
     /**
      * Issue a hosted capture link.
      *
-     * @param array{email?: string, embed_origin?: string, expires_in_minutes?: int, party_id?: string, return_url?: string, send_email?: bool} $params
+     * @param array{email?: string, embed_origin?: string, expires_in_minutes?: int, handoff?: 'never'|'suggest'|'require', party_id?: string, return_url?: string, send_email?: bool} $params
      */
     public function create(string $id, array $params, ?string $idempotencyKey = null, ?string $apiKey = null): Models\CaptureSessionIssued
     {

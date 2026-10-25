@@ -19,12 +19,16 @@ final class Kuaa implements Requester
 {
     public readonly Services\BillingService $billing;
     public readonly Services\CaseCaptureSessionsService $caseCaptureSessions;
+    public readonly Services\CaseChipChallengesService $caseChipChallenges;
+    public readonly Services\CaseChipReadsService $caseChipReads;
     public readonly Services\CaseDocumentsService $caseDocuments;
     public readonly Services\CaseMediaService $caseMedia;
     public readonly Services\CaseOwnershipService $caseOwnership;
     public readonly Services\CasePartiesService $caseParties;
     public readonly Services\CaseTagsService $caseTags;
     public readonly Services\CasesService $cases;
+    public readonly Services\HealthService $health;
+    public readonly Services\LookupsService $lookups;
     public readonly Services\PartiesService $parties;
     public readonly Services\WebhooksService $webhooks;
     public readonly Services\WorkflowsService $workflows;
@@ -51,12 +55,16 @@ final class Kuaa implements Requester
         $this->transport = $transport ?? self::curlTransport(...);
         $this->billing = new Services\BillingService($this);
         $this->caseCaptureSessions = new Services\CaseCaptureSessionsService($this);
+        $this->caseChipChallenges = new Services\CaseChipChallengesService($this);
+        $this->caseChipReads = new Services\CaseChipReadsService($this);
         $this->caseDocuments = new Services\CaseDocumentsService($this);
         $this->caseMedia = new Services\CaseMediaService($this);
         $this->caseOwnership = new Services\CaseOwnershipService($this);
         $this->caseParties = new Services\CasePartiesService($this);
         $this->caseTags = new Services\CaseTagsService($this);
         $this->cases = new Services\CasesService($this);
+        $this->health = new Services\HealthService($this);
+        $this->lookups = new Services\LookupsService($this);
         $this->parties = new Services\PartiesService($this);
         $this->webhooks = new Services\WebhooksService($this);
         $this->workflows = new Services\WorkflowsService($this);

@@ -22,7 +22,7 @@ final class WebhookEvent
         /** cases/ and the case id. */
         public readonly string $subject,
         public readonly string $time,
-        /** @var 'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided' */
+        /** @var 'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided'|'capture_session.opened'|'capture_session.consent_given'|'capture_session.document_submitted'|'capture_session.selfie_submitted'|'capture_session.expired'|'capture_session.revoked' */
         public readonly string $type,
     ) {
     }

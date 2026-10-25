@@ -32,17 +32,33 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 |---|---|
 | `kuaa.billing` | `balance`, `statement`, `statementIter` |
 | `kuaa.caseCaptureSessions` | `create`, `list`, `revoke` |
+| `kuaa.caseChipChallenges` | `create` |
+| `kuaa.caseChipReads` | `create` |
 | `kuaa.caseDocuments` | `list` |
 | `kuaa.caseMedia` | `create` |
 | `kuaa.caseOwnership` | `create`, `get` |
 | `kuaa.caseParties` | `create` |
 | `kuaa.caseTags` | `create`, `delete`, `list` |
 | `kuaa.cases` | `create`, `decision`, `dossier`, `get`, `list`, `listIter`, `start`, `submit`, `update` |
+| `kuaa.health` | `get` |
+| `kuaa.lookups` | `business`, `get`, `person` |
 | `kuaa.parties` | `get`, `list`, `listIter` |
 | `kuaa.webhooks` | `create`, `delete`, `list` |
 | `kuaa.workflows` | `list` |
 
 Cada método aceita, por último, `{ idempotencyKey, apiKey, signal }`. As listas paginadas respondem `{ items, nextCursor, hasMore }`, e o `…Iter` percorre todas as páginas pelo cursor. O envio de imagens (`kuaa.caseMedia.create`) vai como `multipart/form-data`, com cada arquivo em `{ filename, contentType, data }`.
+
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```ts
+const lookup = await kuaa.lookups.person({ cpf: "000.000.001-91", purpose: "onboarding" }, { idempotencyKey: "consulta-0001" });
+console.log(lookup.status, lookup.reasons, lookup.provenance.situacao_cadastral?.source);
+
+const company = await kuaa.lookups.business({ cnpj: "SA.NDB.OX0/0001-25", purpose: "onboarding" }, { idempotencyKey: "consulta-0002" });
+const again = await kuaa.lookups.get(lookup.id);
+```
 
 ## Erros
 

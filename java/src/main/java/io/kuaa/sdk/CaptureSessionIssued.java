@@ -17,6 +17,12 @@ public final class CaptureSessionIssued {
     public static final String EMAIL_STATUS_FAILED = "failed";
     /** A value of {@link #getEmailStatus()}. */
     public static final String EMAIL_STATUS_UNAVAILABLE = "unavailable";
+    /** A value of {@link #getHandoff()}. */
+    public static final String HANDOFF_NEVER = "never";
+    /** A value of {@link #getHandoff()}. */
+    public static final String HANDOFF_SUGGEST = "suggest";
+    /** A value of {@link #getHandoff()}. */
+    public static final String HANDOFF_REQUIRE = "require";
     /** A value of {@link #getLocale()}. */
     public static final String LOCALE_PT_BR = "pt-BR";
     /** A value of {@link #getStatus()}. */
@@ -35,6 +41,7 @@ public final class CaptureSessionIssued {
     private final String embedOrigin;
     private final String expiresAt;
     private final String finishedAt;
+    private final String handoff;
     private final String id;
     private final String locale;
     private final String partyId;
@@ -47,7 +54,7 @@ public final class CaptureSessionIssued {
     private final String url;
     private final CaptureSessionWorkflow workflow;
 
-    CaptureSessionIssued(String caseId, List<String> completedSteps, String createdAt, String emailStatus, String embedOrigin, String expiresAt, String finishedAt, String id, String locale, String partyId, List<String> reasons, String returnUrl, String revokedAt, String status, List<String> steps, String token, String url, CaptureSessionWorkflow workflow) {
+    CaptureSessionIssued(String caseId, List<String> completedSteps, String createdAt, String emailStatus, String embedOrigin, String expiresAt, String finishedAt, String handoff, String id, String locale, String partyId, List<String> reasons, String returnUrl, String revokedAt, String status, List<String> steps, String token, String url, CaptureSessionWorkflow workflow) {
         this.caseId = caseId;
         this.completedSteps = completedSteps;
         this.createdAt = createdAt;
@@ -55,6 +62,7 @@ public final class CaptureSessionIssued {
         this.embedOrigin = embedOrigin;
         this.expiresAt = expiresAt;
         this.finishedAt = finishedAt;
+        this.handoff = handoff;
         this.id = id;
         this.locale = locale;
         this.partyId = partyId;
@@ -77,6 +85,7 @@ public final class CaptureSessionIssued {
                 Json.optional(data, "embed_origin", Json::asString),
                 Json.required(data, "expires_at", Json::asString),
                 Json.optional(data, "finished_at", Json::asString),
+                Json.optional(data, "handoff", Json::asString),
                 Json.required(data, "id", Json::asString),
                 Json.required(data, "locale", Json::asString),
                 Json.required(data, "party_id", Json::asString),
@@ -123,6 +132,11 @@ public final class CaptureSessionIssued {
     /** @return the API's {@code finished_at} (null when the API sends none) */
     public String getFinishedAt() {
         return finishedAt;
+    }
+
+    /** @return The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting. (null when the API sends none) */
+    public String getHandoff() {
+        return handoff;
     }
 
     /** @return The capture session identifier. */
@@ -182,6 +196,6 @@ public final class CaptureSessionIssued {
 
     @Override
     public String toString() {
-        return "CaptureSessionIssued{" + "caseId=" + caseId + ", completedSteps=" + completedSteps + ", createdAt=" + createdAt + ", emailStatus=" + emailStatus + ", embedOrigin=" + embedOrigin + ", expiresAt=" + expiresAt + ", finishedAt=" + finishedAt + ", id=" + id + ", locale=" + locale + ", partyId=" + partyId + ", reasons=" + reasons + ", returnUrl=" + returnUrl + ", revokedAt=" + revokedAt + ", status=" + status + ", steps=" + steps + ", token=" + token + ", url=" + url + ", workflow=" + workflow + "}";
+        return "CaptureSessionIssued{" + "caseId=" + caseId + ", completedSteps=" + completedSteps + ", createdAt=" + createdAt + ", emailStatus=" + emailStatus + ", embedOrigin=" + embedOrigin + ", expiresAt=" + expiresAt + ", finishedAt=" + finishedAt + ", handoff=" + handoff + ", id=" + id + ", locale=" + locale + ", partyId=" + partyId + ", reasons=" + reasons + ", returnUrl=" + returnUrl + ", revokedAt=" + revokedAt + ", status=" + status + ", steps=" + steps + ", token=" + token + ", url=" + url + ", workflow=" + workflow + "}";
     }
 }

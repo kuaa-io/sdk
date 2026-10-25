@@ -40,17 +40,43 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 |---|---|
 | `client.Billing` | `Balance`, `Statement`, `StatementIter` |
 | `client.CaseCaptureSessions` | `Create`, `List`, `Revoke` |
+| `client.CaseChipChallenges` | `Create` |
+| `client.CaseChipReads` | `Create` |
 | `client.CaseDocuments` | `List` |
 | `client.CaseMedia` | `Create` |
 | `client.CaseOwnership` | `Create`, `Get` |
 | `client.CaseParties` | `Create` |
 | `client.CaseTags` | `Create`, `Delete`, `List` |
 | `client.Cases` | `Create`, `Decision`, `Dossier`, `Get`, `List`, `ListIter`, `Start`, `Submit`, `Update` |
+| `client.Health` | `Get` |
+| `client.Lookups` | `Business`, `Get`, `Person` |
 | `client.Parties` | `Get`, `List`, `ListIter` |
 | `client.Webhooks` | `Create`, `Delete`, `List` |
 | `client.Workflows` | `List` |
 
 As listas paginadas respondem uma `*kuaa.Page[T]` (`Items`, `NextCursor`, `HasMore`); o método `…Iter` percorre todas as páginas pelo cursor. As escritas aceitam `kuaa.WithIdempotencyKey`, e toda chamada aceita `kuaa.WithAPIKey` para usar outra chave. O envio de imagens (`client.CaseMedia.Create`) vai como `multipart/form-data`, com cada arquivo num `kuaa.File`.
+
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```go
+lookup, err := client.Lookups.Person(ctx, kuaa.PersonLookupRequest{
+	Cpf:     "000.000.001-91",
+	Purpose: "onboarding",
+}, kuaa.WithIdempotencyKey("consulta-0001"))
+if err != nil {
+	return err
+}
+fmt.Println(lookup.Status, lookup.Reasons)
+if origin := lookup.Provenance.SituacaoCadastral; origin != nil {
+	fmt.Println(origin.Source, origin.RetrievedAt)
+}
+
+company, err := client.Lookups.Business(ctx, kuaa.BusinessLookupRequest{Cnpj: "SA.NDB.OX0/0001-25", Purpose: "onboarding"},
+	kuaa.WithIdempotencyKey("consulta-0002"))
+again, err := client.Lookups.Get(ctx, lookup.ID)
+```
 
 ## Erros
 

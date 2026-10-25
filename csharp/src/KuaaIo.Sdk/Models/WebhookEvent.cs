@@ -36,6 +36,24 @@ public sealed record WebhookEvent
     /// <summary>A value of <see cref="Type"/>.</summary>
     public const string TypeDocumentDecided = "document.decided";
 
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionOpened = "capture_session.opened";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionConsentGiven = "capture_session.consent_given";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionDocumentSubmitted = "capture_session.document_submitted";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionSelfieSubmitted = "capture_session.selfie_submitted";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionExpired = "capture_session.expired";
+
+    /// <summary>A value of <see cref="Type"/>.</summary>
+    public const string TypeCaptureSessionRevoked = "capture_session.revoked";
+
     /// <summary>The API's <c>data</c>.</summary>
     [JsonPropertyName("data")]
     public required WebhookEventData Data { get; init; }

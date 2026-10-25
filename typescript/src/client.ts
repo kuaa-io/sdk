@@ -2,7 +2,7 @@
 
 import type { Envelope, KuaaFile, Query, Requester, RequestSpec, ResponseInfo } from "./core.ts";
 import { KuaaError } from "./errors.ts";
-import { BillingService, CaseCaptureSessionsService, CaseDocumentsService, CaseMediaService, CaseOwnershipService, CasePartiesService, CaseTagsService, CasesService, PartiesService, WebhooksService, WorkflowsService } from "./services.ts";
+import { BillingService, CaseCaptureSessionsService, CaseChipChallengesService, CaseChipReadsService, CaseDocumentsService, CaseMediaService, CaseOwnershipService, CasePartiesService, CaseTagsService, CasesService, HealthService, LookupsService, PartiesService, WebhooksService, WorkflowsService } from "./services.ts";
 import { DEFAULT_BASE_URL, VERSION } from "./version.ts";
 
 export interface ClientOptions {
@@ -59,12 +59,16 @@ function searchOf(url: URL, query: Query): void {
 export class Kuaa implements Requester {
   readonly billing: BillingService;
   readonly caseCaptureSessions: CaseCaptureSessionsService;
+  readonly caseChipChallenges: CaseChipChallengesService;
+  readonly caseChipReads: CaseChipReadsService;
   readonly caseDocuments: CaseDocumentsService;
   readonly caseMedia: CaseMediaService;
   readonly caseOwnership: CaseOwnershipService;
   readonly caseParties: CasePartiesService;
   readonly caseTags: CaseTagsService;
   readonly cases: CasesService;
+  readonly health: HealthService;
+  readonly lookups: LookupsService;
   readonly parties: PartiesService;
   readonly webhooks: WebhooksService;
   readonly workflows: WorkflowsService;
@@ -84,12 +88,16 @@ export class Kuaa implements Requester {
     this.#timeoutMs = config.timeoutMs ?? 30_000;
     this.billing = new BillingService(this);
     this.caseCaptureSessions = new CaseCaptureSessionsService(this);
+    this.caseChipChallenges = new CaseChipChallengesService(this);
+    this.caseChipReads = new CaseChipReadsService(this);
     this.caseDocuments = new CaseDocumentsService(this);
     this.caseMedia = new CaseMediaService(this);
     this.caseOwnership = new CaseOwnershipService(this);
     this.caseParties = new CasePartiesService(this);
     this.caseTags = new CaseTagsService(this);
     this.cases = new CasesService(this);
+    this.health = new HealthService(this);
+    this.lookups = new LookupsService(this);
     this.parties = new PartiesService(this);
     this.webhooks = new WebhooksService(this);
     this.workflows = new WorkflowsService(this);

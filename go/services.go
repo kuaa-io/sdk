@@ -19,12 +19,16 @@ var (
 func (c *Client) initServices() {
 	c.Billing = &BillingService{client: c}
 	c.CaseCaptureSessions = &CaseCaptureSessionsService{client: c}
+	c.CaseChipChallenges = &CaseChipChallengesService{client: c}
+	c.CaseChipReads = &CaseChipReadsService{client: c}
 	c.CaseDocuments = &CaseDocumentsService{client: c}
 	c.CaseMedia = &CaseMediaService{client: c}
 	c.CaseOwnership = &CaseOwnershipService{client: c}
 	c.CaseParties = &CasePartiesService{client: c}
 	c.CaseTags = &CaseTagsService{client: c}
 	c.Cases = &CasesService{client: c}
+	c.Health = &HealthService{client: c}
+	c.Lookups = &LookupsService{client: c}
 	c.Parties = &PartiesService{client: c}
 	c.Webhooks = &WebhooksService{client: c}
 	c.Workflows = &WorkflowsService{client: c}
@@ -111,6 +115,32 @@ func (s *CaseCaptureSessionsService) List(ctx context.Context, id string, opts .
 func (s *CaseCaptureSessionsService) Revoke(ctx context.Context, id string, session string, opts ...RequestOption) (*CaptureSession, error) {
 	var out CaptureSession
 	err := s.client.call(ctx, http.MethodPost, "/v1/cases/"+url.PathEscape(id)+"/capture-sessions/"+url.PathEscape(session)+"/revoke", nil, nil, nil, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// CaseChipChallengesService is the API's case_chip_challenges.
+type CaseChipChallengesService struct{ client *Client }
+
+// Create: Issue a chip read challenge.
+func (s *CaseChipChallengesService) Create(ctx context.Context, id string, params ChipChallengeRequest, opts ...RequestOption) (*ChipChallenge, error) {
+	var out ChipChallenge
+	err := s.client.call(ctx, http.MethodPost, "/v1/cases/"+url.PathEscape(id)+"/chip/challenges", nil, params, nil, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// CaseChipReadsService is the API's case_chip_reads.
+type CaseChipReadsService struct{ client *Client }
+
+// Create: Submit a passport chip read.
+func (s *CaseChipReadsService) Create(ctx context.Context, id string, params ChipReadRequest, opts ...RequestOption) (*ChipRead, error) {
+	var out ChipRead
+	err := s.client.call(ctx, http.MethodPost, "/v1/cases/"+url.PathEscape(id)+"/chip/reads", nil, params, nil, &out, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -389,6 +419,52 @@ func (s *CasesService) Submit(ctx context.Context, id string, params SubmitReque
 func (s *CasesService) Update(ctx context.Context, id string, params CasePatchRequest, opts ...RequestOption) (*Case, error) {
 	var out Case
 	err := s.client.call(ctx, http.MethodPatch, "/v1/cases/"+url.PathEscape(id), nil, params, nil, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// HealthService is the API's health.
+type HealthService struct{ client *Client }
+
+// Get: Read the availability of the engines.
+func (s *HealthService) Get(ctx context.Context, opts ...RequestOption) (*HealthReport, error) {
+	var out HealthReport
+	err := s.client.call(ctx, http.MethodGet, "/v1/health", nil, nil, nil, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// LookupsService is the API's lookups.
+type LookupsService struct{ client *Client }
+
+// Business: Look a CNPJ up.
+func (s *LookupsService) Business(ctx context.Context, params BusinessLookupRequest, opts ...RequestOption) (*Lookup, error) {
+	var out Lookup
+	err := s.client.call(ctx, http.MethodPost, "/v1/lookups/business", nil, params, nil, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Get: Read a lookup.
+func (s *LookupsService) Get(ctx context.Context, id string, opts ...RequestOption) (*Lookup, error) {
+	var out Lookup
+	err := s.client.call(ctx, http.MethodGet, "/v1/lookups/"+url.PathEscape(id), nil, nil, nil, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Person: Look a CPF up.
+func (s *LookupsService) Person(ctx context.Context, params PersonLookupRequest, opts ...RequestOption) (*Lookup, error) {
+	var out Lookup
+	err := s.client.call(ctx, http.MethodPost, "/v1/lookups/person", nil, params, nil, &out, opts)
 	if err != nil {
 		return nil, err
 	}

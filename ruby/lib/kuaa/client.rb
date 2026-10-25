@@ -36,6 +36,10 @@ module Kuaa
     attr_reader :billing
     # @return [CaseCaptureSessionsService]
     attr_reader :case_capture_sessions
+    # @return [CaseChipChallengesService]
+    attr_reader :case_chip_challenges
+    # @return [CaseChipReadsService]
+    attr_reader :case_chip_reads
     # @return [CaseDocumentsService]
     attr_reader :case_documents
     # @return [CaseMediaService]
@@ -48,6 +52,10 @@ module Kuaa
     attr_reader :case_tags
     # @return [CasesService]
     attr_reader :cases
+    # @return [HealthService]
+    attr_reader :health
+    # @return [LookupsService]
+    attr_reader :lookups
     # @return [PartiesService]
     attr_reader :parties
     # @return [WebhooksService]
@@ -68,12 +76,16 @@ module Kuaa
       @last_response = nil
       @billing = BillingService.new(self)
       @case_capture_sessions = CaseCaptureSessionsService.new(self)
+      @case_chip_challenges = CaseChipChallengesService.new(self)
+      @case_chip_reads = CaseChipReadsService.new(self)
       @case_documents = CaseDocumentsService.new(self)
       @case_media = CaseMediaService.new(self)
       @case_ownership = CaseOwnershipService.new(self)
       @case_parties = CasePartiesService.new(self)
       @case_tags = CaseTagsService.new(self)
       @cases = CasesService.new(self)
+      @health = HealthService.new(self)
+      @lookups = LookupsService.new(self)
       @parties = PartiesService.new(self)
       @webhooks = WebhooksService.new(self)
       @workflows = WorkflowsService.new(self)

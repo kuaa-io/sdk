@@ -294,6 +294,8 @@ func skipped(name string) bool {
 var overrides = map[string]string{
 	"CaseTagsResponse.data":                "CaseTagList",
 	"DecisionResponse.data":                "CaseDecision",
+	"HealthResponse.data":                  "HealthReport",
+	"ChipRead.outcomes":                    "ChipOutcomes",
 	"Run.workflow":                         "RunWorkflow",
 	"PartyResponse.data":                   "AddedParty",
 	"PartyList.parties":                    "PartySummary",
@@ -309,6 +311,36 @@ var overrides = map[string]string{
 	"BeneficialOwnerResolution.exempt":     "OwnershipExemption",
 	"BeneficialOwnerResolution.unresolved": "UnresolvedOwnership",
 	"BeneficialOwner.paths":                "OwnershipPath",
+	"Lookup.person":                        "LookupPerson",
+	"Lookup.company":                       "LookupCompany",
+	"Lookup.cost":                          "LookupCost",
+	"Lookup.provenance":                    "LookupProvenance",
+	"Lookup.screening":                     "LookupScreening",
+	"Lookup.sources":                       "LookupSource",
+	"LookupScreening.matches":              "ScreeningMatch",
+	"LookupScreening.sources":              "ScreeningSource",
+	// Every property of the provenance is one field's origin.
+	"LookupProvenance.*": "FieldProvenance",
+}
+
+// override is the name overrides ask for the object at parent.field: its own
+// entry, or the one for every property of parent.
+func override(parent, field string) (string, bool) {
+	if name, ok := overrides[parent+"."+field]; ok {
+		return name, true
+	}
+	name, ok := overrides[parent+".*"]
+	return name, ok
+}
+
+// untypedMaps are the objects the contract writes without a property or a
+// value schema although the API answers a map, by "<model>.<property>", with
+// the type of the map's values. The rule cannot read a shape the contract
+// does not write; each entry stays only until kuaa.io describes the map.
+var untypedMaps = map[string]string{
+	// kuaa.io's ChipReadResource writes reasons as Object() with no
+	// properties; it answers a map[string]string by outcome name.
+	"ChipRead.reasons": "string",
 }
 
 // reserved are the names the overrides ask for.
@@ -374,8 +406,9 @@ func (n *namer) nested(j *job) (string, error) {
 		noun = Pascal(singular(j.field))
 	}
 	var candidates []string
-	if name, ok := overrides[j.parent+"."+j.field]; ok {
-		candidates = append(candidates, name)
+	asked, overridden := override(j.parent, j.field)
+	if overridden {
+		candidates = append(candidates, asked)
 	}
 	if !j.input && !generic[j.field] {
 		candidates = append(candidates, noun)
@@ -386,7 +419,7 @@ func (n *namer) nested(j *job) (string, error) {
 	candidates = append(candidates, j.parent+noun)
 	for i, name := range candidates {
 		// A name an override asks for is kept for it.
-		if !n.taken[name] && (i == 0 && overrides[j.parent+"."+j.field] == name || !reserved()[name]) {
+		if !n.taken[name] && (i == 0 && overridden && asked == name || !reserved()[name]) {
 			return n.declare(name, j.schema, j.input, j.depth)
 		}
 	}
@@ -561,11 +594,15 @@ var verbs = map[string]string{"index": "list", "store": "create", "show": "get",
 // names2 reads an operationId -- api.<resource>[.<nested>].<verb>, as kuaa.io
 // names its routes -- as a service and a method. A nested resource's service
 // carries its parent's singular name: api.cases.tags.store is
-// case_tags.create.
+// case_tags.create. A resource named alone is read: api.health is
+// health.get.
 func names2(operationID string) (string, string, error) {
 	parts := strings.Split(strings.TrimPrefix(operationID, "api."), ".")
-	if len(parts) < 2 || !strings.HasPrefix(operationID, "api.") {
+	if !strings.HasPrefix(operationID, "api.") || parts[0] == "" {
 		return "", "", fmt.Errorf("operationId %q is not api.<resource>.<verb>", operationID)
+	}
+	if len(parts) == 1 {
+		return parts[0], "get", nil
 	}
 	verb := parts[len(parts)-1]
 	if mapped, ok := verbs[verb]; ok {
@@ -774,6 +811,9 @@ func (n *namer) typeOf(s *schema, parent, field string, input bool, depth int) (
 		if values := s.additional(); values != nil {
 			items, _, err := n.typeOf(values, parent, field, input, depth)
 			return &TypeRef{Kind: "map", Items: items}, nullable, err
+		}
+		if values, ok := untypedMaps[parent+"."+field]; ok && len(s.Properties) == 0 {
+			return &TypeRef{Kind: "map", Items: &TypeRef{Kind: values}}, nullable, nil
 		}
 	}
 	return nil, false, fmt.Errorf("unsupported schema type %v", s.Type)

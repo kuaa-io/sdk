@@ -144,6 +144,43 @@ defmodule Kuaa.AddPartyRequestRelationship do
   end
 end
 
+defmodule Kuaa.BusinessLookupRequest do
+  @moduledoc """
+  
+
+  Build it with `new/1` from a keyword list or a map; an optional field left
+  out is left out of the JSON.
+  """
+
+  @enforce_keys [:cnpj, :purpose]
+  defstruct [:cnpj, :product, :purpose]
+
+  @typedoc """
+  * `cnpj`: The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN RFB 2.229/2024); its check digits are verified before anything is asked.
+  * `product` (optional; one of `"basic"`, `"plus"`): Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the organization's Direct Data settings name.
+  * `purpose` (one of `"onboarding"`, `"fraud_prevention"`, `"legal_obligation"`, `"credit_protection"`, `"contract_execution"`): Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis.
+  """
+  @type t :: %__MODULE__{
+          cnpj: String.t(),
+          product: String.t() | nil,
+          purpose: String.t()
+        }
+
+  @doc "The params as they are, or built from a keyword list or a map with atom keys."
+  @spec new(t() | keyword() | map()) :: t()
+  def new(%__MODULE__{} = params), do: params
+  def new(fields), do: struct!(__MODULE__, fields)
+
+  @doc "The body as the API reads it, from the params or what `new/1` builds them from."
+  @spec to_map(t() | keyword() | map()) :: %{optional(String.t()) => term()}
+  def to_map(params) do
+    params = new(params)
+
+    %{"cnpj" => params.cnpj, "purpose" => params.purpose}
+    |> Kuaa.Encode.put_optional("product", params.product)
+  end
+end
+
 defmodule Kuaa.CaptureForm do
   @moduledoc """
   
@@ -198,12 +235,21 @@ defmodule Kuaa.CaptureSessionRequest do
   out is left out of the JSON.
   """
 
-  defstruct [:email, :embed_origin, :expires_in_minutes, :party_id, :return_url, :send_email]
+  defstruct [
+    :email,
+    :embed_origin,
+    :expires_in_minutes,
+    :handoff,
+    :party_id,
+    :return_url,
+    :send_email
+  ]
 
   @typedoc """
   * `email` (optional): The address to e-mail the link to, instead of the one on file. Given alone, it asks for the e-mail too. It is not stored and not audited: the audit keeps only that a link was e-mailed.
   * `embed_origin` (optional): The one https origin that may frame the capture (iframe or WebView) and receive its postMessage events. Without it the capture refuses to be framed.
   * `expires_in_minutes` (optional): How long the link opens, in minutes. Default 1440 (one day).
+  * `handoff` (optional; one of `"never"`, `"suggest"`, `"require"`): How the link, opened on a desktop, offers itself on a phone: `never` shows the capture on any device; `suggest` shows it with a QR code of the same link to continue on a phone; `require` shows a desktop only the QR code. Omitted, the organization's setting applies (suggest by default). The device is read from what the browser says about itself: it steers the page and is not a security control.
   * `party_id` (optional): The party whose capture this is. Empty is the case's primary party.
   * `return_url` (optional): Where the person is offered to go back to when they finish: an absolute https:// address.
   * `send_email` (optional): E-mail the link to the person, in Portuguese and under the organization's brand: to email when given, to the e-mail on file for the party otherwise. A link issued after the case was sent back is e-mailed as a request to send again, with the reason in plain words. At most 5 e-mails per case in 24 hours; data.email_status says what happened, and the link is issued either way.
@@ -212,6 +258,7 @@ defmodule Kuaa.CaptureSessionRequest do
           email: String.t() | nil,
           embed_origin: String.t() | nil,
           expires_in_minutes: integer() | nil,
+          handoff: String.t() | nil,
           party_id: String.t() | nil,
           return_url: String.t() | nil,
           send_email: boolean() | nil
@@ -231,6 +278,7 @@ defmodule Kuaa.CaptureSessionRequest do
     |> Kuaa.Encode.put_optional("email", params.email)
     |> Kuaa.Encode.put_optional("embed_origin", params.embed_origin)
     |> Kuaa.Encode.put_optional("expires_in_minutes", params.expires_in_minutes)
+    |> Kuaa.Encode.put_optional("handoff", params.handoff)
     |> Kuaa.Encode.put_optional("party_id", params.party_id)
     |> Kuaa.Encode.put_optional("return_url", params.return_url)
     |> Kuaa.Encode.put_optional("send_email", params.send_email)
@@ -434,6 +482,126 @@ defmodule Kuaa.CaseTagsRequest do
   end
 end
 
+defmodule Kuaa.ChipChallengeRequest do
+  @moduledoc """
+  
+
+  Build it with `new/1` from a keyword list or a map; an optional field left
+  out is left out of the JSON.
+  """
+
+  defstruct [:party_id]
+
+  @typedoc """
+  * `party_id` (optional): The person whose chip is read. Empty is the case's primary party, which must be a person.
+  """
+  @type t :: %__MODULE__{
+          party_id: String.t() | nil
+        }
+
+  @doc "The params as they are, or built from a keyword list or a map with atom keys."
+  @spec new(t() | keyword() | map()) :: t()
+  def new(%__MODULE__{} = params), do: params
+  def new(fields), do: struct!(__MODULE__, fields)
+
+  @doc "The body as the API reads it, from the params or what `new/1` builds them from."
+  @spec to_map(t() | keyword() | map()) :: %{optional(String.t()) => term()}
+  def to_map(params) do
+    params = new(params)
+
+    %{}
+    |> Kuaa.Encode.put_optional("party_id", params.party_id)
+  end
+end
+
+defmodule Kuaa.ChipReadRequest do
+  @moduledoc """
+  
+
+  Build it with `new/1` from a keyword list or a map; an optional field left
+  out is left out of the JSON.
+  """
+
+  @enforce_keys [:challenge_id, :dg1, :ef_sod]
+  defstruct [
+    :aa_signature,
+    :ca_key_id,
+    :ca_protocol,
+    :ca_status,
+    :challenge_id,
+    :dg1,
+    :dg11,
+    :dg12,
+    :dg14,
+    :dg15,
+    :dg2,
+    :ef_card_access,
+    :ef_com,
+    :ef_sod,
+    :printed_mrz
+  ]
+
+  @typedoc """
+  * `aa_signature` (optional): The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+  * `ca_key_id` (optional): The Chip Authentication key the device used, when DG14 lists more than one.
+  * `ca_protocol` (optional): The Chip Authentication protocol the device ran, as the object identifier DG14 names it.
+  * `ca_status` (optional; one of `"completed"`, `"failed"`): What the device reports about Chip Authentication. The server checks only that the claim is consistent with an authenticated DG14: the protocol itself runs on the device.
+  * `challenge_id`: The challenge issued for this read. It answers one read, once, before it expires.
+  * `dg1`: DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded.
+  * `dg11` (optional): DG11, additional personal details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+  * `dg12` (optional): DG12, additional document details, when the chip has it, as read from the chip -- tag and length included -- in standard base64. At most 8192 bytes decoded.
+  * `dg14` (optional): DG14, the Chip Authentication and PACE security infos, as read from the chip -- tag and length included -- in standard base64. At most 16384 bytes decoded.
+  * `dg15` (optional): DG15, the Active Authentication public key, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+  * `dg2` (optional): DG2, the face image (biometric data, stored sealed), as read from the chip -- tag and length included -- in standard base64. At most 524288 bytes decoded.
+  * `ef_card_access` (optional): EF.CardAccess, the PACE infos, as read from the chip -- tag and length included -- in standard base64. At most 4096 bytes decoded.
+  * `ef_com` (optional): EF.COM, as read from the chip -- tag and length included -- in standard base64. At most 1024 bytes decoded.
+  * `ef_sod`: EF.SOD, as read, in standard base64. Without it nothing is authenticated. At most 65536 bytes decoded.
+  * `printed_mrz` (optional): The MRZ of the printed page, its lines separated by line breaks, compared field by field with DG1. It is not stored outside the sealed read and never answered.
+  """
+  @type t :: %__MODULE__{
+          aa_signature: String.t() | nil,
+          ca_key_id: integer() | nil,
+          ca_protocol: String.t() | nil,
+          ca_status: String.t() | nil,
+          challenge_id: String.t(),
+          dg1: String.t(),
+          dg11: String.t() | nil,
+          dg12: String.t() | nil,
+          dg14: String.t() | nil,
+          dg15: String.t() | nil,
+          dg2: String.t() | nil,
+          ef_card_access: String.t() | nil,
+          ef_com: String.t() | nil,
+          ef_sod: String.t(),
+          printed_mrz: String.t() | nil
+        }
+
+  @doc "The params as they are, or built from a keyword list or a map with atom keys."
+  @spec new(t() | keyword() | map()) :: t()
+  def new(%__MODULE__{} = params), do: params
+  def new(fields), do: struct!(__MODULE__, fields)
+
+  @doc "The body as the API reads it, from the params or what `new/1` builds them from."
+  @spec to_map(t() | keyword() | map()) :: %{optional(String.t()) => term()}
+  def to_map(params) do
+    params = new(params)
+
+    %{"challenge_id" => params.challenge_id, "dg1" => params.dg1, "ef_sod" => params.ef_sod}
+    |> Kuaa.Encode.put_optional("aa_signature", params.aa_signature)
+    |> Kuaa.Encode.put_optional("ca_key_id", params.ca_key_id)
+    |> Kuaa.Encode.put_optional("ca_protocol", params.ca_protocol)
+    |> Kuaa.Encode.put_optional("ca_status", params.ca_status)
+    |> Kuaa.Encode.put_optional("dg11", params.dg11)
+    |> Kuaa.Encode.put_optional("dg12", params.dg12)
+    |> Kuaa.Encode.put_optional("dg14", params.dg14)
+    |> Kuaa.Encode.put_optional("dg15", params.dg15)
+    |> Kuaa.Encode.put_optional("dg2", params.dg2)
+    |> Kuaa.Encode.put_optional("ef_card_access", params.ef_card_access)
+    |> Kuaa.Encode.put_optional("ef_com", params.ef_com)
+    |> Kuaa.Encode.put_optional("printed_mrz", params.printed_mrz)
+  end
+end
+
 defmodule Kuaa.OwnershipRequest do
   @moduledoc """
   
@@ -510,6 +678,43 @@ defmodule Kuaa.OwnershipRequestDeclaration do
     |> Kuaa.Encode.put_optional("from_party_id", params.from_party_id)
     |> Kuaa.Encode.put_optional("relationship_id", params.relationship_id)
     |> Kuaa.Encode.put_optional("to_party_id", params.to_party_id)
+  end
+end
+
+defmodule Kuaa.PersonLookupRequest do
+  @moduledoc """
+  
+
+  Build it with `new/1` from a keyword list or a map; an optional field left
+  out is left out of the JSON.
+  """
+
+  @enforce_keys [:cpf, :purpose]
+  defstruct [:cpf, :include, :purpose]
+
+  @typedoc """
+  * `cpf`: The CPF, as text, with or without punctuation; its check digits are verified before anything is asked.
+  * `include` (optional): aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks Cadastro PF Plus alone.
+  * `purpose` (one of `"onboarding"`, `"fraud_prevention"`, `"legal_obligation"`, `"credit_protection"`, `"contract_execution"`): Why the lookup is made (LGPD art. 6, I), recorded with it with its legal basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g), legal_obligation (art. 7, II), credit_protection (art. 7, X), contract_execution (art. 7, V).
+  """
+  @type t :: %__MODULE__{
+          cpf: String.t(),
+          include: [String.t()] | nil,
+          purpose: String.t()
+        }
+
+  @doc "The params as they are, or built from a keyword list or a map with atom keys."
+  @spec new(t() | keyword() | map()) :: t()
+  def new(%__MODULE__{} = params), do: params
+  def new(fields), do: struct!(__MODULE__, fields)
+
+  @doc "The body as the API reads it, from the params or what `new/1` builds them from."
+  @spec to_map(t() | keyword() | map()) :: %{optional(String.t()) => term()}
+  def to_map(params) do
+    params = new(params)
+
+    %{"cpf" => params.cpf, "purpose" => params.purpose}
+    |> Kuaa.Encode.put_optional("include", Kuaa.Encode.value(params.include))
   end
 end
 

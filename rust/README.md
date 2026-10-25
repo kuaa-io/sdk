@@ -33,17 +33,41 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 |---|---|
 | `client.billing()` | `balance`, `statement`, `statement_iter` |
 | `client.case_capture_sessions()` | `create`, `list`, `revoke` |
+| `client.case_chip_challenges()` | `create` |
+| `client.case_chip_reads()` | `create` |
 | `client.case_documents()` | `list` |
 | `client.case_media()` | `create` |
 | `client.case_ownership()` | `create`, `get` |
 | `client.case_parties()` | `create` |
 | `client.case_tags()` | `create`, `delete`, `list` |
 | `client.cases()` | `create`, `decision`, `dossier`, `get`, `list`, `list_iter`, `start`, `submit`, `update` |
+| `client.health()` | `get` |
+| `client.lookups()` | `business`, `get`, `person` |
 | `client.parties()` | `get`, `list`, `list_iter` |
 | `client.webhooks()` | `create`, `delete`, `list` |
 | `client.workflows()` | `list` |
 
 Os corpos das escritas são structs com `new(obrigatórios…)` e um método por campo opcional; os campos opcionais não definidos não são enviados. Os campos enumerados são enums (`CaseStatus::Approved`) que guardam em `Unrecognized` um valor que esta versão ainda não conhece. As listas respondem uma `Page` (`items`, `next_cursor`, `has_more`), e o `…_iter` devolve um `Iterator` que percorre todas as páginas pelo cursor. O envio de imagens (`client.case_media().create`) vai como `multipart/form-data`, com cada arquivo num `FilePart`. Antes da chamada, `.idempotency_key(…)` torna uma escrita segura para repetir, e `.api_key(…)` usa outra chave. `Client::builder(chave)` aceita `base_url`, `timeout` (30 s por padrão) e `transport`, para usar outro cliente HTTP ou testar sem rede.
+
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```rust
+use kuaa_io_sdk::{BusinessLookupRequest, BusinessLookupRequestPurpose, PersonLookupRequest, PersonLookupRequestPurpose};
+
+let lookup = client
+    .lookups()
+    .idempotency_key("consulta-0001")
+    .person(&PersonLookupRequest::new("000.000.001-91", PersonLookupRequestPurpose::Onboarding))?;
+println!("{:?} {:?}", lookup.status, lookup.reasons);
+
+let company = client
+    .lookups()
+    .idempotency_key("consulta-0002")
+    .business(&BusinessLookupRequest::new("SA.NDB.OX0/0001-25", BusinessLookupRequestPurpose::Onboarding))?;
+let again = client.lookups().get(&lookup.id)?;
+```
 
 ## Erros
 

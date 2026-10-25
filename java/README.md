@@ -39,17 +39,37 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 |---|---|
 | `kuaa.billing()` | `balance`, `statement`, `statementIter` |
 | `kuaa.caseCaptureSessions()` | `create`, `list`, `revoke` |
+| `kuaa.caseChipChallenges()` | `create` |
+| `kuaa.caseChipReads()` | `create` |
 | `kuaa.caseDocuments()` | `list` |
 | `kuaa.caseMedia()` | `create` |
 | `kuaa.caseOwnership()` | `create`, `get` |
 | `kuaa.caseParties()` | `create` |
 | `kuaa.caseTags()` | `create`, `delete`, `list` |
 | `kuaa.cases()` | `create`, `decision`, `dossier`, `get`, `list`, `listIter`, `start`, `submit`, `update` |
+| `kuaa.health()` | `get` |
+| `kuaa.lookups()` | `business`, `get`, `person` |
 | `kuaa.parties()` | `get`, `list`, `listIter` |
 | `kuaa.webhooks()` | `create`, `delete`, `list` |
 | `kuaa.workflows()` | `list` |
 
 Os objetos respondidos são classes imutáveis com getters (`kase.getExternalReference()`), e os valores enumerados são constantes (`Case.STATUS_APPROVED`). Os corpos das escritas são construídos com `builder()`, e um campo opcional não informado fica fora do JSON. As listas paginadas respondem uma `Page<T>` (`getItems`, `getNextCursor`, `hasMore`), e o `…Iter` devolve um `Iterable` que percorre todas as páginas pelo cursor. O envio de imagens (`kuaa.caseMedia().create`) vai como `multipart/form-data`, com cada arquivo num `FilePart` (ou `FilePart.fromPath`). O cliente pode ser compartilhado entre threads.
+
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```java
+Lookup lookup = kuaa.lookups().person(
+        PersonLookupRequest.builder().cpf("000.000.001-91").purpose(PersonLookupRequest.PURPOSE_ONBOARDING).build(),
+        RequestOptions.builder().idempotencyKey("consulta-0001").build());
+System.out.println(lookup.getStatus() + " " + lookup.getReasons());
+
+Lookup company = kuaa.lookups().business(
+        BusinessLookupRequest.builder().cnpj("SA.NDB.OX0/0001-25").purpose(BusinessLookupRequest.PURPOSE_ONBOARDING).build(),
+        RequestOptions.builder().idempotencyKey("consulta-0002").build());
+Lookup again = kuaa.lookups().get(lookup.getId());
+```
 
 ## Erros
 

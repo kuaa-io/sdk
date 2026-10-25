@@ -36,12 +36,16 @@ type Client struct {
 	last                atomic.Pointer[Response]
 	Billing             *BillingService
 	CaseCaptureSessions *CaseCaptureSessionsService
+	CaseChipChallenges  *CaseChipChallengesService
+	CaseChipReads       *CaseChipReadsService
 	CaseDocuments       *CaseDocumentsService
 	CaseMedia           *CaseMediaService
 	CaseOwnership       *CaseOwnershipService
 	CaseParties         *CasePartiesService
 	CaseTags            *CaseTagsService
 	Cases               *CasesService
+	Health              *HealthService
+	Lookups             *LookupsService
 	Parties             *PartiesService
 	Webhooks            *WebhooksService
 	Workflows           *WorkflowsService

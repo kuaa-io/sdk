@@ -26,6 +26,11 @@ final class CaptureSessionIssued
         public readonly ?string $embedOrigin,
         public readonly string $expiresAt,
         public readonly ?string $finishedAt,
+        /**
+         * The link's own choice of how a desktop is offered the link on a phone; null takes the organization's setting.
+         * @var 'never'|'suggest'|'require'|null
+         */
+        public readonly ?string $handoff,
         /** The capture session identifier. */
         public readonly string $id,
         /** @var 'pt-BR' */
@@ -70,6 +75,7 @@ final class CaptureSessionIssued
             embedOrigin: $data['embed_origin'] ?? null,
             expiresAt: $data['expires_at'],
             finishedAt: $data['finished_at'] ?? null,
+            handoff: $data['handoff'] ?? null,
             id: $data['id'],
             locale: $data['locale'],
             partyId: $data['party_id'],

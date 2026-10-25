@@ -64,6 +64,36 @@ export class CaseCaptureSessionsService {
   }
 }
 
+/** The API's case_chip_challenges. */
+export class CaseChipChallengesService {
+  readonly #client: Requester;
+
+  constructor(client: Requester) {
+    this.#client = client;
+  }
+
+  /** Issue a chip read challenge. */
+  async create(id: string, params: models.ChipChallengeRequest, options?: RequestOptions): Promise<models.ChipChallenge> {
+    const envelope = await this.#client.request("POST", `/v1/cases/${encodeURIComponent(id)}/chip/challenges`, { body: params, options });
+    return envelope.data as unknown as models.ChipChallenge;
+  }
+}
+
+/** The API's case_chip_reads. */
+export class CaseChipReadsService {
+  readonly #client: Requester;
+
+  constructor(client: Requester) {
+    this.#client = client;
+  }
+
+  /** Submit a passport chip read. */
+  async create(id: string, params: models.ChipReadRequest, options?: RequestOptions): Promise<models.ChipRead> {
+    const envelope = await this.#client.request("POST", `/v1/cases/${encodeURIComponent(id)}/chip/reads`, { body: params, options });
+    return envelope.data as unknown as models.ChipRead;
+  }
+}
+
 /** The API's case_documents. */
 export class CaseDocumentsService {
   readonly #client: Requester;
@@ -249,6 +279,48 @@ export class CasesService {
   async update(id: string, params: models.CasePatchRequest, options?: RequestOptions): Promise<models.Case> {
     const envelope = await this.#client.request("PATCH", `/v1/cases/${encodeURIComponent(id)}`, { body: params, options });
     return envelope.data as unknown as models.Case;
+  }
+}
+
+/** The API's health. */
+export class HealthService {
+  readonly #client: Requester;
+
+  constructor(client: Requester) {
+    this.#client = client;
+  }
+
+  /** Read the availability of the engines. */
+  async get(options?: RequestOptions): Promise<models.HealthReport> {
+    const envelope = await this.#client.request("GET", `/v1/health`, { options });
+    return envelope.data as unknown as models.HealthReport;
+  }
+}
+
+/** The API's lookups. */
+export class LookupsService {
+  readonly #client: Requester;
+
+  constructor(client: Requester) {
+    this.#client = client;
+  }
+
+  /** Look a CNPJ up. */
+  async business(params: models.BusinessLookupRequest, options?: RequestOptions): Promise<models.Lookup> {
+    const envelope = await this.#client.request("POST", `/v1/lookups/business`, { body: params, options });
+    return envelope.data as unknown as models.Lookup;
+  }
+
+  /** Read a lookup. */
+  async get(id: string, options?: RequestOptions): Promise<models.Lookup> {
+    const envelope = await this.#client.request("GET", `/v1/lookups/${encodeURIComponent(id)}`, { options });
+    return envelope.data as unknown as models.Lookup;
+  }
+
+  /** Look a CPF up. */
+  async person(params: models.PersonLookupRequest, options?: RequestOptions): Promise<models.Lookup> {
+    const envelope = await this.#client.request("POST", `/v1/lookups/person`, { body: params, options });
+    return envelope.data as unknown as models.Lookup;
   }
 }
 

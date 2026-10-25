@@ -20,7 +20,7 @@ final class WebhooksService
     /**
      * Register a webhook endpoint.
      *
-     * @param array{events: list<'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided'>, name: string, url: string} $params
+     * @param array{events: list<'case.created'|'case.updated'|'check.completed'|'decision.recorded'|'review.recorded'|'capture_session.finished'|'document.decided'|'capture_session.opened'|'capture_session.consent_given'|'capture_session.document_submitted'|'capture_session.selfie_submitted'|'capture_session.expired'|'capture_session.revoked'>, name: string, url: string} $params
      */
     public function create(array $params, ?string $idempotencyKey = null, ?string $apiKey = null): Models\WebhookCreated
     {

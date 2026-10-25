@@ -41,6 +41,22 @@ A chave decide a organização e o ambiente: `kuaa_test_…` só funciona no san
 
 Os objetos respondidos são `record`s imutáveis em PascalCase (`kase.ExternalReference`), com os valores enumerados como constantes (`Case.StatusApproved`). O corpo de cada escrita é um `record` com membros `required` (`CaseRequest`); um campo opcional nulo fica fora da requisição. As listas aceitam `…ListParams` (`Limit`, `Cursor` e os filtros), respondem uma `Page<T>` (`Items`, `NextCursor`, `HasMore`), e o `…IterAsync` devolve um `IAsyncEnumerable` que percorre todas as páginas pelo cursor. O envio de imagens (`kuaa.CaseMedia.CreateAsync`) vai como `multipart/form-data`, com cada arquivo num `FilePart` (ou `FilePart.FromPath`). Todo método aceita, por último, `RequestOptions` (`IdempotencyKey` nas escritas, `ApiKey` para usar outra chave numa chamada) e um `CancellationToken`.
 
+## Consultas de CPF e CNPJ
+
+Uma consulta lê o cadastro de um CPF ou de um CNPJ fora de qualquer case: o que a Receita Federal guarda (pelo bureau Direct Data), cruzado com as listas do KUAA. A resposta traz `status` (`regular`, `irregular` ou `inconclusive`, a conclusão do KUAA sob `rule_version`), `reasons`, os dados (`person` ou `company`), `provenance` (de onde veio cada campo e quando), `screening`, `sources` e `cost`. `purpose` é obrigatório e fica registrado com a sua base legal na LGPD. Com uma chave `kuaa_test_…`, o sandbox responde dados sintéticos pelos valores mágicos (o CPF `000.000.001-91` e o CNPJ `SA.NDB.OX0/0001-25` respondem `regular`) e nunca consulta o bureau.
+
+```csharp
+var lookup = await kuaa.Lookups.PersonAsync(
+    new PersonLookupRequest { Cpf = "000.000.001-91", Purpose = PersonLookupRequest.PurposeOnboarding },
+    new RequestOptions { IdempotencyKey = "consulta-0001" });
+Console.WriteLine($"{lookup.Status} {string.Join(",", lookup.Reasons)} {lookup.Provenance.SituacaoCadastral?.Source}");
+
+var company = await kuaa.Lookups.BusinessAsync(
+    new BusinessLookupRequest { Cnpj = "SA.NDB.OX0/0001-25", Purpose = BusinessLookupRequest.PurposeOnboarding },
+    new RequestOptions { IdempotencyKey = "consulta-0002" });
+var again = await kuaa.Lookups.GetAsync(lookup.Id);
+```
+
 ## Erros
 
 Uma recusa da API lança `KuaaException`, com `Status`, `Code` (`validation_failed`, `not_found`, `conflict`, `payment_required`…), `ApiMessage`, `Fields` (as mensagens de cada campo), `RetryAfter` em segundos (num 429 ou 503) e `RequestId`. Uma falha de rede lança `HttpRequestException`; o tempo esgotado, `TimeoutException`.

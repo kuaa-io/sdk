@@ -472,6 +472,39 @@ final class BeneficialOwnerResolution {
   };
 }
 
+/// BusinessLookupRequest is a request body of KUAA's API.
+final class BusinessLookupRequest {
+  const BusinessLookupRequest({
+    required this.cnpj,
+    this.product,
+    required this.purpose,
+  });
+
+  /// The CNPJ, as text, with or without punctuation. It may be alphanumeric (IN
+  /// RFB 2.229/2024); its check digits are verified before anything is asked.
+  final String cnpj;
+
+  /// Cadastro PJ Básica (basic) or Plus (plus). Absent is the product the
+  /// organization's Direct Data settings name.
+  ///
+  /// One of `basic`, `plus`.
+  final String? product;
+
+  /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal
+  /// basis.
+  ///
+  /// One of `onboarding`, `fraud_prevention`, `legal_obligation`,
+  /// `credit_protection`, `contract_execution`.
+  final String purpose;
+
+  /// The JSON the API takes; a field left null is left out.
+  Map<String, Object?> toJson() => {
+    'cnpj': cnpj,
+    'product': ?product,
+    'purpose': purpose,
+  };
+}
+
 /// Capture is an object of KUAA's API.
 final class Capture {
   const Capture({
@@ -631,6 +664,7 @@ final class CaptureSession {
     this.embedOrigin,
     required this.expiresAt,
     this.finishedAt,
+    this.handoff,
     required this.id,
     required this.locale,
     required this.partyId,
@@ -651,6 +685,7 @@ final class CaptureSession {
       embedOrigin: json['embed_origin'] as String?,
       expiresAt: json['expires_at'] as String,
       finishedAt: json['finished_at'] as String?,
+      handoff: json['handoff'] as String?,
       id: json['id'] as String,
       locale: json['locale'] as String,
       partyId: json['party_id'] as String,
@@ -677,6 +712,12 @@ final class CaptureSession {
   final String expiresAt;
 
   final String? finishedAt;
+
+  /// The link's own choice of how a desktop is offered the link on a phone;
+  /// null takes the organization's setting.
+  ///
+  /// One of `never`, `suggest`, `require`.
+  final String? handoff;
 
   /// The capture session identifier.
   final String id;
@@ -717,6 +758,7 @@ final class CaptureSession {
     'embed_origin': ?embedOrigin,
     'expires_at': expiresAt,
     'finished_at': ?finishedAt,
+    'handoff': ?handoff,
     'id': id,
     'locale': locale,
     'party_id': partyId,
@@ -739,6 +781,7 @@ final class CaptureSessionIssued {
     this.embedOrigin,
     required this.expiresAt,
     this.finishedAt,
+    this.handoff,
     required this.id,
     required this.locale,
     required this.partyId,
@@ -762,6 +805,7 @@ final class CaptureSessionIssued {
       embedOrigin: json['embed_origin'] as String?,
       expiresAt: json['expires_at'] as String,
       finishedAt: json['finished_at'] as String?,
+      handoff: json['handoff'] as String?,
       id: json['id'] as String,
       locale: json['locale'] as String,
       partyId: json['party_id'] as String,
@@ -799,6 +843,12 @@ final class CaptureSessionIssued {
   final String expiresAt;
 
   final String? finishedAt;
+
+  /// The link's own choice of how a desktop is offered the link on a phone;
+  /// null takes the organization's setting.
+  ///
+  /// One of `never`, `suggest`, `require`.
+  final String? handoff;
 
   /// The capture session identifier.
   final String id;
@@ -848,6 +898,7 @@ final class CaptureSessionIssued {
     'embed_origin': ?embedOrigin,
     'expires_at': expiresAt,
     'finished_at': ?finishedAt,
+    'handoff': ?handoff,
     'id': id,
     'locale': locale,
     'party_id': partyId,
@@ -892,6 +943,7 @@ final class CaptureSessionRequest {
     this.email,
     this.embedOrigin,
     this.expiresInMinutes,
+    this.handoff,
     this.partyId,
     this.returnUrl,
     this.sendEmail,
@@ -909,6 +961,16 @@ final class CaptureSessionRequest {
 
   /// How long the link opens, in minutes. Default 1440 (one day).
   final int? expiresInMinutes;
+
+  /// How the link, opened on a desktop, offers itself on a phone: `never` shows
+  /// the capture on any device; `suggest` shows it with a QR code of the same
+  /// link to continue on a phone; `require` shows a desktop only the QR code.
+  /// Omitted, the organization's setting applies (suggest by default). The
+  /// device is read from what the browser says about itself: it steers the page
+  /// and is not a security control.
+  ///
+  /// One of `never`, `suggest`, `require`.
+  final String? handoff;
 
   /// The party whose capture this is. Empty is the case's primary party.
   final String? partyId;
@@ -930,6 +992,7 @@ final class CaptureSessionRequest {
     'email': ?email,
     'embed_origin': ?embedOrigin,
     'expires_in_minutes': ?expiresInMinutes,
+    'handoff': ?handoff,
     'party_id': ?partyId,
     'return_url': ?returnUrl,
     'send_email': ?sendEmail,
@@ -1504,6 +1567,344 @@ final class Check {
     'party_id': partyId,
     'started_at': startedAt,
     'status': status,
+  };
+}
+
+/// ChipChallenge is an object of KUAA's API.
+final class ChipChallenge {
+  const ChipChallenge({
+    required this.challenge,
+    required this.expiresAt,
+    required this.id,
+    required this.issuedAt,
+    required this.partyId,
+  });
+
+  /// A ChipChallenge out of the API's JSON.
+  factory ChipChallenge.fromJson(Map<String, Object?> json) {
+    return ChipChallenge(
+      challenge: json['challenge'] as String,
+      expiresAt: json['expires_at'] as String,
+      id: json['id'] as String,
+      issuedAt: json['issued_at'] as String,
+      partyId: json['party_id'] as String,
+    );
+  }
+
+  /// The eight bytes, in standard base64, the device sends the chip in INTERNAL
+  /// AUTHENTICATE. The read is examined against the server's own copy; this one
+  /// is never read back.
+  final String challenge;
+
+  /// After it the challenge answers no read; it answers one read, once, before
+  /// it.
+  final String expiresAt;
+
+  /// The challenge_id the chip read names.
+  final String id;
+
+  final String issuedAt;
+
+  /// The person whose chip is read.
+  final String partyId;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'challenge': challenge,
+    'expires_at': expiresAt,
+    'id': id,
+    'issued_at': issuedAt,
+    'party_id': partyId,
+  };
+}
+
+/// ChipChallengeRequest is a request body of KUAA's API.
+final class ChipChallengeRequest {
+  const ChipChallengeRequest({
+    this.partyId,
+  });
+
+  /// The person whose chip is read. Empty is the case's primary party, which
+  /// must be a person.
+  final String? partyId;
+
+  /// The JSON the API takes; a field left null is left out.
+  Map<String, Object?> toJson() => {
+    'party_id': ?partyId,
+  };
+}
+
+/// Each outcome of the read, the fact chip.&lt;name&gt; a policy reads.
+/// unverifiable is never a pass.
+final class ChipOutcomes {
+  const ChipOutcomes({
+    this.activeAuth,
+    this.certificateValidity,
+    this.chain,
+    this.chipAuth,
+    this.comConsistency,
+    this.dataGroupHashes,
+    this.faceMatch,
+    this.fileStructure,
+    this.mrzCheckDigits,
+    this.mrzMatchesPrinted,
+    this.passiveAuth,
+    this.revocation,
+    this.sodSignature,
+  });
+
+  /// A ChipOutcomes out of the API's JSON.
+  factory ChipOutcomes.fromJson(Map<String, Object?> json) {
+    return ChipOutcomes(
+      activeAuth: json['active_auth'] as String?,
+      certificateValidity: json['certificate_validity'] as String?,
+      chain: json['chain'] as String?,
+      chipAuth: json['chip_auth'] as String?,
+      comConsistency: json['com_consistency'] as String?,
+      dataGroupHashes: json['data_group_hashes'] as String?,
+      faceMatch: json['face_match'] as String?,
+      fileStructure: json['file_structure'] as String?,
+      mrzCheckDigits: json['mrz_check_digits'] as String?,
+      mrzMatchesPrinted: json['mrz_matches_printed'] as String?,
+      passiveAuth: json['passive_auth'] as String?,
+      revocation: json['revocation'] as String?,
+      sodSignature: json['sod_signature'] as String?,
+    );
+  }
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? activeAuth;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? certificateValidity;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? chain;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? chipAuth;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? comConsistency;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? dataGroupHashes;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? faceMatch;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? fileStructure;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? mrzCheckDigits;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? mrzMatchesPrinted;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? passiveAuth;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? revocation;
+
+  /// One of `passed`, `failed`, `not_present`, `unverifiable`.
+  final String? sodSignature;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'active_auth': ?activeAuth,
+    'certificate_validity': ?certificateValidity,
+    'chain': ?chain,
+    'chip_auth': ?chipAuth,
+    'com_consistency': ?comConsistency,
+    'data_group_hashes': ?dataGroupHashes,
+    'face_match': ?faceMatch,
+    'file_structure': ?fileStructure,
+    'mrz_check_digits': ?mrzCheckDigits,
+    'mrz_matches_printed': ?mrzMatchesPrinted,
+    'passive_auth': ?passiveAuth,
+    'revocation': ?revocation,
+    'sod_signature': ?sodSignature,
+  };
+}
+
+/// ChipRead is an object of KUAA's API.
+final class ChipRead {
+  const ChipRead({
+    required this.check,
+    required this.checkId,
+    required this.dg2Present,
+    required this.evidenceId,
+    this.faceEvidenceId,
+    required this.outcomes,
+    required this.reasons,
+    required this.result,
+  });
+
+  /// A ChipRead out of the API's JSON.
+  factory ChipRead.fromJson(Map<String, Object?> json) {
+    return ChipRead(
+      check: json['check'] as String,
+      checkId: json['check_id'] as String,
+      dg2Present: json['dg2_present'] as bool,
+      evidenceId: json['evidence_id'] as String,
+      faceEvidenceId: json['face_evidence_id'] as String?,
+      outcomes: ChipOutcomes.fromJson(readObject(json['outcomes'])),
+      reasons: readMap(json['reasons'], readString),
+      result: json['result'] as String,
+    );
+  }
+
+  /// One of `document_chip`.
+  final String check;
+
+  /// The document_chip check the read was recorded as.
+  final String checkId;
+
+  /// The chip gave a face image.
+  final bool dg2Present;
+
+  /// The evidence of the examination.
+  final String evidenceId;
+
+  /// The evidence of the comparison of the face image with the latest selfie,
+  /// null when none ran.
+  final String? faceEvidenceId;
+
+  /// Each outcome of the read, the fact chip.&lt;name&gt; a policy reads.
+  /// unverifiable is never a pass.
+  final ChipOutcomes outcomes;
+
+  /// The machine-readable reason of each outcome that is not a plain pass, such
+  /// as no_trust_store or hash_mismatch.
+  final Map<String, String> reasons;
+
+  /// fail when an outcome failed, pass when Passive Authentication passed and
+  /// nothing failed, inconclusive otherwise. A measurement, never an approval:
+  /// the policy decides.
+  ///
+  /// One of `pass`, `fail`, `inconclusive`.
+  final String result;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'check': check,
+    'check_id': checkId,
+    'dg2_present': dg2Present,
+    'evidence_id': evidenceId,
+    'face_evidence_id': faceEvidenceId,
+    'outcomes': outcomes.toJson(),
+    'reasons': reasons,
+    'result': result,
+  };
+}
+
+/// ChipReadRequest is a request body of KUAA's API.
+final class ChipReadRequest {
+  const ChipReadRequest({
+    this.aaSignature,
+    this.caKeyId,
+    this.caProtocol,
+    this.caStatus,
+    required this.challengeId,
+    required this.dg1,
+    this.dg11,
+    this.dg12,
+    this.dg14,
+    this.dg15,
+    this.dg2,
+    this.efCardAccess,
+    this.efCom,
+    required this.efSod,
+    this.printedMrz,
+  });
+
+  /// The chip's INTERNAL AUTHENTICATE response to the issued challenge, as read
+  /// from the chip -- tag and length included -- in standard base64. At most
+  /// 1024 bytes decoded.
+  final String? aaSignature;
+
+  /// The Chip Authentication key the device used, when DG14 lists more than
+  /// one.
+  final int? caKeyId;
+
+  /// The Chip Authentication protocol the device ran, as the object identifier
+  /// DG14 names it.
+  final String? caProtocol;
+
+  /// What the device reports about Chip Authentication. The server checks only
+  /// that the claim is consistent with an authenticated DG14: the protocol
+  /// itself runs on the device.
+  ///
+  /// One of `completed`, `failed`.
+  final String? caStatus;
+
+  /// The challenge issued for this read. It answers one read, once, before it
+  /// expires.
+  final String challengeId;
+
+  /// DG1, the MRZ, as read, in standard base64. At most 1024 bytes decoded.
+  final String dg1;
+
+  /// DG11, additional personal details, when the chip has it, as read from the
+  /// chip -- tag and length included -- in standard base64. At most 8192 bytes
+  /// decoded.
+  final String? dg11;
+
+  /// DG12, additional document details, when the chip has it, as read from the
+  /// chip -- tag and length included -- in standard base64. At most 8192 bytes
+  /// decoded.
+  final String? dg12;
+
+  /// DG14, the Chip Authentication and PACE security infos, as read from the
+  /// chip -- tag and length included -- in standard base64. At most 16384 bytes
+  /// decoded.
+  final String? dg14;
+
+  /// DG15, the Active Authentication public key, as read from the chip -- tag
+  /// and length included -- in standard base64. At most 4096 bytes decoded.
+  final String? dg15;
+
+  /// DG2, the face image (biometric data, stored sealed), as read from the chip
+  /// -- tag and length included -- in standard base64. At most 524288 bytes
+  /// decoded.
+  final String? dg2;
+
+  /// EF.CardAccess, the PACE infos, as read from the chip -- tag and length
+  /// included -- in standard base64. At most 4096 bytes decoded.
+  final String? efCardAccess;
+
+  /// EF.COM, as read from the chip -- tag and length included -- in standard
+  /// base64. At most 1024 bytes decoded.
+  final String? efCom;
+
+  /// EF.SOD, as read, in standard base64. Without it nothing is authenticated.
+  /// At most 65536 bytes decoded.
+  final String efSod;
+
+  /// The MRZ of the printed page, its lines separated by line breaks, compared
+  /// field by field with DG1. It is not stored outside the sealed read and
+  /// never answered.
+  final String? printedMrz;
+
+  /// The JSON the API takes; a field left null is left out.
+  Map<String, Object?> toJson() => {
+    'aa_signature': ?aaSignature,
+    'ca_key_id': ?caKeyId,
+    'ca_protocol': ?caProtocol,
+    'ca_status': ?caStatus,
+    'challenge_id': challengeId,
+    'dg1': dg1,
+    'dg11': ?dg11,
+    'dg12': ?dg12,
+    'dg14': ?dg14,
+    'dg15': ?dg15,
+    'dg2': ?dg2,
+    'ef_card_access': ?efCardAccess,
+    'ef_com': ?efCom,
+    'ef_sod': efSod,
+    'printed_mrz': ?printedMrz,
   };
 }
 
@@ -2114,6 +2515,35 @@ final class Evidence {
   };
 }
 
+/// FieldProvenance is an object of KUAA's API.
+final class FieldProvenance {
+  const FieldProvenance({
+    required this.retrievedAt,
+    required this.source,
+  });
+
+  /// A FieldProvenance out of the API's JSON.
+  factory FieldProvenance.fromJson(Map<String, Object?> json) {
+    return FieldProvenance(
+      retrievedAt: json['retrieved_at'] as String,
+      source: json['source'] as String,
+    );
+  }
+
+  final String retrievedAt;
+
+  /// directd:&lt;product&gt; for a value of the Direct Data bureau,
+  /// kuaa:screening:&lt;list&gt; for one of KUAA's lists,
+  /// kuaa:sandbox:&lt;product&gt; in the sandbox.
+  final String source;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'retrieved_at': retrievedAt,
+    'source': source,
+  };
+}
+
 /// Finding is an object of KUAA's API.
 final class Finding {
   const Finding({
@@ -2161,6 +2591,74 @@ final class Finding {
   };
 }
 
+/// HealthReport is an object of KUAA's API.
+final class HealthReport {
+  const HealthReport({
+    required this.checks,
+    required this.livemode,
+  });
+
+  /// A HealthReport out of the API's JSON.
+  factory HealthReport.fromJson(Map<String, Object?> json) {
+    return HealthReport(
+      checks: readList(
+        json['checks'],
+        (value) => HealthReportCheck.fromJson(readObject(value)),
+      ),
+      livemode: json['livemode'] as bool,
+    );
+  }
+
+  /// Every check kind the workflows run or an engine is registered for, by
+  /// kind.
+  final List<HealthReportCheck> checks;
+
+  /// False when the answer comes from the organization's sandbox: synthetic
+  /// data, engine doubles chosen by the documented magic values, nothing billed
+  /// and no official source consulted. True in production.
+  final bool livemode;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'checks': checks.map((item) => item.toJson()).toList(),
+    'livemode': livemode,
+  };
+}
+
+/// HealthReportCheck is an object of KUAA's API.
+final class HealthReportCheck {
+  const HealthReportCheck({
+    required this.availability,
+    required this.check,
+  });
+
+  /// A HealthReportCheck out of the API's JSON.
+  factory HealthReportCheck.fromJson(Map<String, Object?> json) {
+    return HealthReportCheck(
+      availability: json['availability'] as String,
+      check: json['check'] as String,
+    );
+  }
+
+  /// available: an engine answers the check. dev_only: an engine answers it
+  /// with a model not cleared for production, so its evidence is inconclusive
+  /// by design. unavailable: no engine answers it here, and its evidence says
+  /// the engine is not configured.
+  ///
+  /// One of `available`, `dev_only`, `unavailable`.
+  final String availability;
+
+  /// The check kind, as a workflow task names it: face_match, liveness,
+  /// document_ocr...
+  final String check;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'availability': availability,
+    'check': check,
+  };
+}
+
 /// What KUAA verified about the identifier across cases. Null when nothing was,
 /// or for a key without identity.view.
 final class Identity {
@@ -2191,6 +2689,475 @@ final class Identity {
     'created_at': createdAt,
     'id': id,
     'verified_attributes': verifiedAttributes,
+  };
+}
+
+/// Lookup is an object of KUAA's API.
+final class Lookup {
+  const Lookup({
+    this.company,
+    required this.cost,
+    required this.createdAt,
+    required this.document,
+    required this.environment,
+    required this.id,
+    required this.kind,
+    required this.legalBasis,
+    required this.livemode,
+    required this.object,
+    this.person,
+    required this.provenance,
+    required this.purpose,
+    required this.reasons,
+    required this.ruleVersion,
+    required this.screening,
+    required this.sources,
+    required this.status,
+  });
+
+  /// A Lookup out of the API's JSON.
+  factory Lookup.fromJson(Map<String, Object?> json) {
+    return Lookup(
+      company: readOptional(
+        json['company'],
+        (value) => LookupCompany.fromJson(readObject(value)),
+      ),
+      cost: LookupCost.fromJson(readObject(json['cost'])),
+      createdAt: json['created_at'] as String,
+      document: json['document'] as String,
+      environment: json['environment'] as String,
+      id: json['id'] as String,
+      kind: json['kind'] as String,
+      legalBasis: json['legal_basis'] as String,
+      livemode: json['livemode'] as bool,
+      object: json['object'] as String,
+      person: readOptional(
+        json['person'],
+        (value) => LookupPerson.fromJson(readObject(value)),
+      ),
+      provenance: LookupProvenance.fromJson(readObject(json['provenance'])),
+      purpose: json['purpose'] as String,
+      reasons: readList(json['reasons'], readString),
+      ruleVersion: json['rule_version'] as String,
+      screening: LookupScreening.fromJson(readObject(json['screening'])),
+      sources: readList(
+        json['sources'],
+        (value) => LookupSource.fromJson(readObject(value)),
+      ),
+      status: json['status'] as String,
+    );
+  }
+
+  /// Present on a business lookup.
+  final LookupCompany? company;
+
+  final LookupCost cost;
+
+  final String createdAt;
+
+  /// The CPF or CNPJ, masked.
+  final String document;
+
+  /// One of `live`, `sandbox`.
+  final String environment;
+
+  final String id;
+
+  /// One of `person`, `business`.
+  final String kind;
+
+  /// The LGPD article the purpose is made under, such as lgpd.art7.v.
+  final String legalBasis;
+
+  final bool livemode;
+
+  /// One of `lookup`.
+  final String object;
+
+  /// Present on a person lookup.
+  final LookupPerson? person;
+
+  /// Where each field came from and when, by field name; a field with no value
+  /// has no entry.
+  final LookupProvenance provenance;
+
+  /// One of `onboarding`, `fraud_prevention`, `legal_obligation`,
+  /// `credit_protection`, `contract_execution`.
+  final String purpose;
+
+  /// cpf_suspended, cpf_cancelled, cpf_null, cpf_pending_regularization,
+  /// cpf_irregular, cnpj_suspended, cnpj_unfit, cnpj_closed, cnpj_null,
+  /// cnpj_irregular, deceased, sanctions_confirmed, sanctions_possible, pep,
+  /// pep_possible, not_found, screening_unavailable, screening_partial,
+  /// bureau_not_enabled, product_disabled, no_token, budget_exceeded,
+  /// provider_unavailable, and aml_&lt;reason&gt; when AML was not answered.
+  final List<String> reasons;
+
+  final String ruleVersion;
+
+  final LookupScreening screening;
+
+  final List<LookupSource> sources;
+
+  /// KUAA's conclusion under rule_version: irregular when the situação is not
+  /// REGULAR (CPF) or ATIVA (CNPJ), when the person died, or when a sanctions
+  /// list holds the document itself; inconclusive when the registry could not
+  /// be read or held nothing, a sanctions list holds the name only, or no list
+  /// could be read; regular otherwise. A PEP is a reason, not an irregularity.
+  ///
+  /// One of `regular`, `irregular`, `inconclusive`.
+  final String status;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'company': ?company?.toJson(),
+    'cost': cost.toJson(),
+    'created_at': createdAt,
+    'document': document,
+    'environment': environment,
+    'id': id,
+    'kind': kind,
+    'legal_basis': legalBasis,
+    'livemode': livemode,
+    'object': object,
+    'person': ?person?.toJson(),
+    'provenance': provenance.toJson(),
+    'purpose': purpose,
+    'reasons': reasons,
+    'rule_version': ruleVersion,
+    'screening': screening.toJson(),
+    'sources': sources.map((item) => item.toJson()).toList(),
+    'status': status,
+  };
+}
+
+/// Present on a business lookup.
+final class LookupCompany {
+  const LookupCompany({
+    this.cnae,
+    this.dataFundacao,
+    this.naturezaJuridica,
+    this.razaoSocial,
+    this.situacaoCadastral,
+  });
+
+  /// A LookupCompany out of the API's JSON.
+  factory LookupCompany.fromJson(Map<String, Object?> json) {
+    return LookupCompany(
+      cnae: json['cnae'] as String?,
+      dataFundacao: json['data_fundacao'] as String?,
+      naturezaJuridica: json['natureza_juridica'] as String?,
+      razaoSocial: json['razao_social'] as String?,
+      situacaoCadastral: json['situacao_cadastral'] as String?,
+    );
+  }
+
+  /// The main CNAE code.
+  final String? cnae;
+
+  final String? dataFundacao;
+
+  /// The legal nature, as described.
+  final String? naturezaJuridica;
+
+  /// The registered name.
+  final String? razaoSocial;
+
+  /// ATIVA, SUSPENSA, INAPTA, BAIXADA, NULA.
+  final String? situacaoCadastral;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'cnae': ?cnae,
+    'data_fundacao': ?dataFundacao,
+    'natureza_juridica': ?naturezaJuridica,
+    'razao_social': ?razaoSocial,
+    'situacao_cadastral': ?situacaoCadastral,
+  };
+}
+
+/// LookupCost is an object of KUAA's API.
+final class LookupCost {
+  const LookupCost({
+    required this.bureauChargedCents,
+    required this.bureauPriceCents,
+    this.tokenSource,
+  });
+
+  /// A LookupCost out of the API's JSON.
+  factory LookupCost.fromJson(Map<String, Object?> json) {
+    return LookupCost(
+      bureauChargedCents: json['bureau_charged_cents'] as int,
+      bureauPriceCents: json['bureau_price_cents'] as int,
+      tokenSource: json['token_source'] as String?,
+    );
+  }
+
+  /// What Direct Data billed: zero for a same-day repeat, a sandbox or a query
+  /// that was not billable.
+  final int bureauChargedCents;
+
+  final int bureauPriceCents;
+
+  /// platform, organization or sandbox.
+  final String? tokenSource;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'bureau_charged_cents': bureauChargedCents,
+    'bureau_price_cents': bureauPriceCents,
+    'token_source': ?tokenSource,
+  };
+}
+
+/// Present on a person lookup.
+final class LookupPerson {
+  const LookupPerson({
+    this.birthDate,
+    this.deathDate,
+    this.deceased,
+    this.fullName,
+    required this.pep,
+    this.situacaoCadastral,
+    this.situacaoCadastralDate,
+  });
+
+  /// A LookupPerson out of the API's JSON.
+  factory LookupPerson.fromJson(Map<String, Object?> json) {
+    return LookupPerson(
+      birthDate: json['birth_date'] as String?,
+      deathDate: json['death_date'] as String?,
+      deceased: json['deceased'] as bool?,
+      fullName: json['full_name'] as String?,
+      pep: json['pep'] as bool,
+      situacaoCadastral: json['situacao_cadastral'] as String?,
+      situacaoCadastralDate: json['situacao_cadastral_date'] as String?,
+    );
+  }
+
+  final String? birthDate;
+
+  /// From AML, when it was asked.
+  final String? deathDate;
+
+  /// Óbito, from Cadastro PF Plus or AML.
+  final bool? deceased;
+
+  /// The name the Receita Federal holds.
+  final String? fullName;
+
+  /// A politically exposed person: an active PEP on the CGU list, or AML's PEP
+  /// flag.
+  final bool pep;
+
+  /// REGULAR, SUSPENSA, CANCELADA, NULA, TITULAR FALECIDO, PENDENTE DE
+  /// REGULARIZAÇÃO.
+  final String? situacaoCadastral;
+
+  final String? situacaoCadastralDate;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'birth_date': ?birthDate,
+    'death_date': ?deathDate,
+    'deceased': ?deceased,
+    'full_name': ?fullName,
+    'pep': pep,
+    'situacao_cadastral': ?situacaoCadastral,
+    'situacao_cadastral_date': ?situacaoCadastralDate,
+  };
+}
+
+/// Where each field came from and when, by field name; a field with no value
+/// has no entry.
+final class LookupProvenance {
+  const LookupProvenance({
+    this.birthDate,
+    this.cnae,
+    this.dataFundacao,
+    this.deathDate,
+    this.deceased,
+    this.fullName,
+    this.naturezaJuridica,
+    this.pep,
+    this.razaoSocial,
+    this.situacaoCadastral,
+    this.situacaoCadastralDate,
+  });
+
+  /// A LookupProvenance out of the API's JSON.
+  factory LookupProvenance.fromJson(Map<String, Object?> json) {
+    return LookupProvenance(
+      birthDate: readOptional(
+        json['birth_date'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      cnae: readOptional(
+        json['cnae'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      dataFundacao: readOptional(
+        json['data_fundacao'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      deathDate: readOptional(
+        json['death_date'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      deceased: readOptional(
+        json['deceased'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      fullName: readOptional(
+        json['full_name'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      naturezaJuridica: readOptional(
+        json['natureza_juridica'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      pep: readOptional(
+        json['pep'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      razaoSocial: readOptional(
+        json['razao_social'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      situacaoCadastral: readOptional(
+        json['situacao_cadastral'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+      situacaoCadastralDate: readOptional(
+        json['situacao_cadastral_date'],
+        (value) => FieldProvenance.fromJson(readObject(value)),
+      ),
+    );
+  }
+
+  final FieldProvenance? birthDate;
+
+  final FieldProvenance? cnae;
+
+  final FieldProvenance? dataFundacao;
+
+  final FieldProvenance? deathDate;
+
+  final FieldProvenance? deceased;
+
+  final FieldProvenance? fullName;
+
+  final FieldProvenance? naturezaJuridica;
+
+  final FieldProvenance? pep;
+
+  final FieldProvenance? razaoSocial;
+
+  final FieldProvenance? situacaoCadastral;
+
+  final FieldProvenance? situacaoCadastralDate;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'birth_date': ?birthDate?.toJson(),
+    'cnae': ?cnae?.toJson(),
+    'data_fundacao': ?dataFundacao?.toJson(),
+    'death_date': ?deathDate?.toJson(),
+    'deceased': ?deceased?.toJson(),
+    'full_name': ?fullName?.toJson(),
+    'natureza_juridica': ?naturezaJuridica?.toJson(),
+    'pep': ?pep?.toJson(),
+    'razao_social': ?razaoSocial?.toJson(),
+    'situacao_cadastral': ?situacaoCadastral?.toJson(),
+    'situacao_cadastral_date': ?situacaoCadastralDate?.toJson(),
+  };
+}
+
+/// LookupScreening is an object of KUAA's API.
+final class LookupScreening {
+  const LookupScreening({
+    required this.matches,
+    required this.sources,
+    required this.unavailable,
+  });
+
+  /// A LookupScreening out of the API's JSON.
+  factory LookupScreening.fromJson(Map<String, Object?> json) {
+    return LookupScreening(
+      matches: readList(
+        json['matches'],
+        (value) => ScreeningMatch.fromJson(readObject(value)),
+      ),
+      sources: readList(
+        json['sources'],
+        (value) => ScreeningSource.fromJson(readObject(value)),
+      ),
+      unavailable: readList(json['unavailable'], readString),
+    );
+  }
+
+  final List<ScreeningMatch> matches;
+
+  final List<ScreeningSource> sources;
+
+  final List<String> unavailable;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'matches': matches.map((item) => item.toJson()).toList(),
+    'sources': sources.map((item) => item.toJson()).toList(),
+    'unavailable': unavailable,
+  };
+}
+
+/// LookupSource is an object of KUAA's API.
+final class LookupSource {
+  const LookupSource({
+    required this.cached,
+    this.consultaUid,
+    this.outcome,
+    this.reason,
+    this.retrievedAt,
+    required this.source,
+  });
+
+  /// A LookupSource out of the API's JSON.
+  factory LookupSource.fromJson(Map<String, Object?> json) {
+    return LookupSource(
+      cached: json['cached'] as bool,
+      consultaUid: json['consulta_uid'] as String?,
+      outcome: json['outcome'] as String?,
+      reason: json['reason'] as String?,
+      retrievedAt: json['retrieved_at'] as String?,
+      source: json['source'] as String,
+    );
+  }
+
+  /// Answered from the organization's same-day query, at no cost.
+  final bool cached;
+
+  final String? consultaUid;
+
+  /// found, not_found... when Direct Data answered.
+  final String? outcome;
+
+  /// Why nothing was answered: bureau_not_enabled, product_disabled, no_token,
+  /// budget_exceeded, provider_unavailable.
+  final String? reason;
+
+  final String? retrievedAt;
+
+  /// directd:&lt;product&gt;, or kuaa:sandbox:&lt;product&gt;.
+  final String source;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'cached': cached,
+    'consulta_uid': ?consultaUid,
+    'outcome': ?outcome,
+    'reason': ?reason,
+    'retrieved_at': ?retrievedAt,
+    'source': source,
   };
 }
 
@@ -2798,6 +3765,39 @@ final class PartySummary {
   };
 }
 
+/// PersonLookupRequest is a request body of KUAA's API.
+final class PersonLookupRequest {
+  const PersonLookupRequest({
+    required this.cpf,
+    this.include,
+    required this.purpose,
+  });
+
+  /// The CPF, as text, with or without punctuation; its check digits are
+  /// verified before anything is asked.
+  final String cpf;
+
+  /// aml also asks AML Vínculos: PEP, and óbito with its date. Absent asks
+  /// Cadastro PF Plus alone.
+  final List<String>? include;
+
+  /// Why the lookup is made (LGPD art. 6, I), recorded with it with its legal
+  /// basis: onboarding (art. 7, V), fraud_prevention (art. 11, II, g),
+  /// legal_obligation (art. 7, II), credit_protection (art. 7, X),
+  /// contract_execution (art. 7, V).
+  ///
+  /// One of `onboarding`, `fraud_prevention`, `legal_obligation`,
+  /// `credit_protection`, `contract_execution`.
+  final String purpose;
+
+  /// The JSON the API takes; a field left null is left out.
+  Map<String, Object?> toJson() => {
+    'cpf': cpf,
+    'include': ?include,
+    'purpose': purpose,
+  };
+}
+
 /// The policy version that produced the decision: its id, version and content
 /// digest.
 final class Policy {
@@ -3079,6 +4079,101 @@ final class Screening {
     'checked_at': checkedAt,
     'decision': decision,
     'list': list,
+  };
+}
+
+/// ScreeningMatch is an object of KUAA's API.
+final class ScreeningMatch {
+  const ScreeningMatch({
+    required this.classification,
+    required this.list,
+    required this.matchStatus,
+    this.pepActive,
+    required this.score,
+    required this.source,
+    required this.sourceVersion,
+  });
+
+  /// A ScreeningMatch out of the API's JSON.
+  factory ScreeningMatch.fromJson(Map<String, Object?> json) {
+    return ScreeningMatch(
+      classification: json['classification'] as String,
+      list: json['list'] as String,
+      matchStatus: json['match_status'] as String,
+      pepActive: json['pep_active'] as bool?,
+      score: readDouble(json['score']),
+      source: json['source'] as String,
+      sourceVersion: json['source_version'] as String,
+    );
+  }
+
+  /// confirmed: the full CPF or CNPJ is listed. strong: the name and another
+  /// attribute agree. possible: the name alone.
+  ///
+  /// One of `confirmed`, `strong`, `possible`.
+  final String classification;
+
+  /// One of `sanctions`, `pep`.
+  final String list;
+
+  final String matchStatus;
+
+  /// For a PEP: whether the five-year window after the function is still open.
+  final bool? pepActive;
+
+  final double score;
+
+  /// The source the entry is listed in, such as cgu_ceis, cgu_pep, ofac_sdn.
+  final String source;
+
+  /// The version of the source that was read.
+  final String sourceVersion;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'classification': classification,
+    'list': list,
+    'match_status': matchStatus,
+    'pep_active': ?pepActive,
+    'score': score,
+    'source': source,
+    'source_version': sourceVersion,
+  };
+}
+
+/// ScreeningSource is an object of KUAA's API.
+final class ScreeningSource {
+  const ScreeningSource({
+    required this.list,
+    required this.retrievedAt,
+    required this.source,
+    required this.version,
+  });
+
+  /// A ScreeningSource out of the API's JSON.
+  factory ScreeningSource.fromJson(Map<String, Object?> json) {
+    return ScreeningSource(
+      list: json['list'] as String,
+      retrievedAt: json['retrieved_at'] as String,
+      source: json['source'] as String,
+      version: json['version'] as String,
+    );
+  }
+
+  final String list;
+
+  final String retrievedAt;
+
+  final String source;
+
+  final String version;
+
+  /// The JSON the API answers.
+  Map<String, Object?> toJson() => {
+    'list': list,
+    'retrieved_at': retrievedAt,
+    'source': source,
+    'version': version,
   };
 }
 
@@ -3451,7 +4546,10 @@ final class WebhookEvent {
 
   /// One of `case.created`, `case.updated`, `check.completed`,
   /// `decision.recorded`, `review.recorded`, `capture_session.finished`,
-  /// `document.decided`.
+  /// `document.decided`, `capture_session.opened`,
+  /// `capture_session.consent_given`, `capture_session.document_submitted`,
+  /// `capture_session.selfie_submitted`, `capture_session.expired`,
+  /// `capture_session.revoked`.
   final String type;
 
   /// The JSON the API answers.
@@ -3489,6 +4587,7 @@ final class WebhookEventData {
     this.reviewId,
     required this.status,
     this.statusMarket,
+    this.step,
     required this.tenantId,
     required this.type,
   });
@@ -3515,13 +4614,14 @@ final class WebhookEventData {
       reviewId: json['review_id'] as String?,
       status: json['status'] as String,
       statusMarket: json['status_market'] as String?,
+      step: json['step'] as String?,
       tenantId: json['tenant_id'] as String,
       type: json['type'] as String,
     );
   }
 
-  /// Present on capture_session.finished: the hosted capture session the person
-  /// sent, as answered when its link was issued.
+  /// Present on every capture_session.* event: the hosted capture session, as
+  /// answered when its link was issued.
   final String? captureSessionId;
 
   final String caseId;
@@ -3585,9 +4685,10 @@ final class WebhookEventData {
 
   /// What the event left behind: the case's status for case.*, the check's for
   /// check.completed, the outcome for decision.recorded, the reviewer's action
-  /// for review.recorded, finished for capture_session.finished and the
-  /// reviewer's decision about the document (approved, rejected or rerequested)
-  /// for document.decided.
+  /// for review.recorded, finished for capture_session.finished, the session's
+  /// status after the event (active, expired or revoked) for the other
+  /// capture_session.* events, and the reviewer's decision about the document
+  /// (approved, rejected or rerequested) for document.decided.
   final String status;
 
   /// Present on case.created, case.updated and capture_session.finished: The
@@ -3604,11 +4705,20 @@ final class WebhookEventData {
   /// `BLOCKED`, `CANCELLED`, `EXPIRED`.
   final String? statusMarket;
 
+  /// Present on capture_session.consent_given, .document_submitted and
+  /// .selfie_submitted: the step of the hosted capture the person finished.
+  ///
+  /// One of `consent`, `document`, `selfie`.
+  final String? step;
+
   final String tenantId;
 
   /// One of `case.created`, `case.updated`, `check.completed`,
   /// `decision.recorded`, `review.recorded`, `capture_session.finished`,
-  /// `document.decided`.
+  /// `document.decided`, `capture_session.opened`,
+  /// `capture_session.consent_given`, `capture_session.document_submitted`,
+  /// `capture_session.selfie_submitted`, `capture_session.expired`,
+  /// `capture_session.revoked`.
   final String type;
 
   /// The JSON the API answers.
@@ -3632,6 +4742,7 @@ final class WebhookEventData {
     'review_id': ?reviewId,
     'status': status,
     'status_market': ?statusMarket,
+    'step': ?step,
     'tenant_id': tenantId,
     'type': type,
   };
